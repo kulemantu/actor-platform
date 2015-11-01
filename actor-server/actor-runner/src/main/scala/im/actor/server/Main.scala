@@ -12,9 +12,11 @@ import im.actor.server.activation.internal.{ ActivationConfig, InternalCodeActiv
 import im.actor.server.api.frontend.Frontend
 import im.actor.server.api.http.{ HttpApiConfig, HttpApiFrontend }
 import im.actor.server.api.rpc.RpcApiService
+import im.actor.server.api.rpc.service.SearchServiceImpl
 import im.actor.server.api.rpc.service.auth.AuthServiceImpl
 import im.actor.server.api.rpc.service.configs.ConfigsServiceImpl
 import im.actor.server.api.rpc.service.contacts.ContactsServiceImpl
+import im.actor.server.api.rpc.service.device.DeviceServiceImpl
 import im.actor.server.api.rpc.service.files.FilesServiceImpl
 import im.actor.server.api.rpc.service.groups.{ GroupInviteConfig, GroupsServiceImpl }
 import im.actor.server.api.rpc.service.messaging.{ MessagingServiceImpl, ReverseHooksListener }
@@ -30,7 +32,7 @@ import im.actor.server.bot.ActorBot
 import im.actor.server.cli.ActorCliService
 import im.actor.server.db.DbExtension
 import im.actor.server.dialog.{ DialogExtension, DialogProcessor }
-import im.actor.server.email.{ EmailConfig, EmailSender }
+import im.actor.server.email.{ EmailConfig, SmtpEmailSender }
 import im.actor.server.enrich.{ RichMessageConfig, RichMessageWorker }
 import im.actor.server.group._
 import im.actor.server.migrations.{ HiddenGroupMigrator, GroupCreatorMemberMigrator, IntegrationTokenMigrator, LocalNamesMigrator }
@@ -111,7 +113,7 @@ object Main extends App {
           activationConfig,
           new TelesignSmsEngine(telesignClient),
           new TelesignCallEngine((telesignClient)),
-          new EmailSender(emailConfig)
+          new SmtpEmailSender(emailConfig)
         )
       case "actor-activation" ⇒ new GateCodeActivation(gateConfig)
       case _                  ⇒ throw new Exception("""Invalid activation.default-service value provided: valid options: "internal", actor-activation""")
@@ -138,7 +140,9 @@ object Main extends App {
       new PushServiceImpl,
       new ProfileServiceImpl,
       new IntegrationsServiceImpl(s"${webappConfig.scheme}://${webappConfig.host}"),
-      new WebactionsServiceImpl
+      new WebactionsServiceImpl,
+      new DeviceServiceImpl,
+      new SearchServiceImpl
     )
 
     system.log.warning("Starting ActorBot")

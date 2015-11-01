@@ -72,15 +72,20 @@ public class ProfileFragment extends BaseFragment {
         final String nick = user.getNick().get();
         final String aboutText = user.getAbout().get();
         baseColor = getResources().getColor(R.color.primary);
+        ActorStyle style = ActorSDK.sharedActor().style;
 
         View res = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        bind((TextView) res.findViewById(R.id.name), user.getName());
+        TextView nameText = (TextView) res.findViewById(R.id.name);
+        nameText.setTextColor(style.getProfileTitle());
+        bind(nameText, user.getName());
 
         final TextView lastSeen = (TextView) res.findViewById(R.id.lastSeen);
+        lastSeen.setTextColor(style.getProfileSubtitle());
         bind(lastSeen, lastSeen, user);
 
         final FrameLayout about = (FrameLayout) res.findViewById(R.id.about);
+        ((TintImageView) about.findViewById(R.id.recordIcon)).setTint(ActorSDK.sharedActor().style.getProfilleIcon());
         if (aboutText != null && !aboutText.isEmpty()) {
             about.findViewById(R.id.title).setVisibility(View.GONE);
             about.findViewById(R.id.recordIcon).setVisibility(View.INVISIBLE);
@@ -128,16 +133,19 @@ public class ProfileFragment extends BaseFragment {
                 final UserPhone record = phones.get(i);
                 View recordView = inflater.inflate(R.layout.contact_record, contactsContainer, false);
                 TintImageView tintImageView = (TintImageView) recordView.findViewById(R.id.recordIcon);
+                tintImageView.setTint(style.getRecordIconTintColor());
                 if (i == 0) {
                     tintImageView.setResource(R.drawable.ic_call_white_36dp);
                     tintImageView.setVisibility(View.VISIBLE);
                 } else {
                     tintImageView.setVisibility(View.INVISIBLE);
                 }
+                View divider = recordView.findViewById(R.id.divider);
+                divider.setBackgroundColor(ActorSDK.sharedActor().style.getDividerColor());
                 if (i != phones.size() - 1) {
-                    recordView.findViewById(R.id.divider).setVisibility(View.VISIBLE);
+                    divider.setVisibility(View.VISIBLE);
                 } else {
-                    recordView.findViewById(R.id.divider).setVisibility(View.GONE);
+                    divider.setVisibility(View.GONE);
                 }
 
                 String _phoneNumber;
@@ -222,7 +230,9 @@ public class ProfileFragment extends BaseFragment {
         }
 
         avatarView = (CoverAvatarView) res.findViewById(R.id.avatar);
-        avatarView.setBkgrnd((ImageView) res.findViewById(R.id.avatar_bgrnd));
+        ImageView avatarBkgrnd = (ImageView) res.findViewById(R.id.avatar_bgrnd);
+        avatarBkgrnd.setBackgroundColor(ActorSDK.sharedActor().style.getAvatarBackgroundColor());
+        avatarView.setBkgrnd(avatarBkgrnd);
 
         bind(avatarView, user.getAvatar());
         avatarView.setOnClickListener(new View.OnClickListener() {
@@ -257,8 +267,27 @@ public class ProfileFragment extends BaseFragment {
             }
         });
 
-        final ScrollView scrollView = ((ScrollView) res.findViewById(R.id.scrollContainer));
+        TextView settingsHeaderText = (TextView) res.findViewById(R.id.settings_header_text);
+        settingsHeaderText.setTextColor(ActorSDK.sharedActor().style.getSettingsTitle());
 
+        TextView sharedHeaderText = (TextView) res.findViewById(R.id.shared_header_text);
+        sharedHeaderText.setTextColor(ActorSDK.sharedActor().style.getSettingsTitle());
+
+        TintImageView shareMediaIcon = (TintImageView) res.findViewById(R.id.share_media_icon);
+        shareMediaIcon.setTint(style.getSettingsIcon());
+
+        TintImageView shareDocsIcon = (TintImageView) res.findViewById(R.id.share_docs_icon);
+        shareDocsIcon.setTint(style.getSettingsIcon());
+
+        TintImageView notificationsSettingsIcon = (TintImageView) res.findViewById(R.id.settings_notification_icon);
+        notificationsSettingsIcon.setTint(style.getSettingsIcon());
+
+        res.findViewById(R.id.phoneDivider).setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
+        res.findViewById(R.id.after_shared_divider).setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
+        res.findViewById(R.id.bottom_divider).setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
+
+        final ScrollView scrollView = ((ScrollView) res.findViewById(R.id.scrollContainer));
+        scrollView.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
         scrollView.getViewTreeObserver().addOnScrollChangedListener(new ViewTreeObserver.OnScrollChangedListener() {
             @Override
             public void onScrollChanged() {

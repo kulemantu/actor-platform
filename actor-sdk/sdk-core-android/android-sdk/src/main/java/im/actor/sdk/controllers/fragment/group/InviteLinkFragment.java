@@ -20,6 +20,7 @@ import android.widget.Toast;
 
 import im.actor.core.viewmodel.Command;
 import im.actor.core.viewmodel.CommandCallback;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.fragment.BaseFragment;
 import im.actor.sdk.view.adapters.HolderAdapter;
@@ -71,7 +72,11 @@ public class InviteLinkFragment extends BaseFragment {
         final ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
 
         View res = inflater.inflate(R.layout.fragment_list, container, false);
+        res.setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
+
         listView = (ListView) res.findViewById(R.id.listView);
+        listView.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
+
         emptyView = (TextView) res.findViewById(R.id.emptyView);
         emptyView.setText(getString(R.string.invite_link_empty_view));
         adapter = new InviteLincActionsAdapter(getActivity());
@@ -139,6 +144,8 @@ public class InviteLinkFragment extends BaseFragment {
         });
 
         View footer = inflater.inflate(R.layout.fragment_link_item_footer, listView, false);
+        footer.setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
+
         listView.addFooterView(footer, null, false);
 
 
@@ -187,6 +194,7 @@ public class InviteLinkFragment extends BaseFragment {
             topShadow = res.findViewById(R.id.top_shadow);
             botShadow = res.findViewById(R.id.bot_shadow);
             divider = res.findViewById(R.id.divider);
+            divider.setBackgroundColor(ActorSDK.sharedActor().style.getDividerColor());
             return res;
         }
 
@@ -216,7 +224,7 @@ public class InviteLinkFragment extends BaseFragment {
 
             //Hint styling
             if (position == 1) {
-                container.setBackgroundColor(getActivity().getResources().getColor(R.color.bg_backyard));
+                container.setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
                 topShadow.setVisibility(View.VISIBLE);
                 botShadow.setVisibility(View.VISIBLE);
                 divider.setVisibility(View.INVISIBLE);

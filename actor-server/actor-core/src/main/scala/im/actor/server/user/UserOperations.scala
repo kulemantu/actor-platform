@@ -8,6 +8,7 @@ import im.actor.api.rpc.misc.ApiExtension
 import im.actor.api.rpc.{ AuthorizedClientData, Update }
 import im.actor.api.rpc.peers.ApiPeer
 import im.actor.api.rpc.users.{ ApiUser, ApiSex }
+import im.actor.server.auth.DeviceInfo
 import im.actor.server.db.DbExtension
 import im.actor.server.file.Avatar
 import im.actor.server.persist.UserRepo
@@ -56,33 +57,38 @@ private[user] sealed trait Commands extends AuthCommands {
   // FIXME: check existence and reserve generated ids
   def nextId(): Future[Int] = Future.successful(IdUtils.nextIntId())
 
-  def addPhone(userId: Int, phone: Long): Future[Unit] = {
+  def addPhone(userId: Int, phone: Long): Future[Unit] =
     (processorRegion.ref ? AddPhone(userId, phone)).mapTo[AddPhoneAck] map (_ ⇒ ())
-  }
 
-  def addEmail(userId: Int, email: String): Future[Unit] = {
+  def addEmail(userId: Int, email: String): Future[Unit] =
     (processorRegion.ref ? AddEmail(userId, email)).mapTo[AddEmailAck] map (_ ⇒ ())
-  }
 
-  def delete(userId: Int): Future[Unit] = {
+  def delete(userId: Int): Future[Unit] =
     (processorRegion.ref ? Delete(userId)).mapTo[DeleteAck] map (_ ⇒ ())
-  }
 
-  def changeCountryCode(userId: Int, countryCode: String): Future[Unit] = {
+  def changeCountryCode(userId: Int, countryCode: String): Future[Unit] =
     (processorRegion.ref ? ChangeCountryCode(userId, countryCode)).mapTo[ChangeCountryCodeAck] map (_ ⇒ ())
-  }
 
-  def changeName(userId: Int, name: String): Future[SeqState] = {
+  def changeName(userId: Int, name: String): Future[SeqState] =
     (processorRegion.ref ? ChangeName(userId, name)).mapTo[SeqState]
-  }
 
-  def changeNickname(userId: Int, clientAuthId: Long, nickname: Option[String]): Future[SeqState] = {
+  def changeNickname(userId: Int, clientAuthId: Long, nickname: Option[String]): Future[SeqState] =
     (processorRegion.ref ? ChangeNickname(userId, clientAuthId, nickname)).mapTo[SeqState]
-  }
 
-  def changeAbout(userId: Int, clientAuthId: Long, about: Option[String]): Future[SeqState] = {
+  def changeAbout(userId: Int, clientAuthId: Long, about: Option[String]): Future[SeqState] =
     (processorRegion.ref ? ChangeAbout(userId, clientAuthId, about)).mapTo[SeqState]
-  }
+
+  def changeTimeZone(userId: Int, authId: Long, timeZone: String): Future[SeqState] =
+    (processorRegion.ref ? ChangeTimeZone(userId, authId, timeZone)).mapTo[SeqState]
+
+  def setDeviceInfo(userId: Int, authId: Long, data: DeviceInfo): Future[Unit] =
+    for {
+      _ ← changeTimeZone(userId, authId, data.timeZone)
+      _ ← changePreferredLanguages(userId, authId, data.preferredLanguages)
+    } yield ()
+
+  def changePreferredLanguages(userId: Int, authId: Long, preferredLanguages: Seq[String]): Future[SeqState] =
+    (processorRegion.ref ? ChangePreferredLanguages(userId, authId, preferredLanguages)).mapTo[SeqState]
 
   def updateAvatar(userId: Int, clientAuthId: Long, avatarOpt: Option[Avatar]): Future[UpdateAvatarAck] =
     (processorRegion.ref ? UpdateAvatar(userId, clientAuthId, avatarOpt)).mapTo[UpdateAvatarAck]
@@ -96,8 +102,8 @@ private[user] sealed trait Commands extends AuthCommands {
     else
       SeqUpdatesManager.getSeqState(clientAuthId)
 
-  def notifyDialogsChanged(userId: Int): Future[Unit] =
-    (processorRegion.ref ? NotifyDialogsChanged(userId)) map (_ ⇒ ())
+  def notifyDialogsChanged(userId: Int, clientAuthId: Long): Future[SeqState] =
+    (processorRegion.ref ? NotifyDialogsChanged(userId, clientAuthId)).mapTo[SeqState]
 
   def broadcastUserUpdate(
     userId:     Int,

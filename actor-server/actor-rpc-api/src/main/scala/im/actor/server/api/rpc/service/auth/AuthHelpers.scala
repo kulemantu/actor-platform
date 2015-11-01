@@ -2,31 +2,28 @@ package im.actor.server.api.rpc.service.auth
 
 import java.time.{ LocalDateTime, ZoneOffset }
 
+import akka.actor.ActorSystem
+import akka.pattern.ask
+import im.actor.api.rpc.DBIOResult._
+import im.actor.api.rpc._
+import im.actor.api.rpc.users.ApiSex._
 import im.actor.server.acl.ACLUtils
+import im.actor.server.activation.Activation.{ CallCode, EmailCode, SmsCode }
+import im.actor.server.activation._
+import im.actor.server.auth.DeviceInfo
+import im.actor.server.models.{ AuthEmailTransaction, AuthPhoneTransaction, User }
+import im.actor.server.persist.auth.AuthTransactionRepo
+import im.actor.server.session._
+import im.actor.server.{ models, persist }
 import im.actor.util.misc.EmailUtils.isTestEmail
-import im.actor.util.misc.{ PhoneNumberUtils, EmailUtils }
+import im.actor.util.misc.IdUtils._
+import im.actor.util.misc.PhoneNumberUtils._
+import im.actor.util.misc.StringUtils.validName
+import slick.dbio._
 
 import scala.concurrent.Future
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import scalaz.{ -\/, \/, \/- }
-
-import akka.actor.ActorSystem
-import akka.pattern.ask
-import slick.dbio._
-
-import im.actor.api.rpc.DBIOResult._
-import im.actor.api.rpc._
-import im.actor.api.rpc.users.ApiSex._
-import im.actor.server.activation.Activation.{ CallCode, EmailCode, SmsCode }
-import im.actor.server.activation._
-import im.actor.server.models.{ AuthEmailTransaction, AuthPhoneTransaction, User }
-import im.actor.server.persist.auth.AuthTransactionRepo
-import im.actor.server.session._
-import im.actor.server.user.UserExtension
-import im.actor.util.misc.IdUtils._
-import im.actor.util.misc.PhoneNumberUtils._
-import im.actor.util.misc.StringUtils.validName
-import im.actor.server.{ models, persist }
 
 trait AuthHelpers extends Helpers {
   self: AuthServiceImpl ⇒
@@ -69,6 +66,7 @@ trait AuthHelpers extends Helpers {
   def handleUserCreate(user: models.User, transaction: models.AuthTransactionChildren, authId: Long): Result[User] = {
     for {
       _ ← fromFuture(userExt.create(user.id, user.accessSalt, user.nickname, user.name, user.countryCode, im.actor.api.rpc.users.ApiSex(user.sex.toInt), isBot = false))
+      _ ← fromFuture(userExt.setDeviceInfo(user.id, authId, DeviceInfo.parseFrom(transaction.deviceInfo)) recover { case _ ⇒ () })
       _ ← fromDBIO(persist.AvatarDataRepo.create(models.AvatarData.empty(models.AvatarData.OfUser, user.id.toLong)))
       _ ← fromDBIO(AuthTransactionRepo.delete(transaction.transactionHash))
       _ ← transaction match {
@@ -97,11 +95,11 @@ trait AuthHelpers extends Helpers {
     for {
       validationResponse ← fromDBIO(activationContext.validate(transactionHash, code))
       _ ← validationResponse match {
-        case ExpiredCode     ⇒ cleanupAndError(transactionHash, codeExpired)
-        case InvalidHash     ⇒ cleanupAndError(transactionHash, AuthErrors.InvalidAuthCodeHash)
-        case InvalidCode     ⇒ fromEither[Unit](-\/(codeInvalid))
-        case InvalidResponse ⇒ cleanupAndError(transactionHash, AuthErrors.ActivationServiceError)
-        case Validated       ⇒ point(())
+        case ExpiredCode                     ⇒ cleanupAndError(transactionHash, codeExpired)
+        case InvalidHash                     ⇒ cleanupAndError(transactionHash, AuthErrors.InvalidAuthCodeHash)
+        case InvalidCode                     ⇒ fromEither[Unit](-\/(codeInvalid))
+        case InvalidResponse | InternalError ⇒ cleanupAndError(transactionHash, AuthErrors.ActivationServiceError)
+        case Validated                       ⇒ point(())
       }
       _ ← fromDBIO(persist.auth.AuthTransactionRepo.updateSetChecked(transactionHash))
 
@@ -145,25 +143,26 @@ trait AuthHelpers extends Helpers {
   }
 
   //TODO: what country to use in case of email auth
-  protected def authorizeT(userId: Int, countryCode: String, clientData: ClientData): Result[User] = {
+  protected def authorizeT(userId: Int, countryCode: String, deviceInfo: DeviceInfo, clientData: ClientData): Result[User] = {
     for {
       user ← fromDBIOOption(CommonErrors.UserNotFound)(persist.UserRepo.find(userId).headOption)
       _ ← fromFuture(userExt.changeCountryCode(userId, countryCode))
+      _ ← fromFuture(userExt.setDeviceInfo(userId, clientData.authId, deviceInfo) recover { case _ ⇒ () })
       _ ← fromDBIO(persist.AuthIdRepo.setUserData(clientData.authId, userId))
     } yield user
   }
 
-  protected def sendSmsCode(phoneNumber: Long, code: String, transactionHash: Option[String])(implicit system: ActorSystem): DBIO[String \/ Unit] = {
+  protected def sendSmsCode(phoneNumber: Long, code: String, transactionHash: Option[String])(implicit system: ActorSystem): DBIO[CodeFailure \/ Unit] = {
     log.info("Sending sms code {} to {}", code, phoneNumber)
     activationContext.send(transactionHash, SmsCode(phoneNumber, code))
   }
 
-  protected def sendCallCode(phoneNumber: Long, code: String, transactionHash: Option[String], language: String)(implicit system: ActorSystem): DBIO[String \/ Unit] = {
+  protected def sendCallCode(phoneNumber: Long, code: String, transactionHash: Option[String], language: String)(implicit system: ActorSystem): DBIO[CodeFailure \/ Unit] = {
     log.info("Sending call code {} to {}", code, phoneNumber)
     activationContext.send(transactionHash, CallCode(phoneNumber, code, language))
   }
 
-  protected def sendEmailCode(email: String, code: String, transactionHash: String)(implicit system: ActorSystem): DBIO[String \/ Unit] = {
+  protected def sendEmailCode(email: String, code: String, transactionHash: String)(implicit system: ActorSystem): DBIO[CodeFailure \/ Unit] = {
     log.info("Sending email code {} to {}", code, email)
     activationContext.send(Some(transactionHash), EmailCode(email, code))
   }

@@ -172,6 +172,7 @@ public class MainPhoneController extends MainBaseController {
         isFabVisible = false;
 
         fabContent = findViewById(R.id.fabContainer);
+        fabContent.setBackgroundColor(ActorSDK.sharedActor().style.getMainFabbg());
         fabRoot = (FloatingActionButton) findViewById(R.id.rootFab);
         if (ActorSDK.sharedActor().style.getFabColor() != 0) {
             fabRoot.setColorNormal(ActorSDK.sharedActor().style.getFabColor());
@@ -197,6 +198,7 @@ public class MainPhoneController extends MainBaseController {
         searchList.setLayoutManager(new ChatLinearLayoutManager(getActivity()));
 
         searchContainer = findViewById(R.id.searchCont);
+        searchContainer.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
         searchEmptyView = findViewById(R.id.empty);
         searchHintView = findViewById(R.id.searchHint);
         searchHintView.setVisibility(View.GONE);

@@ -18,6 +18,7 @@ import java.util.List;
 import im.actor.core.api.ApiAuthHolder;
 import im.actor.core.api.ApiAuthSession;
 import im.actor.core.viewmodel.CommandCallback;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.fragment.BaseFragment;
 
@@ -31,6 +32,7 @@ public class SecuritySettingsFragment extends BaseFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View res = inflater.inflate(R.layout.fr_settings_encryption, container, false);
+        ((TextView) res.findViewById(R.id.security_settings_title)).setTextColor(ActorSDK.sharedActor().style.getSettingsMainTitle());
         loading = (TextView) res.findViewById(R.id.loading);
         loading.setVisibility(View.GONE);
         loading.setOnClickListener(new View.OnClickListener() {
@@ -40,6 +42,7 @@ public class SecuritySettingsFragment extends BaseFragment {
             }
         });
         authItems = (LinearLayout) res.findViewById(R.id.authItems);
+        res.findViewById(R.id.divider).setBackgroundColor(ActorSDK.sharedActor().style.getDividerColor());
 
         res.findViewById(R.id.terminateSessions).setOnClickListener(new View.OnClickListener() {
             @Override

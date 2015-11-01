@@ -20,10 +20,10 @@
         android:paddingRight="8dp">
 
         <im.actor.sdk.view.TintImageView
+            android:id="@+id/add_icon"
             android:layout_width="72dp"
             android:layout_height="58dp"
-            app:src="@drawable/ic_person_add_white_24dp"
-            app:tintColor="@color/group_action_add_icon" />
+            app:src="@drawable/ic_person_add_white_24dp" />
 
         <TextView
             android:id="@+id/name"
@@ -35,11 +35,11 @@
             android:lines="1"
             android:singleLine="true"
             android:text="@string/group_add_member"
-            android:textColor="@color/group_action_add_text"
             android:textSize="16sp" />
     </LinearLayout>
 
     <FrameLayout
+        android:id="@+id/bottom_divider"
         android:layout_width="match_parent"
         android:layout_height="16dp"
         android:background="@color/bg_backyard">

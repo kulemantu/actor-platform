@@ -1,6 +1,7 @@
 package im.actor.sdk.controllers.fragment.dialogs;
 
 import android.app.Activity;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import im.actor.core.entity.Dialog;
 import im.actor.runtime.generic.mvvm.BindedDisplayList;
 import im.actor.core.viewmodel.CommandCallback;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.Intents;
 import im.actor.sdk.controllers.fragment.DisplayListFragment;
@@ -45,13 +47,14 @@ public abstract class BaseDialogFragment extends DisplayListFragment<Dialog, Dia
 
         View res = inflate(inflater, container, R.layout.fragment_dialogs,
                 messenger().getDialogsDisplayList());
-
+        res.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
         // setAnimationsEnabled(true);
 
         // Footer
 
         FrameLayout footer = new FrameLayout(getActivity());
         footer.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(160)));
+        footer.setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackground());
         ImageView shadow = new ImageView(getActivity());
         shadow.setImageResource(R.drawable.card_shadow_bottom);
         shadow.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -64,7 +67,7 @@ public abstract class BaseDialogFragment extends DisplayListFragment<Dialog, Dia
         hint.setPadding(Screen.dp(16), Screen.dp(8), Screen.dp(16), 0);
         hint.setGravity(Gravity.CENTER);
         hint.setTextSize(15);
-        hint.setTextColor(getResources().getColor(R.color.text_subheader));
+        hint.setTextColor(ActorSDK.sharedActor().style.getTextSubHeader());
         hint.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         footer.addView(hint);
 
@@ -74,7 +77,7 @@ public abstract class BaseDialogFragment extends DisplayListFragment<Dialog, Dia
 
         View header = new View(getActivity());
         header.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(0)));
-        header.setBackgroundColor(getActivity().getResources().getColor(R.color.bg_main));
+        header.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
         addHeaderView(header);
 
         // Empty View

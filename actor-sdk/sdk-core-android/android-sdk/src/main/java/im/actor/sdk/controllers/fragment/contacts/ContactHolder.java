@@ -11,6 +11,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import im.actor.runtime.android.view.BindedViewHolder;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.util.Screen;
 import im.actor.sdk.view.avatar.AvatarView;
@@ -57,7 +58,7 @@ public class ContactHolder extends BindedViewHolder {
         }
 
         View fastBg = new View(context);
-        fastBg.setBackgroundColor(context.getResources().getColor(R.color.bg_main));
+        fastBg.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
         {
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(Screen.dp(40), ViewGroup.LayoutParams.MATCH_PARENT);
             fl.addView(fastBg, layoutParams);
@@ -75,7 +76,7 @@ public class ContactHolder extends BindedViewHolder {
         }
 
         fastTitle = new TextView(context);
-        fastTitle.setTextColor(context.getResources().getColor(R.color.contacts_fast));
+        fastTitle.setTextColor(ActorSDK.sharedActor().style.getContactFastTitleColor());
         fastTitle.setTextSize(18);
         fastTitle.setGravity(Gravity.CENTER);
         fastTitle.setTypeface(Fonts.medium());
@@ -87,7 +88,7 @@ public class ContactHolder extends BindedViewHolder {
         }
 
         title = new TextView(context);
-        title.setTextColor(context.getResources().getColor(R.color.text_primary));
+        title.setTextColor(ActorSDK.sharedActor().style.getTextPrimary());
         title.setPadding(Screen.dp(72), 0, (isSelectable ? Screen.dp(64) : 0) + Screen.dp(8), 0);
         title.setTextSize(16);
         title.setSingleLine(true);
@@ -112,7 +113,7 @@ public class ContactHolder extends BindedViewHolder {
         }
 
         View div = new View(context);
-        div.setBackgroundColor(context.getResources().getColor(R.color.contacts_divider));
+        div.setBackgroundColor(ActorSDK.sharedActor().style.getContactDivider());
         {
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     context.getResources().getDimensionPixelSize(R.dimen.div_size));

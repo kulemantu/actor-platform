@@ -17,9 +17,8 @@ import im.actor.api.rpc.misc.{ ResponseBool, ResponseSeq }
 import im.actor.server._
 import im.actor.server.api.rpc.service.files.FilesServiceImpl
 import im.actor.server.api.rpc.service.profile.{ ProfileErrors, ProfileServiceImpl }
-import im.actor.server.oauth.{ GoogleProvider, OAuth2GoogleConfig }
 
-class ProfileServiceSpec
+final class ProfileServiceSpec
   extends BaseAppSuite
   with ImplicitFileStorageAdapter
   with ImplicitSessionRegionProxy
@@ -33,6 +32,14 @@ class ProfileServiceSpec
   "Nickname check and edit" should "work correct with different nicknames" in profile.e4
 
   "EditAbout" should "set valid about value to user" in profile.e5
+
+  "ChangeMyTimeZone" should "change time zone" in profile.timeZone
+  it should "respond with error on invalid time zone" in profile.invalidTimeZone
+  it should "respond with error on same time zone" in profile.sameTimeZone
+
+  "ChangeMyPreferredLanguages" should "change preferred languages" in profile.preferredLanguages
+  it should "respond with error on invalid locale" in profile.invalidPreferredLanguages
+  it should "respond with error on same preferred languages" in profile.samePreferredLanguages
 
   implicit lazy val service = new ProfileServiceImpl
   implicit lazy val filesService = new FilesServiceImpl
@@ -212,6 +219,88 @@ class ProfileServiceSpec
 
     }
 
-  }
+    def timeZone() = {
+      val (user, authId, _) = createUser()
 
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      whenReady(service.handleEditMyTimeZone("Africa/Addis_Ababa")) { resp ⇒
+        resp should matchPattern {
+          case Ok(_: ResponseSeq) ⇒
+        }
+      }
+    }
+
+    def invalidTimeZone() = {
+      val (user, authId, _) = createUser()
+
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      whenReady(service.handleEditMyTimeZone("Africa/Addis_AbEba")) { resp ⇒
+        inside(resp) {
+          case Error(RpcError(400, "INVALID_TIME_ZONE", _, false, _)) ⇒
+        }
+      }
+    }
+
+    def sameTimeZone() = {
+      val (user, authId, _) = createUser()
+
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      val tz = "Africa/Addis_Ababa"
+
+      whenReady(service.handleEditMyTimeZone(tz)) { resp ⇒
+        resp should matchPattern {
+          case Ok(_: ResponseSeq) ⇒
+        }
+      }
+      whenReady(service.handleEditMyTimeZone(tz)) { resp ⇒
+        inside(resp) {
+          case Error(RpcError(400, "UPDATE_ALREADY_APPLIED", _, false, _)) ⇒
+        }
+      }
+    }
+
+    def preferredLanguages() = {
+      val (user, authId, _) = createUser()
+
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      whenReady(service.handleEditMyPreferredLanguages(Vector("pt-BR", "en-US", "ru"))) { resp ⇒
+        resp should matchPattern {
+          case Ok(_: ResponseSeq) ⇒
+        }
+      }
+    }
+
+    def invalidPreferredLanguages() = {
+      val (user, authId, _) = createUser()
+
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      whenReady(service.handleEditMyPreferredLanguages(Vector("pt-br"))) { resp ⇒
+        inside(resp) {
+          case Error(RpcError(400, "INVALID_LOCALE", _, false, _)) ⇒
+        }
+      }
+
+      whenReady(service.handleEditMyPreferredLanguages(Vector.empty)) { resp ⇒
+        inside(resp) {
+          case Error(RpcError(400, "EMPTY_LOCALES_LIST", _, false, _)) ⇒
+        }
+      }
+    }
+
+    def samePreferredLanguages() = {
+      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      val langs = Vector("pt-BR", "en-US", "ru")
+
+      whenReady(service.handleEditMyPreferredLanguages(langs)) { resp ⇒
+        resp should matchPattern {
+          case Ok(_: ResponseSeq) ⇒
+        }
+      }
+      whenReady(service.handleEditMyPreferredLanguages(langs)) { resp ⇒
+        inside(resp) {
+          case Error(RpcError(400, "UPDATE_ALREADY_APPLIED", _, false, _)) ⇒
+        }
+      }
+    }
+  }
 }

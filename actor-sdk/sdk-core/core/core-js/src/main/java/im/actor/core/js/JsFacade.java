@@ -5,16 +5,24 @@
 package im.actor.core.js;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.user.client.Event;
 
 import im.actor.core.*;
 import im.actor.core.api.ApiAuthSession;
 import im.actor.core.entity.MentionFilterResult;
 import im.actor.core.entity.Peer;
+import im.actor.core.entity.PeerSearchEntity;
+import im.actor.core.entity.PeerSearchType;
+import im.actor.core.entity.PeerType;
 import im.actor.core.js.entity.*;
 import im.actor.core.js.modules.JsBindedValueCallback;
 import im.actor.core.js.providers.JsNotificationsProvider;
 import im.actor.core.js.providers.JsPhoneBookProvider;
+import im.actor.core.js.providers.electron.JsElectronApp;
+import im.actor.core.js.providers.electron.JsElectronListener;
 import im.actor.core.js.utils.HtmlMarkdownUtils;
 import im.actor.core.js.utils.IdentityUtils;
 import im.actor.core.network.RpcException;
@@ -34,6 +42,7 @@ import org.timepedia.exporter.client.Export;
 import org.timepedia.exporter.client.ExportPackage;
 import org.timepedia.exporter.client.Exportable;
 
+import java.util.Date;
 import java.util.List;
 
 @ExportPackage("actor")
@@ -86,6 +95,24 @@ public class JsFacade implements Exportable {
         configuration.setPhoneBookProvider(new JsPhoneBookProvider());
         configuration.setNotificationProvider(new JsNotificationsProvider());
 
+        // Setting locale
+        String locale = LocaleInfo.getCurrentLocale().getLocaleName();
+        if (locale.equals("default")) {
+            Log.d(TAG, "Default locale found");
+            configuration.addPreferredLanguage("en");
+        } else {
+            Log.d(TAG, "Locale found:" + locale);
+            configuration.addPreferredLanguage(locale.toLowerCase());
+        }
+
+        // Setting timezone
+        int offset = new Date().getTimezoneOffset();
+        String timeZone = TimeZone.createTimeZone(offset).getID();
+        Log.d(TAG, "TimeZone found:" + timeZone + " for delta " + offset);
+        configuration.setTimeZone(timeZone);
+
+        // LocaleInfo.getCurrentLocale().getLocaleName()
+
         // Is Web application
         configuration.setPlatformType(PlatformType.WEB);
 
@@ -99,6 +126,19 @@ public class JsFacade implements Exportable {
         }
 
         messenger = new JsMessenger(configuration.build());
+
+        if (isElectron()) {
+            JsElectronApp.subscribe("window", new JsElectronListener() {
+                @Override
+                public void onEvent(String content) {
+                    if ("focus".equals(content)) {
+                        messenger.onAppVisible();
+                    } else if ("blur".equals(content)) {
+                        messenger.onAppHidden();
+                    }
+                }
+            });
+        }
 
         Log.d(TAG, "JsMessenger created");
     }
@@ -376,6 +416,10 @@ public class JsFacade implements Exportable {
         }
     }
 
+    public void deleteMessage(JsPeer peer, String id) {
+        messenger.deleteMessages(peer.convert(), new long[]{Long.parseLong(id)});
+    }
+
     public JsPromise deleteChat(final JsPeer peer) {
         return JsPromise.create(new JsPromiseExecutor() {
             @Override
@@ -558,10 +602,18 @@ public class JsFacade implements Exportable {
     // Events
 
     public void onAppVisible() {
+        // Ignore for electron runtime
+        if (isElectron()) {
+            return;
+        }
         messenger.onAppVisible();
     }
 
     public void onAppHidden() {
+        // Ignore for electron runtime
+        if (isElectron()) {
+            return;
+        }
         messenger.onAppHidden();
     }
 
@@ -658,6 +710,39 @@ public class JsFacade implements Exportable {
                     @Override
                     public void onError(Exception e) {
                         Log.d(TAG, "editMyAbout:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    public JsPromise findGroups() {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.findPeers(PeerSearchType.GROUPS).start(new CommandCallback<List<PeerSearchEntity>>() {
+                    @Override
+                    public void onResult(List<PeerSearchEntity> res) {
+                        Log.d(TAG, "findGroups:result");
+                        JsArray<JsPeerSearchResult> jsRes = JsArray.createArray().cast();
+                        for (PeerSearchEntity s : res) {
+                            if (s.getPeer().getPeerType() == PeerType.GROUP) {
+                                jsRes.push(JsPeerSearchResult.create(messenger.buildPeerInfo(s.getPeer()),
+                                        s.getDescription(), s.getMembersCount(), (int) (s.getDate() / 1000L),
+                                        messenger.buildPeerInfo(Peer.user(s.getCreatorUid())), s.isPublic(),
+                                        s.isJoined()));
+                            } else if (s.getPeer().getPeerType() == PeerType.PRIVATE) {
+                                jsRes.push(JsPeerSearchResult.create(messenger.buildPeerInfo(s.getPeer())));
+                            }
+                            // jsRes.push();
+                        }
+                        resolve(jsRes);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "findGroups:error");
                         reject(e.getMessage());
                     }
                 });
@@ -1076,19 +1161,12 @@ public class JsFacade implements Exportable {
         }
     }
 
-    public native void handleLinkClick(Event event)/*-{
-        console.warn('event type is', event.type);
-        if (event.type == 'click') {
-            if (window.$wnd.messenger.isElectron()) {
-                console.warn('opening external');
-                var url = event.target.getAttribute('href');
-                window.$wnd.require('shell').openExternal(url);
-                event.preventDefault()
-            } else {
-                console.warn('type of window.require is', typeof window.$wnd.require);
-            }
-        } else {
-            throw new Error("Event has type " + event.type + ", must to be click");
+    public void handleLinkClick(Event event) {
+        if (JsElectronApp.isElectron()) {
+            Element target = Element.as(event.getEventTarget());
+            String href = target.getAttribute("href");
+            JsElectronApp.openUrlExternal(href);
+            event.preventDefault();
         }
-    }-*/;
+    }
 }

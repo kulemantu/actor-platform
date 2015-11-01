@@ -47,13 +47,12 @@
             android:gravity="center_vertical"
             android:paddingRight="8dp"
             android:text="@string/group_admin"
-            android:textColor="@color/group_admin"
             android:textSize="16sp" />
     </LinearLayout>
 
     <View
+        android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="@dimen/div_size"
-        android:layout_marginLeft="72dp"
-        android:background="@color/divider" />
+        android:layout_marginLeft="72dp" />
 </LinearLayout>

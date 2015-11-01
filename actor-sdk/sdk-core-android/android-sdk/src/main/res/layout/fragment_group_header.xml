@@ -19,7 +19,6 @@
             android:id="@+id/avatar_bgrnd"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@drawable/img_profile_avatar_default"
             android:scaleType="centerCrop" />
 
         <im.actor.sdk.view.avatar.CoverAvatarView
@@ -45,7 +44,6 @@
                 android:includeFontPadding="false"
                 android:lines="1"
                 android:singleLine="true"
-                android:textColor="@color/profile_title"
                 android:textSize="26sp" />
 
             <TextView
@@ -53,7 +51,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-2dp"
-                android:textColor="@color/profile_subtitle"
                 android:textSize="14sp"
                 android:visibility="gone" />
 
@@ -62,7 +59,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="-2dp"
-                android:textColor="@color/profile_subtitle"
                 android:textSize="14sp" />
         </LinearLayout>
 
@@ -75,22 +71,22 @@
 
     <LinearLayout
         android:id="@+id/descriptionContainer"
-        android:visibility="gone"
-        android:orientation="vertical"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:layout_height="wrap_content">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <LinearLayout
             android:id="@+id/themeContainer"
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:background="@drawable/clickable_background"
-            android:paddingRight="8dp"
-            android:paddingLeft="72dp"
             android:layout_gravity="center_vertical"
+            android:background="@drawable/clickable_background"
             android:gravity="center_vertical"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingLeft="72dp"
+            android:paddingRight="8dp">
 
             <TextView
                 android:id="@+id/theme"
@@ -100,9 +96,9 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:text="@string/theme_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/theme_group"
                 android:textColor="@color/text_secondary"
                 android:textSize="16sp" />
 
@@ -110,23 +106,22 @@
         </LinearLayout>
 
         <View
-            android:layout_marginLeft="72dp"
             android:id="@+id/themeDivider"
             android:layout_width="match_parent"
             android:layout_height="@dimen/div_size"
             android:layout_gravity="bottom"
-            android:background="@color/divider" />
+            android:layout_marginLeft="72dp" />
 
         <LinearLayout
             android:id="@+id/aboutContainer"
             android:layout_width="match_parent"
             android:layout_height="72dp"
-            android:background="@drawable/clickable_background"
-            android:paddingRight="8dp"
-            android:paddingLeft="72dp"
             android:layout_gravity="center_vertical"
+            android:background="@drawable/clickable_background"
             android:gravity="center_vertical"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingLeft="72dp"
+            android:paddingRight="8dp">
 
             <TextView
                 android:id="@+id/about"
@@ -136,15 +131,16 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:text="@string/about_group"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="@string/about_group"
                 android:textColor="@color/text_secondary"
                 android:textSize="16sp" />
 
         </LinearLayout>
 
         <FrameLayout
+            android:id="@+id/after_about_divider"
             android:layout_width="match_parent"
             android:layout_height="16dp"
             android:background="@color/bg_backyard">
@@ -164,12 +160,12 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/settings_header_text"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:gravity="center_vertical|left"
         android:paddingLeft="72dp"
         android:text="@string/profile_settings_header"
-        android:textColor="@color/settings_main_title"
         android:textSize="16sp" />
 
     <LinearLayout
@@ -180,10 +176,10 @@
         android:paddingRight="8dp">
 
         <im.actor.sdk.view.TintImageView
+            android:id="@+id/settings_notification_icon"
             android:layout_width="72dp"
             android:layout_height="match_parent"
-            app:src="@drawable/ic_notifications_white_18dp"
-            app:tintColor="@color/settings_icon" />
+            app:src="@drawable/ic_notifications_white_18dp" />
 
         <TextView
             android:layout_width="0dp"
@@ -201,6 +197,7 @@
     </LinearLayout>
 
     <FrameLayout
+        android:id="@+id/after_settings_divider"
         android:layout_width="match_parent"
         android:layout_height="16dp"
         android:background="@color/bg_backyard">
@@ -220,39 +217,39 @@
 
     <LinearLayout
         android:id="@+id/sharedContainer"
-        android:visibility="visible"
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="visible">
         <TextView
+            android:id="@+id/shared_header_text"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:gravity="center_vertical|left"
             android:paddingLeft="72dp"
             android:text="@string/profile_shared_header"
-            android:textColor="@color/settings_main_title"
             android:textSize="16sp" />
         <LinearLayout
-            android:visibility="gone"
             android:id="@+id/mediaContainer"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:background="@drawable/clickable_background"
-            android:paddingRight="8dp">
+            android:paddingRight="8dp"
+            android:visibility="gone">
 
             <im.actor.sdk.view.TintImageView
+                android:id="@+id/share_media_icon"
                 android:layout_width="72dp"
                 android:layout_height="match_parent"
-                app:src="@drawable/conv_attach_gallery"
-                app:tintColor="@color/settings_icon" />
+                app:src="@drawable/conv_attach_gallery" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center_vertical"
-                android:textColor="@color/text_primary"
                 android:text="@string/profile_shared_media"
+                android:textColor="@color/text_primary"
                 android:textSize="16sp" />
 
 
@@ -273,10 +270,10 @@
             android:paddingRight="8dp">
 
             <im.actor.sdk.view.TintImageView
+                android:id="@+id/share_docs_icon"
                 android:layout_width="72dp"
                 android:layout_height="match_parent"
-                app:src="@drawable/conv_attach_file"
-                app:tintColor="@color/settings_icon" />
+                app:src="@drawable/conv_attach_file" />
 
             <TextView
                 android:layout_width="0dp"
@@ -298,6 +295,7 @@
 
         </LinearLayout>
         <FrameLayout
+            android:id="@+id/bottom_divider"
             android:layout_width="match_parent"
             android:layout_height="16dp"
             android:background="@color/bg_backyard">
@@ -328,7 +326,6 @@
             android:gravity="center_vertical|left"
             android:paddingLeft="72dp"
             android:text="@string/group_members_header"
-            android:textColor="@color/settings_main_title"
             android:textSize="16sp" />
 
         <TextView
