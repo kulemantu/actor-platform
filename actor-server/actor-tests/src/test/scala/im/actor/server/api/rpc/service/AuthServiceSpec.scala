@@ -35,7 +35,7 @@ final class AuthServiceSpec
   extends BaseAppSuite
   with ImplicitSequenceService
   with ImplicitSessionRegionProxy
-  with SequenceMatchers {
+  with SeqUpdateMatchers {
   behavior of "AuthService"
 
   //phone part
@@ -465,7 +465,7 @@ final class AuthServiceSpec
 
       {
         implicit val clientData = regClientData
-        expectUpdate[UpdateContactRegistered](0, Array.empty, UpdateContactRegistered.header)(identity)
+        expectUpdate(classOf[UpdateContactRegistered])(identity)
       }
 
       whenReady(db.run(persist.contact.UnregisteredPhoneContactRepo.find(phoneNumber))) {
@@ -513,16 +513,10 @@ final class AuthServiceSpec
 
       {
         implicit val clientData = regClientData
-        expectUpdate[UpdateContactRegistered](0, Array.empty, UpdateContactRegistered.header)(identity)
+        expectUpdate(classOf[UpdateContactRegistered])(identity)
 
         whenReady(db.run(persist.contact.UnregisteredPhoneContactRepo.find(phoneNumber))) {
           _ shouldBe empty
-        }
-
-        val kv = ShardakkaExtension(system).simpleKeyValue(KeyValueMappings.LocalNames)
-        whenReady(kv.get(ContactsUtils.localNameKey(regUser.id, createdUser.id))) { optLocalName ⇒
-          optLocalName shouldBe defined
-          optLocalName shouldEqual localName
         }
 
         whenReady(contactService.handleGetContacts("wrongHash")) { resp ⇒
@@ -609,7 +603,7 @@ final class AuthServiceSpec
     def e13() = {}
 
     def malformedEmail() = {
-      val malformedEmail = "foo@bar"
+      val malformedEmail = "http://sh____"
       implicit val clientData = ClientData(createAuthId(), createSessionId(), None)
 
       whenReady(startEmailAuth(malformedEmail)) { resp ⇒
@@ -923,7 +917,7 @@ final class AuthServiceSpec
 
       {
         implicit val clientData = regClientData
-        expectUpdate[UpdateContactRegistered](0, Array.empty, UpdateContactRegistered.header)(identity)
+        expectUpdate(classOf[UpdateContactRegistered])(identity)
       }
 
       whenReady(db.run(persist.contact.UnregisteredEmailContactRepo.find(email))) {

@@ -7,10 +7,9 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.style.ReplacementSpan;
 
-import im.actor.sdk.R;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.util.Screen;
 import im.actor.core.viewmodel.UserVM;
-import im.actor.runtime.android.AndroidContext;
 
 /**
 * Created by ex3ndr on 26.03.15.
@@ -28,7 +27,7 @@ public class UserSpan extends ReplacementSpan {
         if (textPaint == null) {
             textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.SUBPIXEL_TEXT_FLAG);
             textPaint.setTextSize(Screen.sp(16));
-            textPaint.setColor(AndroidContext.getContext().getResources().getColor(R.color.text_primary));
+            textPaint.setColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
         }
 
         int padding = Screen.dp(18);

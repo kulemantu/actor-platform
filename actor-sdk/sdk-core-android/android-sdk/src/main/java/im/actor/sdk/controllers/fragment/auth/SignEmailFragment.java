@@ -1,6 +1,7 @@
 package im.actor.sdk.controllers.fragment.auth;
 
 import android.app.AlertDialog;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.text.Editable;
@@ -13,9 +14,11 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.util.Fonts;
 import im.actor.sdk.util.KeyboardHelper;
+import im.actor.sdk.view.SelectorFactory;
 
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
 
@@ -28,7 +31,11 @@ public class SignEmailFragment extends BaseAuthFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_sign_email, container, false);
 
-        ((TextView) v.findViewById(R.id.button_continue_text)).setTypeface(Fonts.medium());
+        TextView buttonCotinueText = (TextView) v.findViewById(R.id.button_continue_text);
+        StateListDrawable states = SelectorFactory.get(ActorSDK.sharedActor().style.getMainColor(), getActivity());
+        buttonCotinueText.setBackgroundDrawable(states);
+        buttonCotinueText.setTypeface(Fonts.medium());
+        buttonCotinueText.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryInvColor());
 
         keyboardHelper = new KeyboardHelper(getActivity());
 
@@ -52,8 +59,9 @@ public class SignEmailFragment extends BaseAuthFragment {
     }
 
     private void initView(View v) {
-
+        ((TextView) v.findViewById(R.id.email_login_hint)).setTextColor(ActorSDK.sharedActor().style.getTextSecondaryColor());
         emailEditText = (EditText) v.findViewById(R.id.tv_email);
+        emailEditText.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
         emailEditText.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
         String email = messenger().getAuthEmail();
         if(email!=null && !email.isEmpty()){

@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.activity.BaseActivity;
 import im.actor.sdk.util.KeyboardHelper;
@@ -59,6 +60,8 @@ public abstract class ActorEditTextActivity extends BaseActivity {
 
         // Message Body
         messageEditText = (EditText) findViewById(R.id.et_message);
+        messageEditText.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
+        messageEditText.setHintTextColor(ActorSDK.sharedActor().style.getTextHintColor());
         // messageEditText.addTextChangedListener(new TextWatcherImp());
 
         // Handling selection changed
@@ -135,6 +138,7 @@ public abstract class ActorEditTextActivity extends BaseActivity {
 
         // Kick panel
         removedFromGroup = findViewById(R.id.kickedFromChat);
+        ((TextView) removedFromGroup.findViewById(R.id.kicked_text)).setTextColor(ActorSDK.sharedActor().style.getMainColor());
 
         // Emoji keyboard
         final ImageView emojiButton = (ImageView) findViewById(R.id.ib_emoji);

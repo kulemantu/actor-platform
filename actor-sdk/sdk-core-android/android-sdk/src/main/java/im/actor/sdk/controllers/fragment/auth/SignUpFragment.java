@@ -2,6 +2,7 @@ package im.actor.sdk.controllers.fragment.auth;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.drawable.StateListDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -12,9 +13,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import im.actor.core.entity.Sex;
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.Intents;
 import im.actor.sdk.util.Screen;
+import im.actor.sdk.view.SelectorFactory;
 import im.actor.sdk.view.avatar.AvatarView;
 import im.actor.sdk.util.Fonts;
 import im.actor.sdk.util.KeyboardHelper;
@@ -44,9 +47,15 @@ public class SignUpFragment extends BaseAuthFragment {
         avatarView.init(Screen.dp(96), 24);
         avatarView.getHierarchy().setPlaceholderImage(R.drawable.circle_placeholder);
 
-        ((TextView) v.findViewById(R.id.button_confirm_sms_code_text)).setTypeface(Fonts.medium());
+        TextView buttonConfirm = (TextView) v.findViewById(R.id.button_confirm_sms_code_text);
+        buttonConfirm.setTypeface(Fonts.medium());
+        StateListDrawable states = SelectorFactory.get(ActorSDK.sharedActor().style.getMainColor(), getActivity());
+        buttonConfirm.setBackgroundDrawable(states);
+        buttonConfirm.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryInvColor());
 
         firstNameEditText = (EditText) v.findViewById(R.id.et_first_name_enter);
+        firstNameEditText.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
+        firstNameEditText.setHintTextColor(ActorSDK.sharedActor().style.getTextHintColor());
         final View sendConfirmCodeButton = v.findViewById(R.id.button_confirm_sms_code);
         firstNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -63,6 +72,8 @@ public class SignUpFragment extends BaseAuthFragment {
             public void afterTextChanged(Editable s) {
             }
         });
+
+        ((TextView) v.findViewById(R.id.sign_up_hint)).setTextColor(ActorSDK.sharedActor().style.getTextSecondaryColor());
 
         v.findViewById(R.id.pickAvatar).setOnClickListener(new View.OnClickListener() {
             @Override

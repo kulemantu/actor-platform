@@ -32,8 +32,14 @@ message User {
     repeated bytes internal_extensions = 15 [(scalapb.field).type = "im.actor.api.rpc.misc.ApiExtension"];
     optional string external = 16;
     optional bool is_admin = 17;
+    repeated SocialContact social_contacts = 18;
     repeated string preferred_languages = 19;
     optional string time_zone = 20;
+}
+
+message SocialContact {
+    required string value = 1;
+    required string title = 2;
 }
 
 message UserCommands {
@@ -99,6 +105,15 @@ message UserCommands {
 
     message AddEmailAck {}
 
+    message AddSocialContact {
+        option (scalapb.message).extends = "im.actor.server.user.UserCommand";
+
+        required int32 user_id = 1;
+        required SocialContact contact = 2;
+    }
+
+    message AddSocialContactAck {}
+
     message Delete {
         option (scalapb.message).extends = "im.actor.server.user.UserCommand";
 
@@ -144,8 +159,10 @@ message UserCommands {
         option (scalapb.message).extends = "im.actor.server.user.UserCommand";
 
         required int32 user_id = 1;
-        required int64 access_hash = 2;
-        required string name = 3;
+        required int64 client_auth_id = 2;
+        required int32 contact_user_id = 3;
+        optional string name = 4;
+        required bool supress_update = 5;
     }
 
     message BroadcastUpdate {
@@ -217,6 +234,7 @@ message UserCommands {
         required int32 user_id = 1;
         required int64 client_auth_id = 2;
     }
+
 }
 
 message UserQueries {
@@ -292,6 +310,16 @@ message UserQueries {
         required bool isAdmin = 1;
     }
 
+    message GetLocalName {
+        option (scalapb.message).extends = "im.actor.server.user.UserQuery";
+
+        required int32 user_id = 1;
+        required int32 client_user_id = 2;
+    }
+
+    message GetLocalNameResponse {
+        optional string local_name = 1;
+    }
 }
 
 message UserEvents {
@@ -339,6 +367,12 @@ message UserEvents {
         required string email = 1;
     }
 
+    message SocialContactAdded {
+        option (scalapb.message).extends = "im.actor.server.user.UserEvent";
+
+        required SocialContact contact = 1;
+    }
+
     message CountryCodeChanged {
         option (scalapb.message).extends = "im.actor.server.user.UserEvent";
 
@@ -383,5 +417,12 @@ message UserEvents {
         option (scalapb.message).extends = "im.actor.server.user.UserEvent";
 
         optional string time_zone = 1;
+    }
+
+    message LocalNameChanged {
+        option (scalapb.message).extends = "im.actor.server.user.UserEvent";
+
+        required int32 contact_user_id = 1;
+        optional string local_name = 2;
     }
 }

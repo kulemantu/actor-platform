@@ -63,8 +63,8 @@ public class MainPhoneController extends MainBaseController {
 
     private RecyclerView searchList;
     private View searchContainer;
-    private View searchEmptyView;
-    private View searchHintView;
+    private TextView searchEmptyView;
+    private TextView searchHintView;
 
     private boolean isSearchVisible = false;
     private SearchAdapter searchAdapter;
@@ -160,25 +160,39 @@ public class MainPhoneController extends MainBaseController {
         }
 
         setContentView(R.layout.actor_activity_main);
-
+        ActorStyle style = ActorSDK.sharedActor().style;
         getActivity().setSupportActionBar(((Toolbar) findViewById(R.id.toolbar)));
 
         syncInProgressView = findViewById(R.id.syncInProgress);
+        ((TextView) syncInProgressView.findViewById(R.id.wait_text)).setTextColor(style.getTextSecondaryColor());
+        ((TextView) syncInProgressView.findViewById(R.id.sync_text)).setTextColor(style.getMainColor());
+        syncInProgressView.findViewById(R.id.sync_background).setBackgroundColor(style.getMainColor());
         emptyContactsView = findViewById(R.id.emptyContacts);
+        ((TextView) emptyContactsView.findViewById(R.id.no_contacts)).setTextColor(style.getTextSecondaryColor());
+        ((TextView) emptyContactsView.findViewById(R.id.add_contact_manually_text)).setTextColor(style.getTextSecondaryColor());
+        ((TextView) emptyContactsView.findViewById(R.id.empty_contacts_text)).setTextColor(style.getMainColor());
+        emptyContactsView.findViewById(R.id.empty_contacts_bg).setBackgroundColor(style.getMainColor());
 
-        ((TextView) findViewById(R.id.addContactButtonText)).setTypeface(Fonts.medium());
-        ((TextView) findViewById(R.id.inviteButtonText)).setTypeface(Fonts.medium());
+        TextView addContactBtnText = (TextView) findViewById(R.id.addContactButtonText);
+        addContactBtnText.setTextColor(style.getTextSecondaryColor());
+        addContactBtnText.setTypeface(Fonts.medium());
+        TextView inviteBtnText = (TextView) findViewById(R.id.inviteButtonText);
+        inviteBtnText.setTypeface(Fonts.medium());
+        inviteBtnText.setTextColor(style.getTextPrimaryInvColor());
 
         isFabVisible = false;
 
         fabContent = findViewById(R.id.fabContainer);
-        fabContent.setBackgroundColor(ActorSDK.sharedActor().style.getMainFabbg());
+        ((TextView) fabContent.findViewById(R.id.fab_add_contact_text)).setTextColor(style.getTextPrimaryColor());
+        ((TextView) fabContent.findViewById(R.id.fab_create_group_text)).setTextColor(style.getTextPrimaryColor());
+        ((TextView) fabContent.findViewById(R.id.fab_compose_text)).setTextColor(style.getTextPrimaryColor());
+        fabContent.setBackgroundColor(ActorSDK.sharedActor().style.getMainFabbgColor());
         fabRoot = (FloatingActionButton) findViewById(R.id.rootFab);
         if (ActorSDK.sharedActor().style.getFabColor() != 0) {
             fabRoot.setColorNormal(ActorSDK.sharedActor().style.getFabColor());
         }
-        if (ActorSDK.sharedActor().style.getFabColorPressed() != 0) {
-            fabRoot.setColorPressed(ActorSDK.sharedActor().style.getFabColorPressed());
+        if (ActorSDK.sharedActor().style.getFabPressedColor() != 0) {
+            fabRoot.setColorPressed(ActorSDK.sharedActor().style.getFabPressedColor());
         }
         fabRoot.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -198,9 +212,11 @@ public class MainPhoneController extends MainBaseController {
         searchList.setLayoutManager(new ChatLinearLayoutManager(getActivity()));
 
         searchContainer = findViewById(R.id.searchCont);
-        searchContainer.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
-        searchEmptyView = findViewById(R.id.empty);
-        searchHintView = findViewById(R.id.searchHint);
+        searchContainer.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
+        searchEmptyView = (TextView) findViewById(R.id.empty);
+        searchHintView = (TextView) findViewById(R.id.searchHint);
+        searchEmptyView.setTextColor(style.getTextSecondaryColor());
+        searchHintView.setTextColor(style.getTextSecondaryColor());
         searchHintView.setVisibility(View.GONE);
         searchEmptyView.setVisibility(View.GONE);
 
@@ -240,14 +256,12 @@ public class MainPhoneController extends MainBaseController {
             }
         });
 
-        ActorStyle style = ActorSDK.sharedActor().style;
-
         com.getbase.floatingactionbutton.FloatingActionButton fabCompose = (FloatingActionButton) findViewById(R.id.composeContainer);
         if (style.getFabColor() != 0) {
             fabCompose.setColorNormal(style.getFabColor());
         }
-        if (style.getFabColorPressed() != 0) {
-            fabCompose.setColorPressed(style.getFabColorPressed());
+        if (style.getFabPressedColor() != 0) {
+            fabCompose.setColorPressed(style.getFabPressedColor());
         }
         fabCompose.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -261,8 +275,8 @@ public class MainPhoneController extends MainBaseController {
         if (style.getFabColor() != 0) {
             fabCreateGroup.setColorNormal(style.getFabColor());
         }
-        if (style.getFabColorPressed() != 0) {
-            fabCreateGroup.setColorPressed(style.getFabColorPressed());
+        if (style.getFabPressedColor() != 0) {
+            fabCreateGroup.setColorPressed(style.getFabPressedColor());
         }
         fabCreateGroup.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -276,8 +290,8 @@ public class MainPhoneController extends MainBaseController {
         if (style.getFabColor() != 0) {
             fabAddContact.setColorNormal(style.getFabColor());
         }
-        if (style.getFabColorPressed() != 0) {
-            fabAddContact.setColorPressed(style.getFabColorPressed());
+        if (style.getFabPressedColor() != 0) {
+            fabAddContact.setColorPressed(style.getFabPressedColor());
         }
         fabAddContact.setOnClickListener(new View.OnClickListener() {
             @Override

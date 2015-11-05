@@ -22,6 +22,7 @@ export default {
       // Sidebar menu
       'editProfile': 'Editar perfil',
       'addToContacts': 'Adicionar contato',
+      'createGroup': 'Criar Grupo',
       'configureIntegrations': 'Configure Integrações',
       'helpAndFeedback': 'Ajuda & Feedback',
       'twitter': 'Nosso twitter',
@@ -102,7 +103,7 @@ export default {
     'sharedMedia': 'Media Compartilhada',
     'notifications': 'Notificações',
     'integrationTokenCopied': 'Link de integração.',
-    'membros': '{numMembers, plural,' +
+    'members': '{numMembers, plural,' +
     '=0 {sem Membros}' +
     '=1 {# Membro}' +
     'other {# Membros}' +

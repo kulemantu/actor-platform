@@ -55,18 +55,18 @@
         android:paddingTop="20dp">
 
         <TextView
+            android:id="@+id/app_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/tour_welcome_title"
-            android:textColor="@color/text_primary_inv"
             android:textSize="21sp" />
 
         <TextView
+            android:id="@+id/tour_welcome_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/tour_welcome_subtitle"
-            android:textColor="@color/text_primary_inv"
             android:textSize="16sp" />
     </LinearLayout>
 
@@ -93,10 +93,10 @@
         android:orientation="vertical">
 
         <View
+            android:id="@+id/background_colored"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@color/primary" />
+            android:layout_weight="1" />
 
         <View
             android:layout_width="match_parent"
@@ -128,13 +128,11 @@
                 android:id="@+id/signUpButtonText"
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
-                android:background="@drawable/btn_green"
                 android:gravity="center"
                 android:minWidth="88dp"
                 android:paddingLeft="24dp"
                 android:paddingRight="24dp"
                 android:text="@string/tour_sign_up"
-                android:textColor="@color/text_primary_inv"
                 android:textSize="15sp" />
         </FrameLayout>
 
@@ -146,7 +144,6 @@
             android:minWidth="88dp"
             android:text="@string/tour_sign_in"
             android:textAllCaps="true"
-            android:textColor="@color/text_primary_inv"
             android:textSize="14sp" />
 
 

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import im.actor.core.viewmodel.CommandCallback;
@@ -44,8 +45,9 @@ public class EditAboutFragment extends BaseFragment {
 
         helper = new KeyboardHelper(getActivity());
         View res = inflater.inflate(R.layout.fragment_edit_about, container, false);
-        res.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackground());
+        res.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
         aboutEdit = (EditText) res.findViewById(R.id.nameEdit);
+        aboutEdit.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
         if (type == EditAboutActivity.TYPE_ME) {
             UserVM userModel = users().get(myUid());
             aboutEdit.setText(userModel.getAbout().get());
@@ -63,6 +65,7 @@ public class EditAboutFragment extends BaseFragment {
                 getActivity().finish();
             }
         });
+        ((TextView) res.findViewById(R.id.cancel)).setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
         res.findViewById(R.id.ok).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,6 +103,7 @@ public class EditAboutFragment extends BaseFragment {
                 }
             }
         });
+        ((TextView) res.findViewById(R.id.ok)).setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
         return res;
     }
 

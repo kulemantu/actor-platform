@@ -137,6 +137,7 @@ private[user] trait UserCommandHandlers {
         relatedUserIds ← getRelations(userId)
         _ ← userExt.broadcastUsersUpdate(relatedUserIds, update, pushText = None, isFat = false, deliveryId = None)
         _ ← SeqUpdatesManager.persistAndPushUpdates(user.authIds.filterNot(_ == clientAuthId).toSet, update, pushText = None, isFat = false, deliveryId = None)
+        _ ← db.run(UserRepo.setName(userId, name))
         seqstate ← SeqUpdatesManager.persistAndPushUpdate(clientAuthId, update, pushText = None, isFat = false)
       } yield seqstate
     }
@@ -151,7 +152,7 @@ private[user] trait UserCommandHandlers {
       val rng = ThreadLocalRandom.current()
       db.run(for {
         _ ← p.UserPhoneRepo.create(rng.nextInt(), userId, ACLUtils.nextAccessSalt(rng), phone, "Mobile phone")
-        _ ← markContactRegistered(user, phone, false)
+        _ ← DBIO.from(markContactRegistered(user, phone, false))
       } yield {
         AddPhoneAck()
       }) andThen {
@@ -164,12 +165,17 @@ private[user] trait UserCommandHandlers {
       val rng = ThreadLocalRandom.current()
       db.run(for {
         _ ← p.UserEmailRepo.create(rng.nextInt(), userId, ACLUtils.nextAccessSalt(rng), email, "Email")
-        _ ← markContactRegistered(user, email, false)
+        _ ← DBIO.from(markContactRegistered(user, email, false))
       } yield {
         AddEmailAck()
       }) andThen {
         case Failure(e) ⇒ log.error(e, "Failed to add email")
       }
+    }
+
+  protected def addSocialContact(user: User, contact: SocialContact): Unit =
+    persistReply(TSEvent(now(), UserEvents.SocialContactAdded(contact)), user) { _ ⇒
+      Future.successful(AddSocialContactAck())
     }
 
   protected def changeNickname(user: User, clientAuthId: Long, nicknameOpt: Option[String]): Unit = {
@@ -302,9 +308,10 @@ private[user] trait UserCommandHandlers {
       _ ← FutureExt.ftraverse(phones)(c ⇒ db.run(UserPhoneContactRepo.insertOrUpdate(c)))
       _ ← FutureExt.ftraverse(emails)(c ⇒ db.run(UserEmailContactRepo.insertOrUpdate(c)))
       _ ← FutureExt.ftraverse(idsLocalNames.toSeq) {
-        case (contactUserId, localName) ⇒ ContactsUtils.registerLocalName(user.id, contactUserId, localName)
+        case (contactUserId, localName) ⇒
+          contacts.editLocalName(clientAuthId, contactUserId, localName, supressUpdate = true)
       }
-      update = UpdateContactsAdded(idsLocalNames.map(_._1).toVector)
+      update = UpdateContactsAdded(idsLocalNames.keys.toVector)
       seqstate ← userExt.broadcastClientUpdate(user.id, clientAuthId, update, pushText = None, isFat = true, deliveryId = None)
     } yield seqstate) pipeTo sender()
   }
@@ -323,67 +330,63 @@ private[user] trait UserCommandHandlers {
     }
   }
 
-  private def markContactRegistered(user: User, phoneNumber: Long, isSilent: Boolean): DBIO[Unit] = {
-    val date = new DateTime
-
-    p.contact.UnregisteredPhoneContactRepo.find(phoneNumber) flatMap { contacts ⇒
-      log.debug(s"Unregistered $phoneNumber is in contacts of users: $contacts")
-      val randomId = ThreadLocalRandom.current().nextLong()
-      val updateContactRegistered = UpdateContactRegistered(user.id, isSilent, date.getMillis, randomId)
-      val updateContactsAdded = UpdateContactsAdded(Vector(user.id))
-      // FIXME: #perf broadcast updates using broadcastUpdateAll to serialize update once
-      val actions = contacts map { contact ⇒
-        val localName = contact.name
-        val serviceMessage = ServiceMessages.contactRegistered(user.id, localName.getOrElse(user.name))
-        for {
-          _ ← DBIO.from(ContactsUtils.registerLocalName(contact.ownerUserId, user.id, localName))
-          _ ← ContactsUtils.addContact(contact.ownerUserId, user.id, phoneNumber, localName)
-          _ ← DBIO.from(userExt.broadcastUserUpdate(contact.ownerUserId, updateContactRegistered, Some(s"${localName.getOrElse(user.name)} registered"), isFat = true, deliveryId = None))
-          _ ← DBIO.from(userExt.broadcastUserUpdate(contact.ownerUserId, updateContactsAdded, None, isFat = false, deliveryId = None))
-          _ ← DBIO.from(dialogExt.writeMessage(
-            ApiPeer(ApiPeerType.Private, contact.ownerUserId),
-            user.id,
-            date,
-            randomId,
-            serviceMessage
-          ))
-        } yield {
-          recordRelation(user.id, contact.ownerUserId)
-        }
-      }
-      for {
-        _ ← DBIO.sequence(actions)
-        _ ← p.contact.UnregisteredPhoneContactRepo.deleteAll(phoneNumber)
-      } yield ()
-    }
-  }
-
-  private def markContactRegistered(user: User, email: String, isSilent: Boolean): DBIO[Unit] = {
+  // TODO: DRY it, finally!
+  private def markContactRegistered(user: User, phoneNumber: Long, isSilent: Boolean): Future[Unit] = {
     val date = new DateTime
     for {
-      _ ← DBIO.from(userExt.hooks.beforeEmailContactRegistered.runAll(user.id, email))
-      contacts ← p.contact.UnregisteredEmailContactRepo.find(email)
-      _ = log.debug(s"Unregistered $email is in contacts of users: $contacts")
-      _ ← DBIO.sequence(contacts.map { contact ⇒
+      contacts ← db.run(p.contact.UnregisteredPhoneContactRepo.find(phoneNumber))
+      _ = log.debug(s"Unregistered $phoneNumber is in contacts of users: $contacts")
+      _ ← Future.sequence(contacts map { contact ⇒
         val randomId = ThreadLocalRandom.current().nextLong()
         val updateContactRegistered = UpdateContactRegistered(user.id, isSilent, date.getMillis, randomId)
         val updateContactsAdded = UpdateContactsAdded(Vector(user.id))
         val localName = contact.name
         val serviceMessage = ServiceMessages.contactRegistered(user.id, localName.getOrElse(user.name))
         for {
-          _ ← ContactsUtils.addContact(contact.ownerUserId, user.id, email, localName)
-          _ ← DBIO.from(userExt.broadcastUserUpdate(contact.ownerUserId, updateContactRegistered, Some(serviceMessage.text), isFat = true, deliveryId = None))
-          _ ← DBIO.from(userExt.broadcastUserUpdate(contact.ownerUserId, updateContactsAdded, None, isFat = false, deliveryId = None))
-          _ ← DBIO.from(dialogExt.writeMessage(
+          _ ← userExt.addContact(contact.ownerUserId, 0, user.id, localName, Some(phoneNumber), None)
+          _ ← userExt.broadcastUserUpdate(contact.ownerUserId, updateContactRegistered, Some(s"${localName.getOrElse(user.name)} registered"), isFat = true, deliveryId = None)
+          _ ← userExt.broadcastUserUpdate(contact.ownerUserId, updateContactsAdded, None, isFat = false, deliveryId = None)
+          _ ← dialogExt.writeMessage(
             ApiPeer(ApiPeerType.Private, contact.ownerUserId),
             user.id,
             date,
             randomId,
             serviceMessage
-          ))
+          )
+        } yield {
+          recordRelation(user.id, contact.ownerUserId)
+        }
+      })
+      _ ← db.run(p.contact.UnregisteredPhoneContactRepo.deleteAll(phoneNumber))
+    } yield ()
+  }
+
+  private def markContactRegistered(user: User, email: String, isSilent: Boolean): Future[Unit] = {
+    val date = new DateTime
+    for {
+      _ ← userExt.hooks.beforeEmailContactRegistered.runAll(user.id, email)
+      contacts ← db.run(p.contact.UnregisteredEmailContactRepo.find(email))
+      _ = log.debug(s"Unregistered $email is in contacts of users: $contacts")
+      _ ← Future.sequence(contacts.map { contact ⇒
+        val randomId = ThreadLocalRandom.current().nextLong()
+        val updateContactRegistered = UpdateContactRegistered(user.id, isSilent, date.getMillis, randomId)
+        val updateContactsAdded = UpdateContactsAdded(Vector(user.id))
+        val localName = contact.name
+        val serviceMessage = ServiceMessages.contactRegistered(user.id, localName.getOrElse(user.name))
+        for {
+          _ ← userExt.addContact(contact.ownerUserId, 0, user.id, localName, None, Some(email))
+          _ ← userExt.broadcastUserUpdate(contact.ownerUserId, updateContactRegistered, Some(serviceMessage.text), isFat = true, deliveryId = None)
+          _ ← userExt.broadcastUserUpdate(contact.ownerUserId, updateContactsAdded, None, isFat = false, deliveryId = None)
+          _ ← dialogExt.writeMessage(
+            ApiPeer(ApiPeerType.Private, contact.ownerUserId),
+            user.id,
+            date,
+            randomId,
+            serviceMessage
+          )
         } yield recordRelation(user.id, contact.ownerUserId)
       })
-      _ ← p.contact.UnregisteredEmailContactRepo.deleteAll(email)
+      _ ← db.run(p.contact.UnregisteredEmailContactRepo.deleteAll(email))
     } yield ()
   }
 }

@@ -47,6 +47,7 @@ private[user] object UserBuilder {
       internalExtensions = e.extensions,
       external = e.external,
       isAdmin = e.isAdmin,
+      socialContacts = Seq.empty[SocialContact],
       preferredLanguages = Seq.empty[String],
       timeZone = None
     )
@@ -77,11 +78,14 @@ object UserProcessor {
       10026 → classOf[UserCommands.UpdateAvatar],
       10027 → classOf[UserCommands.UpdateAvatarAck],
       10028 → classOf[UserCommands.AddContacts],
+      10029 → classOf[UserCommands.AddSocialContact],
+      10030 → classOf[UserCommands.AddSocialContactAck],
       10031 → classOf[UserCommands.UpdateIsAdmin],
       10032 → classOf[UserCommands.UpdateIsAdminAck],
       10033 → classOf[UserCommands.NotifyDialogsChanged],
       10035 → classOf[UserCommands.ChangePreferredLanguages],
       10036 → classOf[UserCommands.ChangeTimeZone],
+      10037 → classOf[UserCommands.EditLocalName],
 
       11001 → classOf[UserQueries.GetAuthIds],
       11002 → classOf[UserQueries.GetAuthIdsResponse],
@@ -96,6 +100,8 @@ object UserProcessor {
       11011 → classOf[UserQueries.GetUser],
       11012 → classOf[UserQueries.IsAdmin],
       11013 → classOf[UserQueries.IsAdminResponse],
+      11014 → classOf[UserQueries.GetLocalName],
+      11015 → classOf[UserQueries.GetLocalNameResponse],
 
       12001 → classOf[UserEvents.AuthAdded],
       12002 → classOf[UserEvents.AuthRemoved],
@@ -108,11 +114,14 @@ object UserProcessor {
       12011 → classOf[UserEvents.NicknameChanged],
       12012 → classOf[UserEvents.AboutChanged],
       12013 → classOf[UserEvents.AvatarUpdated],
+      12014 → classOf[UserEvents.SocialContactAdded],
       12016 → classOf[UserEvents.IsAdminUpdated],
       12017 → classOf[UserEvents.PreferredLanguagesChanged],
       12018 → classOf[UserEvents.TimeZoneChanged],
+      12019 → classOf[UserEvents.LocalNameChanged],
 
-      13000 → classOf[User]
+      13000 → classOf[User],
+      13001 → classOf[SocialContact]
     )
 
   def props: Props =
@@ -143,6 +152,8 @@ private[user] final class UserProcessor
 
   override def persistenceId = UserOffice.persistenceIdFor(userId)
 
+  protected val contacts = new UserContacts(userId)
+
   context.setReceiveTimeout(1.hour)
 
   override def updatedState(evt: TSEvent, state: User): User = {
@@ -160,6 +171,8 @@ private[user] final class UserProcessor
         state.copy(phones = state.phones :+ phone)
       case TSEvent(_, UserEvents.EmailAdded(email)) ⇒
         state.copy(emails = state.emails :+ email)
+      case TSEvent(_, UserEvents.SocialContactAdded(contact)) ⇒
+        state.copy(socialContacts = state.socialContacts :+ contact)
       case TSEvent(_, UserEvents.Deleted()) ⇒
         state.copy(isDeleted = true)
       case TSEvent(_, UserEvents.NicknameChanged(nickname)) ⇒
@@ -191,6 +204,7 @@ private[user] final class UserProcessor
     case Delete(_) ⇒ delete(state)
     case AddPhone(_, phone) ⇒ addPhone(state, phone)
     case AddEmail(_, email) ⇒ addEmail(state, email)
+    case AddSocialContact(_, contact) ⇒ addSocialContact(state, contact)
     case ChangeNickname(_, clientAuthId, nickname) ⇒ changeNickname(state, clientAuthId, nickname)
     case ChangeAbout(_, clientAuthId, about) ⇒ changeAbout(state, clientAuthId, about)
     case UpdateAvatar(_, clientAuthId, avatarOpt) ⇒ updateAvatar(state, clientAuthId, avatarOpt)
@@ -199,6 +213,8 @@ private[user] final class UserProcessor
     case NotifyDialogsChanged(_, clientAuthId) ⇒ notifyDialogsChanged(state, clientAuthId)
     case ChangeTimeZone(_, authId, timeZone) ⇒ changeTimeZone(state, authId, timeZone)
     case ChangePreferredLanguages(_, authId, preferredLanguages) ⇒ changePreferredLanguages(state, authId, preferredLanguages)
+    case cmd: EditLocalName ⇒ contacts.ref forward cmd
+    case query: GetLocalName ⇒ contacts.ref forward query
     case StopOffice ⇒ context stop self
     case ReceiveTimeout ⇒ context.parent ! ShardRegion.Passivate(stopMessage = StopOffice)
   }
