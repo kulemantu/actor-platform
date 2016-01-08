@@ -12,7 +12,7 @@ public class AASettingsViewController: AAContentTableController {
     
     private var headerCell: AAAvatarRow!
     private var nicknameCell: AATitledRow!
-    private var aboutCell: AATextRow!
+    private var aboutCell: AATitledRow!
     
     public init() {
         super.init(style: AAContentTableStyle.SettingsPlain)
@@ -223,16 +223,16 @@ public class AASettingsViewController: AAContentTableController {
             }
             
             // Contacts: About
-            self.aboutCell = s.text("ProfileAbout") { [unowned self] (r) -> () in
-
-                r.navigate = true
+            self.aboutCell = s.titled("ProfileAbout") { [unowned self] (r) -> () in
+                
+                r.accessoryType = .DisclosureIndicator
                 
                 r.bindAction = { [unowned self] (r) -> () in
                     if let about = self.user.getAboutModel().get() {
-                        r.content = about
+                        r.subtitle = about
                         r.isAction = false
                     } else {
-                        r.content = AALocalized("SettingsAboutNotSet")
+                        r.subtitle = AALocalized("SettingsAboutNotSet")
                         r.isAction = true
                     }
                 }
@@ -261,6 +261,7 @@ public class AASettingsViewController: AAContentTableController {
                     
                     return AADevice.isiPad
                 }
+                
             }
  
             // Profile: Phones
@@ -271,7 +272,7 @@ public class AASettingsViewController: AAContentTableController {
                 r.data = self.user.getPhonesModel().get().toSwiftArray()
                 
                 r.bindData = { (c: AATitledCell, d: ACUserPhone) -> () in
-                    c.setContent(d.title, content: "+\(d.phone)", isAction: false)
+                    c.setContent(AALocalized("SettingsMobilePhone"), content: "+\(d.phone)", isAction: false)
                     c.accessoryType = .None
                 }
                 
@@ -351,7 +352,7 @@ public class AASettingsViewController: AAContentTableController {
 
             // Support: App version
             let version = NSBundle.mainBundle().infoDictionary!["CFBundleShortVersionString"] as! String
-            s.hint(version.replace("{version}", dest: version))
+            s.hint(AALocalized("SettingsVersion").replace("{version}", dest: version))
             
             ActorSDK.sharedActor().delegate.actorSettingsSupportDidCreated(self, section: s)
         }

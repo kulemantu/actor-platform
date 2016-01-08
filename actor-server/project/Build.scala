@@ -4,50 +4,67 @@ import sbt.Keys._
 import sbt._
 import spray.revolver.RevolverPlugin._
 import com.trueaccord.scalapb.{ScalaPbPlugin => PB}
-import com.typesafe.sbt.packager.docker.DockerPlugin.autoImport.Docker
+import com.typesafe.sbt.SbtMultiJvm
+import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 
-object Build extends sbt.Build with Versioning with Releasing with Publishing {
+object Build extends sbt.Build with Versioning with Releasing {
   val ScalaVersion = "2.11.7"
-  val Version = getVersion
+  val BotKitVersion = getVersion
 
   lazy val buildSettings =
     Defaults.coreDefaultSettings ++
       Seq(
-        version := Version,
+        //version := Version,
         scalaVersion := ScalaVersion,
+        scalaVersion in ThisBuild := ScalaVersion,
         crossPaths := false,
-        organizationHomepage := Some(url("https://actor.im"))
-      )
+        organization := "im.actor.server",
+        organizationHomepage := Some(url("https://actor.im")),
+        resolvers ++= Resolvers.seq,
+        scalacOptions ++= Seq("-Yopt-warnings")
+      ) ++ Sonatype.sonatypeSettings
 
-  lazy val compilerWarnings = Seq(
-    "-Ywarn-dead-code",
-    "-Ywarn-infer-any",
-    "-Ywarn-numeric-widen"
-  )
+  lazy val pomExtraXml =
+    <url>https://actor.im</url>
+      <scm>
+        <connection>scm:git:github.com/actorapp/actor-platform.git</connection>
+        <developerConnection>scm:git:git@github.com:actorapp/actor-platform.git</developerConnection>
+        <url>github.com/(your repository url)</url>
+      </scm>
+      <developers>
+        <developer>
+          <id>prettynatty</id>
+          <name>Andrey Kuznetsov</name>
+          <url>https://github.com/prettynatty</url>
+        </developer>
+        <developer>
+          <id>rockjam</id>
+          <name>Nikolay Tatarinov</name>
+          <url>https://github.com/rockjam</url>
+        </developer>
+      </developers>
 
-  lazy val defaultScalacOptions = Seq(
-    "-target:jvm-1.8",
-    "-Ybackend:GenBCode",
-    "-Ydelambdafy:method",
-    "-Yopt:l:classpath",
-    //"-Ymacro-debug-lite",
-    "-encoding", "UTF-8",
-    "-deprecation",
-    "-unchecked",
-    "-feature",
-    "-language:higherKinds",
-    "-Xfatal-warnings",
-    "-Xlint",
-    "-Xfuture"
-  ) ++ compilerWarnings
+  lazy val defaultSettingsBotkit =
+    buildSettings ++
+    ActorHouseRules.actorDefaultSettings(
+      "im.actor",
+      ActorHouseRules.PublishType.PublishToSonatype,
+      pomExtraXml
+    )
 
-  lazy val defaultSettings =
-    buildSettings ++ Formatting.formatSettings ++
+  lazy val defaultSettingsServer =
+      buildSettings ++
+        ActorHouseRules.actorDefaultSettings(
+          "im.actor.server",
+          ActorHouseRules.PublishType.PublishToSonatype,
+          pomExtraXml) ++
       PB.protobufSettings ++ Seq(
       //PB.javaConversions in PB.protobufConfig := true,
-      libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.9" % PB.protobufConfig,
+      libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % "0.5.17" % PB.protobufConfig,
       PB.includePaths in PB.protobufConfig ++= Seq(
-        file("actor-core/src/main/protobuf")
+        file("actor-models/src/main/protobuf"),
+        file("actor-core/src/main/protobuf"),
+        file("actor-fs-adapters/src/main/protobuf")
       ),
       PB.runProtoc in PB.protobufConfig := (args =>
         com.github.os72.protocjar.Protoc.runProtoc("-v300" +: args.toArray))
@@ -58,19 +75,15 @@ object Build extends sbt.Build with Versioning with Releasing with Publishing {
             sys.error("Java 8 is required for this project.")
         },
         resolvers ++= Resolvers.seq,
-        scalacOptions in Compile ++= defaultScalacOptions,
-        javaOptions ++= Seq("-Dfile.encoding=UTF-8"),
-        javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation"),
         fork in Test := false,
         updateOptions := updateOptions.value.withCachedResolution(true)
       )
-
 
   lazy val root = Project(
     "actor",
     file("."),
     settings =
-      defaultSettings ++ releaseSettings ++
+      defaultSettingsServer ++
         Revolver.settings ++
         Seq(
           libraryDependencies ++= Dependencies.root,
@@ -85,61 +98,42 @@ object Build extends sbt.Build with Versioning with Releasing with Publishing {
           )
         )
   ).settings(net.virtualvoid.sbt.graph.Plugin.graphSettings: _*)
-    .dependsOn(actorRunner, actorCli)
+    .settings(releaseSettings)
+    .dependsOn(actorServerSdk)
     .aggregate(
       //      actorDashboard,
-      actorBots,
-      actorBotsShared,
-      actorBotkit,
-      actorRuntime,
+      actorServerSdk,
+      actorTestkit,
       actorTests
     )
     .settings(
-    aggregate in Docker := false,
     aggregate in Revolver.reStart := false
-  )
-
-  lazy val actorRunner = Project(
-    id = "actor-runner",
-    base = file("actor-runner"),
-    settings = defaultSettings ++ Seq(
-      libraryDependencies ++= Dependencies.runner
-    )
-  ).dependsOn(
-    actorActivation,
-    actorBots,
-    actorCli,
-    actorEnrich,
-    actorEmail,
-    actorFrontend,
-    actorHttpApi,
-    actorRpcApi,
-    actorNotifications,
-    actorOAuth
   )
 
   lazy val actorActivation = Project(
     id = "actor-activation",
     base = file("actor-activation"),
-    settings = defaultSettings ++
+    settings = defaultSettingsServer ++
       Seq(
         libraryDependencies ++= Dependencies.activation,
         scalacOptions in Compile := (scalacOptions in Compile).value.filterNot(_ == "-Ywarn-unused-import")
       )
-  ).dependsOn(actorEmail, actorSms, actorPersist)
+  )
+    .dependsOn(actorEmail, actorSms, actorPersist)
 
   lazy val actorBots = Project(
     id = "actor-bots",
     base = file("actor-bots"),
-    settings = defaultSettings ++
+    settings = defaultSettingsServer ++
       Seq(libraryDependencies ++= Dependencies.bots)
   )
-    .dependsOn(actorBotkit, actorCore, actorTestkit % "test")
+    .dependsOn(actorCore, actorHttpApi, actorTestkit % "test")
 
   lazy val actorBotsShared = Project(
     id = "actor-bots-shared",
     base = file("actor-bots-shared"),
-    settings = defaultSettings ++ publishSettings ++ Seq(
+    settings = defaultSettingsBotkit ++ Seq(
+      version := BotKitVersion,
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
       libraryDependencies ++= Dependencies.botShared,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
@@ -149,7 +143,8 @@ object Build extends sbt.Build with Versioning with Releasing with Publishing {
   lazy val actorBotkit = Project(
     id = "actor-botkit",
     base = file("actor-botkit"),
-    settings = defaultSettings ++ publishSettings ++ Revolver.settings ++ Seq(
+    settings = defaultSettingsBotkit ++ Revolver.settings ++ Seq(
+      version := BotKitVersion,
       libraryDependencies ++= Dependencies.botkit,
       addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
     )
@@ -160,127 +155,129 @@ object Build extends sbt.Build with Versioning with Releasing with Publishing {
   lazy val actorCli = Project(
     id = "actor-cli",
     base = file("actor-cli"),
-    settings = defaultSettings ++ Revolver.settings ++ Seq(
+    settings = defaultSettingsServer ++ Revolver.settings ++ Seq(
       libraryDependencies ++= Dependencies.cli,
       mainClass in Revolver.reStart := Some("im.actor.server.cli.ActorCliApp"),
       mainClass in Compile := Some("im.actor.server.cli.ActorCliApp")
     )
   )
+    .dependsOn(actorCore)
 
   lazy val actorCore = Project(
     id = "actor-core",
     base = file("actor-core"),
-    settings = defaultSettings ++ SbtActorApi.settings ++ Seq(
+    settings = defaultSettingsServer ++ SbtActorApi.settings ++ Seq(
       libraryDependencies ++= Dependencies.core
     )
-  ).dependsOn(actorCodecs, actorModels, actorPersist, actorPresences, actorSocial, actorRuntime)
+  )
+    .dependsOn(actorCodecs, actorFileAdapter, actorModels, actorPersist, actorRuntime)
 
   lazy val actorEmail = Project(
     id = "actor-email",
     base = file("actor-email"),
-    settings = defaultSettings ++
+    settings = defaultSettingsServer ++
       Seq(
         libraryDependencies ++= Dependencies.email
       )
   )
+    .dependsOn(actorRuntime)
 
   lazy val actorEnrich = Project(
     id = "actor-enrich",
     base = file("actor-enrich"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.enrich
     )
-  ).dependsOn(actorRpcApi, actorRuntime)
+  )
+    .dependsOn(actorRpcApi, actorRuntime)
 
   lazy val actorHttpApi = Project(
     id = "actor-http-api",
     base = file("actor-http-api"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.httpApi
     )
-  ).dependsOn(actorBots, actorCore, actorPersist, actorRuntime)
+  )
+    .dependsOn(actorPersist, actorRuntime)//runtime deps because of ActorConfig
 
   lazy val actorOAuth = Project(
     id = "actor-oauth",
     base = file("actor-oauth"),
-    settings = defaultSettings ++
+    settings = defaultSettingsServer ++
       Seq(
         libraryDependencies ++= Dependencies.oauth
       )
-  ).dependsOn(actorPersist)
+  )
+    .dependsOn(actorPersist)
 
   lazy val actorSession = Project(
     id = "actor-session",
     base = file("actor-session"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.session
     )
-  ).dependsOn(actorPersist, actorCore, actorCodecs, actorCore, actorRpcApi)
+  )
+    .dependsOn(actorPersist, actorCore, actorCodecs, actorCore, actorRpcApi)
 
   lazy val actorSessionMessages = Project(
     id = "actor-session-messages",
     base = file("actor-session-messages"),
-    settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.sessionMessages)
-  ).dependsOn(actorCore)
-
-  lazy val actorPresences = Project(
-    id = "actor-presences",
-    base = file("actor-presences"),
-    settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.presences)
-  ).dependsOn(actorPersist)
+    settings = defaultSettingsServer ++ Seq(libraryDependencies ++= Dependencies.sessionMessages)
+  )
+    .dependsOn(actorCore)
 
   lazy val actorRpcApi = Project(
     id = "actor-rpc-api",
     base = file("actor-rpc-api"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.rpcApi
     )
-  ).dependsOn(
+  )
+    .dependsOn(
     actorActivation,
-    actorCodecs,
     actorCore,
     actorOAuth,
-    actorPersist,
-    actorPresences,
     actorSessionMessages,
-    actorSms,
-    actorSocial,
-    actorRuntime)
+    actorSms)
 
   lazy val actorSms = Project(
     id = "actor-sms",
     base = file("actor-sms"),
-    settings = defaultSettings ++ Seq(libraryDependencies ++= Dependencies.sms)
-  ).dependsOn(actorRuntime)
+    settings = defaultSettingsServer ++ Seq(libraryDependencies ++= Dependencies.sms)
+  )
+    .dependsOn(actorRuntime)
 
-  lazy val actorSocial = Project(
-    id = "actor-social",
-    base = file("actor-social"),
-    settings = defaultSettings ++ Seq(
-      libraryDependencies ++= Dependencies.social
+  lazy val actorFileAdapter = Project(
+    id = "actor-fs-adapters",
+    base = file("actor-fs-adapters"),
+    settings = defaultSettingsServer ++ Seq(
+      libraryDependencies ++= Dependencies.fileAdapter
     )
-  ).dependsOn(actorPersist)
+  )
+    .dependsOn(actorHttpApi, actorPersist)
 
   lazy val actorFrontend = Project(
     id = "actor-frontend",
     base = file("actor-frontend"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.frontend
     )
-  ).dependsOn(actorCore, actorSessionMessages, actorSession)
+  )
+    .dependsOn(actorCore, actorSession)
 
   lazy val actorCodecs = Project(
     id = "actor-codecs",
     base = file("actor-codecs"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.codecs
     )
-  ).dependsOn(actorModels)
+  )
+    .dependsOn(actorModels)
 
   lazy val actorModels = Project(
     id = "actor-models",
     base = file("actor-models"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.models
     )
   )
@@ -288,72 +285,101 @@ object Build extends sbt.Build with Versioning with Releasing with Publishing {
   lazy val actorPersist = Project(
     id = "actor-persist",
     base = file("actor-persist"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.persist
     )
-  ).dependsOn(actorModels)
-
-  //  lazy val actorDashboard = Project(
-  //    id = "actor-dashboard",
-  //    base = file("actor-dashboard"),
-  //    settings = defaultSettings ++ Seq(
-  //      scalacOptions in Compile := (scalacOptions in Compile).value.filterNot(_ == "-Ywarn-unused-import"),
-  //      javaOptions := javaOptions.value.filterNot(_.startsWith("-Dscalac.patmat.analysisBudget")),
-  //      libraryDependencies ++= Dependencies.dashboard
-  //    )
-  //  )
-  //    .enablePlugins(PlayScala)
-  //    .dependsOn(actorPersist, actorUtils)
+  )
+    .dependsOn(actorModels, actorRuntime)
 
   lazy val actorTestkit = Project(
     id = "actor-testkit",
     base = file("actor-testkit"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.tests
     )
   ).configs(Configs.all: _*)
     .dependsOn(
       actorCore,
       actorRpcApi,
-      actorSession,
-      actorPresences
+      actorSession
     )
-
-  lazy val actorNotifications = Project(
-    id = "actor-notifications",
-    base = file("actor-notifications"),
-    settings = defaultSettings ++ Seq(
-      libraryDependencies ++= Dependencies.notifications
-    )
-  )
-    .dependsOn(actorCore, actorModels, actorPersist, actorSms, actorRuntime)
 
   lazy val actorRuntime = Project(
     id = "actor-runtime",
     base = file("actor-runtime"),
-    settings = defaultSettings ++ Seq(
+    settings = defaultSettingsServer ++ Seq(
       libraryDependencies ++= Dependencies.runtime
     )
+  )
+
+  lazy val actorServerSdk = Project(
+    id = "actor-server-sdk",
+    base = file("actor-server-sdk"),
+    settings = defaultSettingsServer ++ Seq(
+      libraryDependencies ++= Dependencies.sdk
+    )
+  )
+    .dependsOn(
+    actorActivation,
+    actorBots,
+    actorCli,
+    actorEnrich,
+    actorEmail,
+    actorFrontend,
+    actorHttpApi,
+    actorRpcApi,
+    actorOAuth
+  ).aggregate(
+    actorActivation,
+    actorBots,
+    actorCli,
+    actorCodecs,
+    actorCore,
+    actorEmail,
+    actorEnrich,
+    actorFileAdapter,
+    actorFrontend,
+    actorHttpApi,
+    actorModels,
+    actorOAuth,
+    actorPersist,
+    actorRpcApi,
+    actorRuntime,
+    actorSession,
+    actorSessionMessages,
+    actorSms
   )
 
   lazy val actorTests = Project(
     id = "actor-tests",
     base = file("actor-tests"),
-    settings = defaultSettings ++ Testing.settings ++ Seq(
-      libraryDependencies ++= Dependencies.tests
+    settings = defaultSettingsServer ++ Testing.settings ++ Seq(
+      libraryDependencies ++= Dependencies.tests,
+      compile in MultiJvm <<= (compile in MultiJvm) triggeredBy (compile in Test),
+      executeTests in Test <<= (executeTests in Test, executeTests in MultiJvm) map {
+        case (testResults, multiNodeResults)  =>
+          val overall =
+            if (testResults.overall.id < multiNodeResults.overall.id)
+              multiNodeResults.overall
+            else
+              testResults.overall
+          Tests.Output(overall,
+            testResults.events ++ multiNodeResults.events,
+            testResults.summaries ++ multiNodeResults.summaries)
+      }
     ))
     .configs(Configs.all: _*)
+      .configs(MultiJvm)
     .dependsOn(
       actorTestkit % "test",
       actorActivation,
+      actorBots,
       actorCodecs,
       actorCore,
-      //      actorDashboard,
       actorEmail,
       actorEnrich,
       actorFrontend,
       actorHttpApi,
-      actorNotifications,
       actorOAuth,
       actorPersist,
       actorRpcApi,

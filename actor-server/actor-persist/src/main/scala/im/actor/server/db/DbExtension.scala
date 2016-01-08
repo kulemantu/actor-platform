@@ -1,14 +1,16 @@
 package im.actor.server.db
 
 import akka.actor._
+import akka.event.Logging
 import com.github.kxbmap.configs._
 import com.typesafe.config.{ Config, ConfigFactory }
 import im.actor.server.JNDI
 import org.flywaydb.core.Flyway
 import slick.driver.PostgresDriver.api.Database
-import slick.jdbc.{ HikariCPJdbcDataSource, JdbcDataSource }
+import slick.jdbc.hikaricp.HikariCPJdbcDataSource
+import slick.jdbc.JdbcDataSource
 
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 trait DbExtension extends Extension {
   val ds: JdbcDataSource
@@ -29,6 +31,8 @@ object DbExtension extends ExtensionId[DbExtensionImpl] with ExtensionIdProvider
   override def lookup = DbExtension
 
   override def createExtension(system: ExtendedActorSystem): DbExtensionImpl = {
+    val log = Logging(system, getClass)
+
     val sqlConfig = system.settings.config.getConfig("services.postgresql")
     val ds = initDs(sqlConfig).get
     val db = initDb(ds)
@@ -38,7 +42,13 @@ object DbExtension extends ExtensionId[DbExtensionImpl] with ExtensionIdProvider
     }
 
     val ext = new DbExtensionImpl(ds, db)
-    ext.migrate()
+
+    Try(ext.migrate()) match {
+      case Success(_) ⇒
+      case Failure(e) ⇒
+        log.error(e, "Migration failed")
+        throw e
+    }
     ext
   }
 
@@ -53,7 +63,7 @@ object DbExtension extends ExtensionId[DbExtensionImpl] with ExtensionIdProvider
       s"""
         |url: "jdbc:postgresql://"${host}":"${port}"/"${db}
       """.stripMargin
-    )).resolve(), null, "main")
+    )).resolve(), null, "main", getClass.getClassLoader)
   }
 
   private def initDb(ds: HikariCPJdbcDataSource): Database = {

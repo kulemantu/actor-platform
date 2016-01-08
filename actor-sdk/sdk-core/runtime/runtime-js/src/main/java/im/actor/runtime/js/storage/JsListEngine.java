@@ -19,6 +19,8 @@ import im.actor.runtime.storage.ListEngineRecord;
 
 public class JsListEngine<T extends BserObject & ListEngineItem> implements ListEngine<T> {
 
+    private static final String TAG = "JsListEngine";
+
     private JsListStorage storage;
     private BserCreator<T> creator;
     private HashMap<Long, T> cache = new HashMap<Long, T>();
@@ -40,7 +42,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onItemAddedOrUpdated(item);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (addOrUpdateItem)");
+                Log.e(TAG, e);
             }
         }
 
@@ -61,7 +64,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onItemsAddedOrUpdated(items);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (addOrUpdateItems)");
+                Log.e(TAG, e);
             }
         }
     }
@@ -82,7 +86,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onItemsReplaced(items);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (replaceItems)");
+                Log.e(TAG, e);
             }
         }
     }
@@ -96,7 +101,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onItemRemoved(key);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (removeItem)");
+                Log.e(TAG, e);
             }
         }
     }
@@ -111,7 +117,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onItemsRemoved(keys);
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (removeItems)");
+                Log.e(TAG, e);
             }
         }
     }
@@ -124,7 +131,8 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
             try {
                 callback.onClear();
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.d(TAG, "Exception during update (clear)");
+                Log.e(TAG, e);
             }
         }
     }
@@ -142,7 +150,7 @@ public class JsListEngine<T extends BserObject & ListEngineItem> implements List
                 return res;
             } catch (IOException e) {
                 Log.d("JsListEngine", "Unable to decode: " + e.getMessage());
-                e.printStackTrace();
+                Log.e(TAG, e);
             }
         }
 

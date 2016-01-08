@@ -10,13 +10,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
+import im.actor.core.api.ApiMessage;
 import im.actor.core.api.ApiSex;
 import im.actor.core.api.ApiAuthSession;
 import im.actor.core.entity.FileReference;
 import im.actor.core.entity.Group;
 import im.actor.core.entity.MentionFilterResult;
+import im.actor.core.entity.MessageSearchEntity;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerSearchEntity;
 import im.actor.core.entity.PeerSearchType;
@@ -25,6 +28,8 @@ import im.actor.core.entity.Sex;
 import im.actor.core.entity.User;
 import im.actor.core.entity.WebActionDescriptor;
 import im.actor.core.entity.content.FastThumb;
+import im.actor.core.entity.content.JsonContent;
+import im.actor.core.entity.content.internal.Sticker;
 import im.actor.core.i18n.I18nEngine;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.modules.Modules;
@@ -37,8 +42,6 @@ import im.actor.core.modules.events.PeerInfoClosed;
 import im.actor.core.modules.events.PeerInfoOpened;
 import im.actor.core.modules.events.UserVisible;
 import im.actor.core.network.NetworkState;
-import im.actor.core.network.parser.Request;
-import im.actor.core.network.parser.Response;
 import im.actor.core.util.ActorTrace;
 import im.actor.core.util.Timing;
 import im.actor.core.viewmodel.AppStateVM;
@@ -50,11 +53,13 @@ import im.actor.core.viewmodel.FileVMCallback;
 import im.actor.core.viewmodel.GroupAvatarVM;
 import im.actor.core.viewmodel.GroupVM;
 import im.actor.core.viewmodel.OwnAvatarVM;
+import im.actor.core.viewmodel.StickerPackVM;
 import im.actor.core.viewmodel.UploadFileCallback;
 import im.actor.core.viewmodel.UploadFileVM;
 import im.actor.core.viewmodel.UploadFileVMCallback;
 import im.actor.core.viewmodel.UserVM;
 import im.actor.runtime.actors.ActorSystem;
+import im.actor.runtime.json.JSONObject;
 import im.actor.runtime.mvvm.MVVMCollection;
 import im.actor.runtime.mvvm.ValueModel;
 import im.actor.runtime.storage.PreferencesStorage;
@@ -305,6 +310,7 @@ public class Messenger {
         return modules.getGroupsModule().getGroupsCollection();
     }
 
+
     /**
      * Get Group Value Model by GID
      *
@@ -501,7 +507,7 @@ public class Messenger {
      *
      * @param state New network state
      */
-    @ObjectiveCName("onNetworkChanged")
+    @ObjectiveCName("onNetworkChanged:")
     public void onNetworkChanged(@NotNull NetworkState state) {
         modules.getActorApi().onNetworkChanged(state);
     }
@@ -534,6 +540,21 @@ public class Messenger {
     public void sendMessage(@NotNull Peer peer, @NotNull String text, @Nullable String markDownText,
                             @Nullable ArrayList<Integer> mentions, boolean autoDetect) {
         modules.getMessagesModule().sendMessage(peer, text, markDownText, mentions, autoDetect);
+    }
+
+    /**
+     * Send Markdown Message with mentions
+     *
+     * @param peer        destination peer
+     * @param name        contact name
+     * @param phones      contact phones
+     * @param emails      contact emails
+     * @param base64photo contact photo
+     */
+    @ObjectiveCName("sendContactWithPeer:withName:withPhones:withEmails:withPhoto:")
+    public void sendContact(@NotNull Peer peer, @NotNull String name, @NotNull HashSet<String> phones,
+                            @NotNull HashSet<String> emails, @Nullable String base64photo) {
+        modules.getMessagesModule().sendContact(peer, name, phones, emails, base64photo);
     }
 
     /**
@@ -582,7 +603,7 @@ public class Messenger {
      */
     @ObjectiveCName("sendMessageWithPeer:withText:")
     public void sendMessage(@NotNull Peer peer, @NotNull String text) {
-        sendMessage(peer, text, null, null, false);
+        sendMessage(peer, text, null, null, true);
     }
 
     /**
@@ -642,6 +663,46 @@ public class Messenger {
     }
 
     /**
+     * Send Audio message
+     *
+     * @param peer       destination peer
+     * @param duration   audio duration
+     * @param descriptor File Descriptor
+     */
+    @ObjectiveCName("sendAudioWithPeer:withName:withDuration:withDescriptor:")
+    public void sendAudio(@NotNull Peer peer, @NotNull String fileName,
+                          int duration, @NotNull String descriptor) {
+        modules.getMessagesModule().sendAudio(peer, fileName, duration, descriptor);
+    }
+
+    /**
+     * Send Location Message
+     *
+     * @param peer         destination peer
+     * @param longitude    user location longitude
+     * @param latitude     user location latitude
+     * @param street       user location street
+     * @param place        user location place
+     */
+    @ObjectiveCName("sendLocationWithPeer:withLongitude:withLatitude:withStreet:withPlace:")
+    public void sendLocation(@NotNull Peer peer,
+                             @NotNull Double longitude, @NotNull Double latitude,
+                             @Nullable String street, @Nullable String place) {
+        modules.getMessagesModule().sendLoacation(peer, longitude, latitude, street, place);
+    }
+
+    /**
+     * Send json message
+     *
+     * @param peer destination peer
+     * @param json json content
+     */
+    @ObjectiveCName("sendJsonWithPeer:withJson:")
+    public void sendCustomJsonMessage(@NotNull Peer peer, @NotNull JsonContent content) {
+        modules.getMessagesModule().sendJson(peer, content);
+    }
+
+    /**
      * Send document without preview
      *
      * @param peer       destination peer
@@ -692,6 +753,21 @@ public class Messenger {
     }
 
     /**
+     * Send document without preview
+     *
+     * @param peer    destination peer
+     * @param sticker sticker to send
+     */
+    @ObjectiveCName("sendStickerWithPeer:withSticker:")
+    public void sendSticker(Peer peer, Sticker sticker) {
+        modules.getMessagesModule().sendSticker(peer, sticker);
+    }
+
+    public void updateJsonMessageContentLocal(Peer peer, long rid, JsonContent json) {
+        modules.getMessagesModule().updateJson(peer, rid, json);
+    }
+
+    /**
      * Clear chat
      *
      * @param peer destination peer
@@ -711,6 +787,54 @@ public class Messenger {
     @ObjectiveCName("hideChatCommandWithPeer:")
     public Command<Boolean> hideChat(Peer peer) {
         return modules.getMessagesModule().hideChat(peer);
+    }
+
+    /**
+     * Favouriting chat
+     *
+     * @param peer destination peer
+     * @return Command for execution
+     */
+    @ObjectiveCName("favouriteChatCommandWithPeer:")
+    public Command<Boolean> favouriteChat(Peer peer) {
+        return modules.getMessagesModule().favoriteChat(peer);
+    }
+
+    /**
+     * Unfavouriting chat
+     *
+     * @param peer destination peer
+     * @return Command for execution
+     */
+    @ObjectiveCName("unfavouriteChatCommandWithPeer:")
+    public Command<Boolean> unfavoriteChat(Peer peer) {
+        return modules.getMessagesModule().unfavoriteChat(peer);
+    }
+
+    /**
+     * Adding reaction to a message
+     *
+     * @param peer destination peer
+     * @param rid  random id of message
+     * @param code reaction code
+     * @return Command for execution
+     */
+    @ObjectiveCName("addReactionWithPeer:withRid:withCode:")
+    public Command<Boolean> addReaction(Peer peer, long rid, String code) {
+        return modules.getMessagesModule().addReaction(peer, rid, code);
+    }
+
+    /**
+     * Removing reaction to a message
+     *
+     * @param peer destination peer
+     * @param rid  random id of message
+     * @param code reaction code
+     * @return Command for execution
+     */
+    @ObjectiveCName("removeReactionWithPeer:withRid:withCode:")
+    public Command<Boolean> removeReaction(Peer peer, long rid, String code) {
+        return modules.getMessagesModule().removeReaction(peer, rid, code);
     }
 
     /**
@@ -768,6 +892,51 @@ public class Messenger {
     @ObjectiveCName("findPeersWithType:")
     public Command<List<PeerSearchEntity>> findPeers(PeerSearchType type) {
         return modules.getSearchModule().findPeers(type);
+    }
+
+    /**
+     * Finding text messages by query
+     *
+     * @param peer  peer for search
+     * @param query query for search
+     * @return found messages
+     */
+    @ObjectiveCName("findTextMessagesWithPeer:withQuery:")
+    public Command<List<MessageSearchEntity>> findTextMessages(Peer peer, String query) {
+        return modules.getSearchModule().findTextMessages(peer, query);
+    }
+
+    /**
+     * Finding all doc messages
+     *
+     * @param peer peer for search
+     * @return found messages
+     */
+    @ObjectiveCName("findAllDocsWithPeer:")
+    public Command<List<MessageSearchEntity>> findAllDocs(Peer peer) {
+        return modules.getSearchModule().findAllDocs(peer);
+    }
+
+    /**
+     * Finding all messages with links
+     *
+     * @param peer peer for search
+     * @return found messages
+     */
+    @ObjectiveCName("findAllLinksWithPeer:")
+    public Command<List<MessageSearchEntity>> findAllLinks(Peer peer) {
+        return modules.getSearchModule().findAllLinks(peer);
+    }
+
+    /**
+     * Finding all messages with photos
+     *
+     * @param peer peer for search
+     * @return found messages
+     */
+    @ObjectiveCName("findAllPhotosWithPeer:")
+    public Command<List<MessageSearchEntity>> findAllPhotos(Peer peer) {
+        return modules.getSearchModule().findAllPhotos(peer);
     }
 
     //////////////////////////////////////
@@ -1345,7 +1514,7 @@ public class Messenger {
      *
      * @param val is notification vibration enabled
      */
-    @ObjectiveCName("changeNotificationVibrationEnabledWithValue")
+    @ObjectiveCName("changeNotificationVibrationEnabledWithValue:")
     public void changeNotificationVibrationEnabled(boolean val) {
         modules.getSettingsModule().changeNotificationVibrationEnabled(val);
     }
@@ -1389,6 +1558,46 @@ public class Messenger {
     public void changeSendByEnter(boolean val) {
         modules.getSettingsModule().changeSendByEnter(val);
     }
+
+    /**
+     * Change text size
+     *
+     * @param val new chat text size
+     */
+    @ObjectiveCName("changeTextSizeWithValue:")
+    public void changeTextSize(int val) {
+        modules.getSettingsModule().changeTextSize(val);
+    }
+
+    /**
+     * Get text size
+     */
+    @ObjectiveCName("getTextSize")
+    public int getTextSize() {
+        return modules.getSettingsModule().getTextSize();
+    }
+
+    /**
+     * Get privacy state
+     *
+     * @return privacy state
+     */
+    @NotNull
+    @ObjectiveCName("getPrivacy")
+    public String getPrivacy() {
+        return modules.getSettingsModule().getPrivacy();
+    }
+
+    /**
+     * Change privacy
+     *
+     * @param privacy privacy state (none|contacts|always)
+     */
+    @ObjectiveCName("setPrivacyWithPrivacy:")
+    public void setPrivacy(String privacy) {
+        modules.getSettingsModule().setPrivacy(privacy);
+    }
+
 
     /**
      * Is markdown enabled.
@@ -1562,6 +1771,24 @@ public class Messenger {
         modules.getSettingsModule().changeSelectedWallpapper(uri);
     }
 
+    /**
+     *  Getting saved sticker packs
+     *
+     * @return list of saved sticker packs Value Models
+     */
+    @ObjectiveCName("getOwnStickerPacksIdsVM")
+    public ValueModel<ArrayList<StickerPackVM>> getOwnStickerPacks() {
+        return modules.getStickersModule().getStickerPacks();
+    }
+
+    /**
+     * Loading sticker packs for current user
+     */
+    @ObjectiveCName("loadStickers")
+    public void loadStickers() {
+        modules.getStickersModule().loadStickers();
+    }
+
     //////////////////////////////////////
     //            Security
     //////////////////////////////////////
@@ -1690,5 +1917,9 @@ public class Messenger {
      */
     ModuleContext getModuleContext() {
         return modules;
+    }
+
+    public long getAuthId() {
+        return modules.getApiModule().getActorApi().getKeyStorage().getAuthKey();
     }
 }

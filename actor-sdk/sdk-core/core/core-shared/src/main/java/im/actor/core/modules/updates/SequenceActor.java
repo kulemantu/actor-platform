@@ -290,6 +290,14 @@ public class SequenceActor extends ModuleActor {
                     }
                     Log.d(TAG, "Difference parsed  in " + (im.actor.runtime.Runtime.getCurrentTime() - parseStart) + " ms");
 
+                    if (updates.size() > 0) {
+                        String command = "Difference updates:";
+                        for (Update u : updates) {
+                            command += "\n| " + u;
+                        }
+                        Log.d(TAG, command);
+                    }
+
                     long applyStart = im.actor.runtime.Runtime.getCurrentTime();
                     processor.applyDifferenceUpdate(response.getUsers(), response.getGroups(), updates);
                     Log.d(TAG, "Difference applied in " + (im.actor.runtime.Runtime.getCurrentTime() - applyStart) + " ms");

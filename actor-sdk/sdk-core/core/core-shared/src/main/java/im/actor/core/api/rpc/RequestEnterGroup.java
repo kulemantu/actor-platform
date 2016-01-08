@@ -53,6 +53,7 @@ public class RequestEnterGroup extends Request<ResponseEnterGroup> {
     @Override
     public String toString() {
         String res = "rpc EnterGroup{";
+        res += "peer=" + this.peer;
         res += "}";
         return res;
     }

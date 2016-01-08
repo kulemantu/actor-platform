@@ -56,8 +56,16 @@ public abstract class BaseContactFragment extends DisplayListFragment<Contact, C
         View res = inflate(inflater, container, layoutId, messenger().buildContactsDisplayList());
 
         emptyView = res.findViewById(R.id.emptyCollection);
-        emptyView.findViewById(R.id.empty_collection_bg).setBackgroundColor(ActorSDK.sharedActor().style.getMainColor());
-        ((TextView) emptyView.findViewById(R.id.empty_collection_text)).setTextColor(ActorSDK.sharedActor().style.getMainColor());
+        if (emptyView != null) {
+            emptyView.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
+            emptyView.findViewById(R.id.empty_collection_bg).setBackgroundColor(ActorSDK.sharedActor().style.getMainColor());
+            ((TextView) emptyView.findViewById(R.id.empty_collection_text)).setTextColor(ActorSDK.sharedActor().style.getMainColor());
+        } else {
+            emptyView = res.findViewById(R.id.empty_collection_text);
+            if (emptyView != null && emptyView instanceof TextView) {
+                ((TextView) emptyView.findViewById(R.id.empty_collection_text)).setTextColor(ActorSDK.sharedActor().style.getMainColor());
+            }
+        }
         View headerPadding = new View(getActivity());
         headerPadding.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
         headerPadding.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(0)));
@@ -65,6 +73,14 @@ public abstract class BaseContactFragment extends DisplayListFragment<Contact, C
 
         addFootersAndHeaders();
 
+
+        if (emptyView != null) {
+            if (messenger().getAppState().getIsContactsEmpty().get()) {
+                emptyView.setVisibility(View.VISIBLE);
+            } else {
+                emptyView.setVisibility(View.GONE);
+            }
+        }
         bind(messenger().getAppState().getIsContactsEmpty(), new ValueChangedListener<Boolean>() {
             @Override
             public void onChanged(Boolean val, Value<Boolean> Value) {
@@ -77,7 +93,8 @@ public abstract class BaseContactFragment extends DisplayListFragment<Contact, C
                 }
             }
         });
-        res.setBackgroundColor(ActorSDK.sharedActor().style.getMainBackgroundColor());
+        res.setBackgroundColor(ActorSDK.sharedActor().style.getBackyardBackgroundColor());
+
         return res;
     }
 

@@ -22,7 +22,7 @@
 
 "ContactsAddHint" = "Please, specify phone number";
 
-"ContactsActionInvite" = "Tell Friends about Actor";
+"ContactsActionInvite" = "Tell Friends about";
 
 "ContactsActionAdd" = "Add Friend";
 
@@ -57,7 +57,7 @@
 
 "SettingsUsernameHintField" = "Enter your Username";
 
-"SettingsUsernameHint" = "You can choose a username in Actor. If you do, other people will be able to find you by this username and contact you without sharing your phone number.\n\nYou can use a-z, 0-9 and underscores. Minumum length is 5 characters.";
+"SettingsUsernameHint" = "You can choose a username in {appname}. If you do, other people will be able to find you by this username and contact you without sharing your phone number.\n\nYou can use a-z, 0-9 and underscores. Minumum length is 5 characters.";
 
 
 "SettingsAboutNotSet" = "Set about me";
@@ -81,6 +81,22 @@
 "SettingsAbout" = "App Homepage";
 
 "SettingsVersion" = "Version {version}";
+
+"SettingsAllSessions" = "All sessions";
+
+"SettingsLastSeen" = "Last seen";
+
+"SettingsLastSeenHint" = "Change who can see your Last Seen time.";
+
+
+"SettingsLastSeenEverybody" = "Everybody";
+
+"SettingsLastSeenContacts"  = "My Contacts";
+
+"SettingsLastSeenNone"    = "Nobody";
+
+"SettingsMobilePhone"    = "Mobile Phone";
+
 
 /*
  * Profile
@@ -172,7 +188,7 @@
 
 "GroupMemberCallNoPhones" = "No phone number available for user.";
 
-"GroupAddParticipant" = "Add Prticipant...";
+"GroupAddParticipant" = "Add Participant...";
 
 "GroupAddParticipantTitle" = "Contacts";
 
@@ -198,7 +214,7 @@
 
 "GroupIntegrationLinkTitle" = "LINK";
 
-"GroupIntegrationLinkHint" = "You can use this link to send message from any external system.";
+"GroupIntegrationLinkHint" = "You can use this link to send a message from any external system.";
 
 "GroupIntegrationDoc" = "Open Documentation";
 
@@ -229,6 +245,12 @@
 "CreateGroupMembersTitle" = "Invite members";
 
 "CreateGroupMembersPlaceholders" = "Enter Names";
+
+/*
+ * Location
+ */
+
+"LocationTitle" = "Location";
 
 /*
  * Notifications
@@ -296,7 +318,9 @@
 
 "ChatSend" = "Send";
 
-"ChatNoGroupAccess" = "You is not member";
+"ChatNoGroupAccess" = "You are not a member";
+
+"ChatNewMessages" = "New messages";
 
 /*
  * Find
@@ -316,7 +340,7 @@
 
 "Placeholder_Empty_Title" = "Invite your friends";
 
-"Placeholder_Empty_Message" = "None of your contacts use Actor. Use button bellow to invite them.";
+"Placeholder_Empty_Message" = "None of your contacts use {appname}. Use button bellow to invite them.";
 
 "Placeholder_Empty_Action" = "TELL A FRIEND";
 
@@ -330,7 +354,7 @@
 
 "Placeholder_Contacts_Title" = "Invite your friends";
 
-"Placeholder_Contacts_Message" = "None of your contacts use Actor. Use button bellow to invite them.";
+"Placeholder_Contacts_Message" = "None of your contacts use {appname}. Use button bellow to invite them.";
 
 "Placeholder_Contacts_Action" = "TELL A FRIEND";
 
@@ -348,11 +372,19 @@
  * Auth
  */
 
+"AuthMoreInfo" = "Free, fast and secure messaging.";
+
+"AuthStarButton" = "Start Messaging";
+
 "AuthPhoneTitle" = "Your Phone";
 
 "AuthPhoneNumberHint" = "Your phone number";
 
 "AuthPhoneHint" = "Please confirm your country code and enter your phone number.";
+
+"AuthTermsOfServiceFull" = "By signing up, you agree to the Terms of Service.";
+
+"AuthTermsOfService" = "Terms of Service";
 
 "AuthPhoneTooShort" = "Phone number too short";
 
@@ -360,9 +392,9 @@
 
 "AuthCodeHint" = "We have sent you an SMS with the code.";
 
-"AuthCallHint" = "Actor will call you in {time}";
+"AuthCallHint" = "{appname} will call you in {time}";
 
-"AuthCallDoneHint" = "Actor dialed your number.";
+"AuthCallDoneHint" = "{appname} dialed your number.";
 
 "AuthNoCodeHint" = "Doesn't get the code?";
 
@@ -376,13 +408,15 @@
 
 "AuthProfileHint" = "Enter your name and add a pofile picture";
 
+"AuthTerms" = "By signing up to {app_name}, you agree not to: \n\n - use our service to send spam and scam users.\n\n- promote violence on publicly viewable {app_name} bots or channels.\n\nWe reserve the right to update these Terms of Service later.";
+
 /*
  * Common Elements
  */
 
 "CurrentLocale" = "En";
 
-"InviteText" = "Hi! Let's switch to Actor! {link}";
+"InviteText" = "Hi! Let's switch to {appname}! {link}";
 
 "PhotoRemove" = "Delete Photo";
 
@@ -393,6 +427,10 @@
 "PhotoLibrary" = "Media Library";
 
 "SendDocument" = "Document";
+
+"ShareLocation" = "Location";
+
+"ShareContact" = "Share Contact";
 
 "NavigationEdit" = "Edit";
 
@@ -453,3 +491,5 @@
 "ErrorAlreadyJoined" = "You are already member of group";
 
 "ErrorUnableToJoin" = "Unable to join to group";
+
+"ErrorUnableToCall" = "Unable to call this number";

@@ -17,6 +17,7 @@ abstract class BaseAppSuite(_system: ActorSystem = {
   extends ActorSuite(_system)
   with FlatSpecLike
   with ScalaFutures
+  with MessagingSpecHelpers
   with Matchers
   with Inside
   with ServiceSpecMatchers
@@ -26,12 +27,13 @@ abstract class BaseAppSuite(_system: ActorSystem = {
   protected implicit val materializer: ActorMaterializer = ActorMaterializer()
   protected implicit lazy val ec: ExecutionContext = _system.dispatcher
 
-  protected implicit lazy val db: PostgresDriver.api.Database = DbExtension(_system).db
-
-  DbExtension(_system).clean()
-  DbExtension(_system).migrate()
+  protected implicit lazy val db: PostgresDriver.api.Database = {
+    DbExtension(_system).clean()
+    DbExtension(_system).migrate()
+    DbExtension(_system).db
+  }
 
   override implicit def patienceConfig: PatienceConfig =
-    new PatienceConfig(timeout = Span(30, Seconds))
+    new PatienceConfig(timeout = Span(15, Seconds))
 
 }

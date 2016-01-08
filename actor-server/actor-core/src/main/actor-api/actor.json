@@ -55,6 +55,22 @@
         {
           "type": "enum",
           "content": {
+            "name": "PhoneActivationType",
+            "values": [
+              {
+                "name": "CODE",
+                "id": 1
+              },
+              {
+                "name": "PASSWORD",
+                "id": 2
+              }
+            ]
+          }
+        },
+        {
+          "type": "enum",
+          "content": {
             "name": "EmailActivationType",
             "values": [
               {
@@ -64,6 +80,10 @@
               {
                 "name": "OAUTH2",
                 "id": 2
+              },
+              {
+                "name": "PASSWORD",
+                "id": 3
               }
             ]
           }
@@ -101,6 +121,17 @@
                   "type": "bool",
                   "id": 2,
                   "name": "isRegistered"
+                },
+                {
+                  "type": {
+                    "type": "opt",
+                    "childType": {
+                      "type": "enum",
+                      "childType": "PhoneActivationType"
+                    }
+                  },
+                  "id": 3,
+                  "name": "activationType"
                 }
               ]
             },
@@ -364,6 +395,330 @@
         {
           "type": "rpc",
           "content": {
+            "name": "StartAnonymousAuth",
+            "header": 198,
+            "response": {
+              "type": "reference",
+              "name": "Auth"
+            },
+            "doc": [
+              "Starting Anonymous login",
+              {
+                "type": "reference",
+                "argument": "name",
+                "category": "full",
+                "description": "Name of new user"
+              },
+              {
+                "type": "reference",
+                "argument": "appId",
+                "category": "hidden",
+                "description": "Application Id"
+              },
+              {
+                "type": "reference",
+                "argument": "apiKey",
+                "category": "hidden",
+                "description": "Application API key"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceHash",
+                "category": "full",
+                "description": "Hash of device unique id and app bundle id. Used for autologout users when app is reinstalled"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceTitle",
+                "category": "full",
+                "description": "Device Title"
+              },
+              {
+                "type": "reference",
+                "argument": "timeZone",
+                "category": "full",
+                "description": "TimeZone of device"
+              },
+              {
+                "type": "reference",
+                "argument": "preferredLanguages",
+                "category": "full",
+                "description": "Preferred languages"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "name"
+              },
+              {
+                "type": "int32",
+                "id": 2,
+                "name": "appId"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "apiKey"
+              },
+              {
+                "type": "bytes",
+                "id": 4,
+                "name": "deviceHash"
+              },
+              {
+                "type": "string",
+                "id": 5,
+                "name": "deviceTitle"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 6,
+                "name": "timeZone"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": "string"
+                },
+                "id": 7,
+                "name": "preferredLanguages"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "StartTokenAuth",
+            "header": 203,
+            "response": {
+              "type": "reference",
+              "name": "Auth"
+            },
+            "doc": [
+              "Starting token-based login",
+              {
+                "type": "reference",
+                "argument": "token",
+                "category": "full",
+                "description": "Token for authentication"
+              },
+              {
+                "type": "reference",
+                "argument": "appId",
+                "category": "hidden",
+                "description": "Application Id"
+              },
+              {
+                "type": "reference",
+                "argument": "apiKey",
+                "category": "hidden",
+                "description": "Application API key"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceHash",
+                "category": "full",
+                "description": "Hash of device unique id and app bundle id. Used for autologout users when app is reinstalled"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceTitle",
+                "category": "full",
+                "description": "Device Title"
+              },
+              {
+                "type": "reference",
+                "argument": "timeZone",
+                "category": "full",
+                "description": "TimeZone of device"
+              },
+              {
+                "type": "reference",
+                "argument": "preferredLanguages",
+                "category": "full",
+                "description": "Preferred languages"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "token"
+              },
+              {
+                "type": "int32",
+                "id": 2,
+                "name": "appId"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "apiKey"
+              },
+              {
+                "type": "bytes",
+                "id": 4,
+                "name": "deviceHash"
+              },
+              {
+                "type": "string",
+                "id": 5,
+                "name": "deviceTitle"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 6,
+                "name": "timeZone"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": "string"
+                },
+                "id": 7,
+                "name": "preferredLanguages"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "StartUsernameAuth",
+            "header": 2571,
+            "response": {
+              "type": "anonymous",
+              "header": 2572,
+              "doc": [
+                "Result of login auth start. If is not registered move to signup.",
+                {
+                  "type": "reference",
+                  "argument": "transactionHash",
+                  "category": "danger",
+                  "description": "  Authentication transaction hash"
+                },
+                {
+                  "type": "reference",
+                  "argument": "isRegistered",
+                  "category": "full",
+                  "description": "  If user is registered with this username"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": "string",
+                  "id": 1,
+                  "name": "transactionHash"
+                },
+                {
+                  "type": "bool",
+                  "id": 2,
+                  "name": "isRegistered"
+                }
+              ]
+            },
+            "doc": [
+              "Starting Login Authentication",
+              {
+                "type": "reference",
+                "argument": "username",
+                "category": "full",
+                "description": "Username for signing in"
+              },
+              {
+                "type": "reference",
+                "argument": "appId",
+                "category": "hidden",
+                "description": "Application id"
+              },
+              {
+                "type": "reference",
+                "argument": "apiKey",
+                "category": "hidden",
+                "description": "Application API key"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceHash",
+                "category": "full",
+                "description": "Hash of device unique id and app bundle id. Used for autologout users when app is reinstalled"
+              },
+              {
+                "type": "reference",
+                "argument": "deviceTitle",
+                "category": "full",
+                "description": "Device Title"
+              },
+              {
+                "type": "reference",
+                "argument": "timeZone",
+                "category": "full",
+                "description": "Time Zone of device"
+              },
+              {
+                "type": "reference",
+                "argument": "preferredLanguages",
+                "category": "full",
+                "description": "Preferred languages of device"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "username"
+              },
+              {
+                "type": "int32",
+                "id": 2,
+                "name": "appId"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "apiKey"
+              },
+              {
+                "type": "bytes",
+                "id": 4,
+                "name": "deviceHash"
+              },
+              {
+                "type": "string",
+                "id": 5,
+                "name": "deviceTitle"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 6,
+                "name": "timeZone"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": "string"
+                },
+                "id": 7,
+                "name": "preferredLanguages"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
             "name": "ValidateCode",
             "header": 189,
             "response": {
@@ -395,6 +750,44 @@
                 "type": "string",
                 "id": 2,
                 "name": "code"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "ValidatePassword",
+            "header": 207,
+            "response": {
+              "type": "reference",
+              "name": "Auth"
+            },
+            "doc": [
+              "Validation of account password",
+              {
+                "type": "reference",
+                "argument": "transactionHash",
+                "category": "full",
+                "description": "Hash of transaction"
+              },
+              {
+                "type": "reference",
+                "argument": "password",
+                "category": "full",
+                "description": "Password for account"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "transactionHash"
+              },
+              {
+                "type": "string",
+                "id": 2,
+                "name": "password"
               }
             ]
           }
@@ -518,6 +911,12 @@
                 "argument": "sex",
                 "category": "full",
                 "description": "Optional user sex"
+              },
+              {
+                "type": "reference",
+                "argument": "password",
+                "category": "full",
+                "description": "Password for password-based accounts"
               }
             ],
             "attributes": [
@@ -541,6 +940,14 @@
                 },
                 "id": 3,
                 "name": "sex"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 4,
+                "name": "password"
               }
             ]
           }
@@ -2830,6 +3237,307 @@
         {
           "type": "struct",
           "content": {
+            "name": "TextModernMessage",
+            "doc": [
+              "Modern text message",
+              {
+                "type": "reference",
+                "argument": "text",
+                "category": "full",
+                "description": "  optional text of message"
+              },
+              {
+                "type": "reference",
+                "argument": "senderNameOverride",
+                "category": "full",
+                "description": "  optional overriding of sender"
+              },
+              {
+                "type": "reference",
+                "argument": "senderPhotoOverride",
+                "category": "full",
+                "description": "  optional overriding sender's photo"
+              },
+              {
+                "type": "reference",
+                "argument": "style",
+                "category": "full",
+                "description": "  optional paragraph style"
+              },
+              {
+                "type": "reference",
+                "argument": "attaches",
+                "category": "full",
+                "description": "  optional Attaches of message"
+              }
+            ],
+            "trait": {
+              "name": "TextMessageEx",
+              "key": 2
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 1,
+                "name": "text"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 2,
+                "name": "senderNameOverride"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Avatar"
+                  }
+                },
+                "id": 3,
+                "name": "senderPhotoOverride"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ParagraphStyle"
+                  }
+                },
+                "id": 4,
+                "name": "style"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "TextModernAttach"
+                  }
+                },
+                "id": 5,
+                "name": "attaches"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "ParagraphStyle",
+            "doc": [
+              "Paragraph style",
+              {
+                "type": "reference",
+                "argument": "showParagraph",
+                "category": "full",
+                "description": "  Show quote-like paragraph?"
+              },
+              {
+                "type": "reference",
+                "argument": "paragraphColor",
+                "category": "full",
+                "description": "  Override paragraph color"
+              },
+              {
+                "type": "reference",
+                "argument": "bgColor",
+                "category": "full",
+                "description": "  Override background color"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "bool"
+                },
+                "id": 1,
+                "name": "showParagraph"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "trait",
+                    "childType": "Color"
+                  }
+                },
+                "id": 2,
+                "name": "paragraphColor"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "trait",
+                    "childType": "Color"
+                  }
+                },
+                "id": 3,
+                "name": "bgColor"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "TextModernAttach",
+            "doc": [
+              "Attaches to message",
+              {
+                "type": "reference",
+                "argument": "title",
+                "category": "full",
+                "description": "  Attach of message"
+              },
+              {
+                "type": "reference",
+                "argument": "titleUrl",
+                "category": "full",
+                "description": "  Attach title url"
+              },
+              {
+                "type": "reference",
+                "argument": "titleIcon",
+                "category": "full",
+                "description": "  Attach title icon"
+              },
+              {
+                "type": "reference",
+                "argument": "text",
+                "category": "full",
+                "description": "  Attach text"
+              },
+              {
+                "type": "reference",
+                "argument": "style",
+                "category": "full",
+                "description": "  Attach style"
+              }
+            ],
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 1,
+                "name": "title"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 2,
+                "name": "titleUrl"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ImageLocation"
+                  }
+                },
+                "id": 3,
+                "name": "titleIcon"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 4,
+                "name": "text"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ParagraphStyle"
+                  }
+                },
+                "id": 5,
+                "name": "style"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "TextModernField"
+                  }
+                },
+                "id": 6,
+                "name": "fields"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "TextModernField",
+            "doc": [
+              "Modern message fields",
+              {
+                "type": "reference",
+                "argument": "title",
+                "category": "full",
+                "description": "  Field title"
+              },
+              {
+                "type": "reference",
+                "argument": "value",
+                "category": "full",
+                "description": "  Field value"
+              },
+              {
+                "type": "reference",
+                "argument": "isShort",
+                "category": "full",
+                "description": "  Is field can be shown in compact way (default is TRUE)"
+              }
+            ],
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "title"
+              },
+              {
+                "type": "string",
+                "id": 2,
+                "name": "value"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "bool"
+                },
+                "id": 3,
+                "name": "isShort"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
             "name": "ServiceMessage",
             "doc": [
               "Service message",
@@ -3007,6 +3715,66 @@
                 "type": "string",
                 "id": 1,
                 "name": "title"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "ServiceExChangedTopic",
+            "doc": [
+              "Service message on group topic change",
+              {
+                "type": "reference",
+                "argument": "topic",
+                "category": "full",
+                "description": "  New group topic"
+              }
+            ],
+            "trait": {
+              "name": "ServiceEx",
+              "key": 18
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 1,
+                "name": "topic"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "ServiceExChangedAbout",
+            "doc": [
+              "Service message on group about change",
+              {
+                "type": "reference",
+                "argument": "about",
+                "category": "full",
+                "description": "  New group about"
+              }
+            ],
+            "trait": {
+              "name": "ServiceEx",
+              "key": 19
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 1,
+                "name": "about"
               }
             ]
           }
@@ -3382,6 +4150,112 @@
         {
           "type": "struct",
           "content": {
+            "name": "StickerMessage",
+            "doc": [
+              "Sticker message",
+              {
+                "type": "reference",
+                "argument": "stickerId",
+                "category": "full",
+                "description": "  Optional Unique ID of sticker"
+              },
+              {
+                "type": "reference",
+                "argument": "fastPreview",
+                "category": "full",
+                "description": "  Optional Fast preview of sticker in webp format"
+              },
+              {
+                "type": "reference",
+                "argument": "image512",
+                "category": "full",
+                "description": "  Optional 512x512 sticker image in webp format"
+              },
+              {
+                "type": "reference",
+                "argument": "image256",
+                "category": "full",
+                "description": "  Optional 256x256 sticker image in webp format"
+              },
+              {
+                "type": "reference",
+                "argument": "stickerCollectionId",
+                "category": "full",
+                "description": "  Optional Collection ID"
+              },
+              {
+                "type": "reference",
+                "argument": "stickerCollectionAccessHash",
+                "category": "full",
+                "description": "  Optional Collection Access Hash"
+              }
+            ],
+            "trait": {
+              "name": "Message",
+              "key": 6
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "int32"
+                },
+                "id": 1,
+                "name": "stickerId"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "bytes"
+                },
+                "id": 2,
+                "name": "fastPreview"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ImageLocation"
+                  }
+                },
+                "id": 3,
+                "name": "image512"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ImageLocation"
+                  }
+                },
+                "id": 4,
+                "name": "image256"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "int32"
+                },
+                "id": 5,
+                "name": "stickerCollectionId"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "int64"
+                },
+                "id": 6,
+                "name": "stickerCollectionAccessHash"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
             "name": "DialogShort",
             "doc": [
               "Short Dialog from grouped conversation list",
@@ -3475,6 +4349,45 @@
                 },
                 "id": 3,
                 "name": "dialogs"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "MessageReaction",
+            "doc": [
+              "Reaction to message",
+              {
+                "type": "reference",
+                "argument": "users",
+                "category": "full",
+                "description": "  User's reaction"
+              },
+              {
+                "type": "reference",
+                "argument": "code",
+                "category": "full",
+                "description": "  Reaction EMOJI code"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "alias",
+                    "childType": "userId"
+                  }
+                },
+                "id": 1,
+                "name": "users"
+              },
+              {
+                "type": "string",
+                "id": 2,
+                "name": "code"
               }
             ]
           }
@@ -3728,6 +4641,152 @@
                 },
                 "id": 1,
                 "name": "peer"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "MessageSetReaction",
+            "header": 210,
+            "response": {
+              "type": "reference",
+              "name": "ReactionsResponse"
+            },
+            "doc": [
+              "Setting Message reaction",
+              {
+                "type": "reference",
+                "argument": "peer",
+                "category": "full",
+                "description": "Destination peer"
+              },
+              {
+                "type": "reference",
+                "argument": "rid",
+                "category": "full",
+                "description": "Message random id"
+              },
+              {
+                "type": "reference",
+                "argument": "code",
+                "category": "full",
+                "description": "Reaction code"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "OutPeer"
+                },
+                "id": 1,
+                "name": "peer"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "randomId"
+                },
+                "id": 2,
+                "name": "rid"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "code"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "MessageRemoveReaction",
+            "header": 220,
+            "response": {
+              "type": "reference",
+              "name": "ReactionsResponse"
+            },
+            "doc": [
+              "Removing Message reaction",
+              {
+                "type": "reference",
+                "argument": "peer",
+                "category": "full",
+                "description": "Destination peer"
+              },
+              {
+                "type": "reference",
+                "argument": "rid",
+                "category": "full",
+                "description": "Message random id"
+              },
+              {
+                "type": "reference",
+                "argument": "code",
+                "category": "full",
+                "description": "Reaction code"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "OutPeer"
+                },
+                "id": 1,
+                "name": "peer"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "randomId"
+                },
+                "id": 2,
+                "name": "rid"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "code"
+              }
+            ]
+          }
+        },
+        {
+          "type": "response",
+          "content": {
+            "name": "ReactionsResponse",
+            "header": 219,
+            "doc": [
+              "Response for reactions change"
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "seq"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "seq_state"
+                },
+                "id": 2,
+                "name": "state"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "MessageReaction"
+                  }
+                },
+                "id": 3,
+                "name": "reactions"
               }
             ]
           }
@@ -4249,6 +5308,63 @@
           }
         },
         {
+          "type": "update",
+          "content": {
+            "name": "ReactionsUpdate",
+            "header": 222,
+            "doc": [
+              "Update about reactions change",
+              {
+                "type": "reference",
+                "argument": "peer",
+                "category": "full",
+                "description": "  Destination peer"
+              },
+              {
+                "type": "reference",
+                "argument": "rid",
+                "category": "full",
+                "description": "  Message random id"
+              },
+              {
+                "type": "reference",
+                "argument": "reactions",
+                "category": "full",
+                "description": "  New Reactions"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "Peer"
+                },
+                "id": 1,
+                "name": "peer"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "randomId"
+                },
+                "id": 2,
+                "name": "rid"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "MessageReaction"
+                  }
+                },
+                "id": 3,
+                "name": "reactions"
+              }
+            ]
+          }
+        },
+        {
           "type": "enum",
           "content": {
             "name": "MessageState",
@@ -4297,6 +5413,12 @@
                 "argument": "message",
                 "category": "full",
                 "description": "  Content of message"
+              },
+              {
+                "type": "reference",
+                "argument": "reactions",
+                "category": "full",
+                "description": "  Message reactions"
               }
             ],
             "attributes": [
@@ -4342,6 +5464,17 @@
                 },
                 "id": 6,
                 "name": "state"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "MessageReaction"
+                  }
+                },
+                "id": 7,
+                "name": "reactions"
               }
             ]
           }
@@ -4820,6 +5953,66 @@
             },
             "doc": [
               "Show Dialog in grouped list"
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "OutPeer"
+                },
+                "id": 1,
+                "name": "peer"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "FavouriteDialog",
+            "header": 224,
+            "response": {
+              "type": "reference",
+              "name": "DialogsOrder"
+            },
+            "doc": [
+              "Marking dialog as favourite",
+              {
+                "type": "reference",
+                "argument": "peer",
+                "category": "full",
+                "description": "Peer for favouriting"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "OutPeer"
+                },
+                "id": 1,
+                "name": "peer"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "UnfavouriteDialog",
+            "header": 227,
+            "response": {
+              "type": "reference",
+              "name": "DialogsOrder"
+            },
+            "doc": [
+              "Making dialog as unfavourite",
+              {
+                "type": "reference",
+                "argument": "peer",
+                "category": "full",
+                "description": "Peer for favouriting"
+              }
             ],
             "attributes": [
               {
@@ -6906,6 +8099,433 @@
       ]
     },
     {
+      "title": "Stickers",
+      "package": "stickers",
+      "doc": [
+        "Stickers support in Actor"
+      ],
+      "items": [
+        {
+          "type": "struct",
+          "content": {
+            "name": "StickerDescriptor",
+            "doc": [
+              "Descriptor of a Sticker",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "  Sticker unique id"
+              },
+              {
+                "type": "reference",
+                "argument": "emoji",
+                "category": "full",
+                "description": "  Emoji code for sticker"
+              },
+              {
+                "type": "reference",
+                "argument": "image128",
+                "category": "full",
+                "description": "  Image of sticker 128x128 in WebP format"
+              },
+              {
+                "type": "reference",
+                "argument": "image512",
+                "category": "full",
+                "description": "  Image of sticker 512x512 in WebP format"
+              },
+              {
+                "type": "reference",
+                "argument": "image256",
+                "category": "full",
+                "description": "  Image of sticker 256x256 in WebP format"
+              }
+            ],
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 2,
+                "name": "emoji"
+              },
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "ImageLocation"
+                },
+                "id": 3,
+                "name": "image128"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ImageLocation"
+                  }
+                },
+                "id": 4,
+                "name": "image512"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "ImageLocation"
+                  }
+                },
+                "id": 5,
+                "name": "image256"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "StickerCollection",
+            "doc": [
+              "Sticker collection",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "  Unique id of a collection"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "full",
+                "description": "  Access Hash of a collection"
+              },
+              {
+                "type": "reference",
+                "argument": "stickers",
+                "category": "compact",
+                "description": "  Sticker list"
+              }
+            ],
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "StickerDescriptor"
+                  }
+                },
+                "id": 3,
+                "name": "stickers"
+              }
+            ]
+          }
+        },
+        {
+          "type": "response",
+          "content": {
+            "name": "StickersReponse",
+            "header": 240,
+            "doc": [
+              "Stickers response",
+              {
+                "type": "reference",
+                "argument": "collections",
+                "category": "full",
+                "description": "  Sticker collections"
+              },
+              {
+                "type": "reference",
+                "argument": "seq",
+                "category": "full",
+                "description": "  Seq of update"
+              },
+              {
+                "type": "reference",
+                "argument": "state",
+                "category": "full",
+                "description": "  State of update"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "StickerCollection"
+                  }
+                },
+                "id": 1,
+                "name": "collections"
+              },
+              {
+                "type": "int32",
+                "id": 2,
+                "name": "seq"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "seq_state"
+                },
+                "id": 3,
+                "name": "state"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "LoadOwnStickers",
+            "header": 238,
+            "response": {
+              "type": "anonymous",
+              "header": 239,
+              "doc": [
+                "Own Stickers collections",
+                {
+                  "type": "reference",
+                  "argument": "ownStickers",
+                  "category": "hidden",
+                  "description": "  Own sticker collections"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": {
+                    "type": "list",
+                    "childType": {
+                      "type": "struct",
+                      "childType": "StickerCollection"
+                    }
+                  },
+                  "id": 1,
+                  "name": "ownStickers"
+                }
+              ]
+            },
+            "doc": [
+              "Loading own stickers"
+            ],
+            "attributes": []
+          }
+        },
+        {
+          "type": "update",
+          "content": {
+            "name": "OwnStickersChanged",
+            "header": 161,
+            "doc": [
+              "Own Stickers changed",
+              {
+                "type": "reference",
+                "argument": "collections",
+                "category": "compact",
+                "description": "  New own sticker collections"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "StickerCollection"
+                  }
+                },
+                "id": 1,
+                "name": "collections"
+              }
+            ]
+          }
+        },
+        {
+          "type": "update",
+          "content": {
+            "name": "StickerCollectionsChanged",
+            "header": 164,
+            "doc": [
+              "Sticker collection changed",
+              {
+                "type": "reference",
+                "argument": "collections",
+                "category": "full",
+                "description": "  Updated sticker collections"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "StickerCollection"
+                  }
+                },
+                "id": 1,
+                "name": "collections"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "AddStickerCollection",
+            "header": 244,
+            "response": {
+              "type": "reference",
+              "name": "StickersReponse"
+            },
+            "doc": [
+              "Adding sticker collection",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "Collection id"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "full",
+                "description": "Collection access hash"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "RemoveStickerCollection",
+            "header": 245,
+            "response": {
+              "type": "reference",
+              "name": "StickersReponse"
+            },
+            "doc": [
+              "Removing sticker collection",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "Collection id"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "full",
+                "description": "Collection access hash"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "LoadStickerCollection",
+            "header": 246,
+            "response": {
+              "type": "anonymous",
+              "header": 247,
+              "doc": [
+                "Loaded collection",
+                {
+                  "type": "reference",
+                  "argument": "collection",
+                  "category": "full",
+                  "description": "  Collection of stickers"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": {
+                    "type": "struct",
+                    "childType": "StickerCollection"
+                  },
+                  "id": 1,
+                  "name": "collection"
+                }
+              ]
+            },
+            "doc": [
+              "Loading stickers",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "Collection id"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "full",
+                "description": "Collection access hash"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "title": "Search",
       "package": "search",
       "doc": [
@@ -7077,8 +8697,8 @@
                 "type": {
                   "type": "list",
                   "childType": {
-                    "type": "struct",
-                    "childType": "SearchOrCondition"
+                    "type": "trait",
+                    "childType": "SearchCondition"
                   }
                 },
                 "id": 2,
@@ -7481,69 +9101,90 @@
           }
         },
         {
+          "type": "response",
+          "content": {
+            "name": "MessageSearchResponse",
+            "header": 218,
+            "doc": [
+              "Search Result",
+              {
+                "type": "reference",
+                "argument": "searchResults",
+                "category": "full",
+                "description": "  Search results"
+              },
+              {
+                "type": "reference",
+                "argument": "users",
+                "category": "full",
+                "description": "  Search users"
+              },
+              {
+                "type": "reference",
+                "argument": "groups",
+                "category": "full",
+                "description": "  Search groups"
+              },
+              {
+                "type": "reference",
+                "argument": "loadMoreState",
+                "category": "hidden",
+                "description": "  State for loading more results"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "MessageSearchItem"
+                  }
+                },
+                "id": 1,
+                "name": "searchResults"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "User"
+                  }
+                },
+                "id": 2,
+                "name": "users"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Group"
+                  }
+                },
+                "id": 3,
+                "name": "groups"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "bytes"
+                },
+                "id": 4,
+                "name": "loadMoreState"
+              }
+            ]
+          }
+        },
+        {
           "type": "rpc",
           "content": {
             "name": "MessageSearch",
             "header": 217,
             "response": {
-              "type": "anonymous",
-              "header": 218,
-              "doc": [
-                "Search Result",
-                {
-                  "type": "reference",
-                  "argument": "searchResults",
-                  "category": "full",
-                  "description": "  Search results"
-                },
-                {
-                  "type": "reference",
-                  "argument": "users",
-                  "category": "full",
-                  "description": "  Search users"
-                },
-                {
-                  "type": "reference",
-                  "argument": "groups",
-                  "category": "full",
-                  "description": "  Search groups"
-                }
-              ],
-              "attributes": [
-                {
-                  "type": {
-                    "type": "list",
-                    "childType": {
-                      "type": "struct",
-                      "childType": "MessageSearchItem"
-                    }
-                  },
-                  "id": 1,
-                  "name": "searchResults"
-                },
-                {
-                  "type": {
-                    "type": "list",
-                    "childType": {
-                      "type": "struct",
-                      "childType": "User"
-                    }
-                  },
-                  "id": 2,
-                  "name": "users"
-                },
-                {
-                  "type": {
-                    "type": "list",
-                    "childType": {
-                      "type": "struct",
-                      "childType": "Group"
-                    }
-                  },
-                  "id": 3,
-                  "name": "groups"
-                }
-              ]
+              "type": "reference",
+              "name": "MessageSearchResponse"
             },
             "doc": [
               "Performing message search",
@@ -7562,6 +9203,33 @@
                 },
                 "id": 1,
                 "name": "query"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "MessageSearchMore",
+            "header": 222,
+            "response": {
+              "type": "reference",
+              "name": "MessageSearchResponse"
+            },
+            "doc": [
+              "Performing message search paging",
+              {
+                "type": "reference",
+                "argument": "loadMoreState",
+                "category": "hidden",
+                "description": "State for loading more results"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "bytes",
+                "id": 1,
+                "name": "loadMoreState"
               }
             ]
           }
@@ -7709,8 +9377,483 @@
       ]
     },
     {
+      "title": "Invites",
+      "package": "invites",
+      "doc": [
+        "Invite mechanizm"
+      ],
+      "items": [
+        {
+          "type": "struct",
+          "content": {
+            "name": "InviteState",
+            "doc": [
+              "Invite state",
+              {
+                "type": "reference",
+                "argument": "email",
+                "category": "full",
+                "description": "  Email of invite"
+              },
+              {
+                "type": "reference",
+                "argument": "name",
+                "category": "full",
+                "description": "  Name of invited user"
+              },
+              {
+                "type": "reference",
+                "argument": "uid",
+                "category": "full",
+                "description": "  Uid of registered user"
+              },
+              {
+                "type": "reference",
+                "argument": "tid",
+                "category": "full",
+                "description": "  Team id of invite"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "email"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 2,
+                "name": "name"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "int32"
+                },
+                "id": 3,
+                "name": "uid"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "int32"
+                },
+                "id": 4,
+                "name": "tid"
+              }
+            ]
+          }
+        },
+        {
+          "type": "response",
+          "content": {
+            "name": "InviteList",
+            "header": 2564,
+            "doc": [
+              "Intites list",
+              {
+                "type": "reference",
+                "argument": "invites",
+                "category": "full",
+                "description": "  Intvites"
+              },
+              {
+                "type": "reference",
+                "argument": "relatedUsers",
+                "category": "full",
+                "description": "  Related users in invites"
+              },
+              {
+                "type": "reference",
+                "argument": "relatedGroups",
+                "category": "full",
+                "description": "  Related groups in invites"
+              },
+              {
+                "type": "reference",
+                "argument": "relatedTeams",
+                "category": "full",
+                "description": "  Related teams in invites"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "InviteState"
+                  }
+                },
+                "id": 1,
+                "name": "invites"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "User"
+                  }
+                },
+                "id": 2,
+                "name": "relatedUsers"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Group"
+                  }
+                },
+                "id": 3,
+                "name": "relatedGroups"
+              },
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Team"
+                  }
+                },
+                "id": 4,
+                "name": "relatedTeams"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "LoadOwnSentInvites",
+            "header": 2563,
+            "response": {
+              "type": "reference",
+              "name": "InviteList"
+            },
+            "doc": [
+              "Loading current invite states"
+            ],
+            "attributes": []
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "SendInvite",
+            "header": 2565,
+            "response": {
+              "type": "reference",
+              "name": "InviteList"
+            },
+            "doc": [
+              "Sending an email invite",
+              {
+                "type": "reference",
+                "argument": "email",
+                "category": "full",
+                "description": "Email for invite"
+              },
+              {
+                "type": "reference",
+                "argument": "name",
+                "category": "full",
+                "description": "Optional name for invite"
+              },
+              {
+                "type": "reference",
+                "argument": "destTeam",
+                "category": "full",
+                "description": "Optional team for invite"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "email"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
+                "id": 2,
+                "name": "name"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "OutTeam"
+                  }
+                },
+                "id": 3,
+                "name": "destTeam"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Teams",
+      "package": "teams",
+      "doc": [
+        "Teams support for Actor"
+      ],
+      "items": [
+        {
+          "type": "struct",
+          "content": {
+            "name": "Team",
+            "doc": [
+              "Team entity",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "  Team Id"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "danger",
+                "description": "  Team Access Hash"
+              },
+              {
+                "type": "reference",
+                "argument": "name",
+                "category": "full",
+                "description": "  Team name"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              },
+              {
+                "type": "string",
+                "id": 3,
+                "name": "name"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "OutTeam",
+            "doc": [
+              "Reference to a team",
+              {
+                "type": "reference",
+                "argument": "id",
+                "category": "full",
+                "description": "  Team Id"
+              },
+              {
+                "type": "reference",
+                "argument": "accessHash",
+                "category": "full",
+                "description": "  Team access hash"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "id"
+              },
+              {
+                "type": "int64",
+                "id": 2,
+                "name": "accessHash"
+              }
+            ]
+          }
+        },
+        {
+          "type": "response",
+          "content": {
+            "name": "TeamsList",
+            "header": 2562,
+            "doc": [
+              "Teams response",
+              {
+                "type": "reference",
+                "argument": "teams",
+                "category": "hidden",
+                "description": "  Teams list"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Team"
+                  }
+                },
+                "id": 1,
+                "name": "teams"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "LoadOwnTeams",
+            "header": 2561,
+            "response": {
+              "type": "reference",
+              "name": "TeamsList"
+            },
+            "doc": [
+              "Loading own teams"
+            ],
+            "attributes": []
+          }
+        },
+        {
+          "type": "update",
+          "content": {
+            "name": "OwnTeamsChanged",
+            "header": 165,
+            "doc": [
+              "Update about own teams changed",
+              {
+                "type": "reference",
+                "argument": "ownTeams",
+                "category": "full",
+                "description": "  Updated own teams list"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "Team"
+                  }
+                },
+                "id": 1,
+                "name": "ownTeams"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "CreateTeam",
+            "header": 2566,
+            "response": {
+              "type": "anonymous",
+              "header": 2567,
+              "doc": [
+                "Created team response",
+                {
+                  "type": "reference",
+                  "argument": "createdTeam",
+                  "category": "full",
+                  "description": "  Created Team"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": {
+                    "type": "struct",
+                    "childType": "Team"
+                  },
+                  "id": 1,
+                  "name": "createdTeam"
+                }
+              ]
+            },
+            "doc": [
+              "Creation of a Team",
+              {
+                "type": "reference",
+                "argument": "title",
+                "category": "full",
+                "description": "Title of a team"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "title"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "InviteToTeam",
+            "header": 2568,
+            "response": {
+              "type": "reference",
+              "name": "Void"
+            },
+            "doc": [
+              "Inviting people to team",
+              {
+                "type": "reference",
+                "argument": "user",
+                "category": "full",
+                "description": "Dest user"
+              },
+              {
+                "type": "reference",
+                "argument": "destTeam",
+                "category": "full",
+                "description": "Dest team"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "UserOutPeer"
+                },
+                "id": 1,
+                "name": "user"
+              },
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "OutTeam"
+                },
+                "id": 3,
+                "name": "destTeam"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "title": "Integrations",
-      "package": "integrtions",
+      "package": "integrations",
       "doc": [
         "Package contains methods for providing integration"
       ],
@@ -8239,6 +10382,65 @@
         {
           "type": "struct",
           "content": {
+            "name": "ImageLocation",
+            "doc": [
+              "Image location",
+              {
+                "type": "reference",
+                "argument": "fileLocation",
+                "category": "full",
+                "description": "  Location of file"
+              },
+              {
+                "type": "reference",
+                "argument": "width",
+                "category": "full",
+                "description": "  Width of avatar image"
+              },
+              {
+                "type": "reference",
+                "argument": "height",
+                "category": "full",
+                "description": "  Height of avatar image"
+              },
+              {
+                "type": "reference",
+                "argument": "fileSize",
+                "category": "full",
+                "description": "  Size of file"
+              }
+            ],
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "struct",
+                  "childType": "FileLocation"
+                },
+                "id": 1,
+                "name": "fileLocation"
+              },
+              {
+                "type": "int32",
+                "id": 2,
+                "name": "width"
+              },
+              {
+                "type": "int32",
+                "id": 3,
+                "name": "height"
+              },
+              {
+                "type": "int32",
+                "id": 4,
+                "name": "fileSize"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
             "name": "AvatarImage",
             "doc": [
               "Avatar Image",
@@ -8404,7 +10606,139 @@
           }
         },
         {
+          "type": "enum",
+          "content": {
+            "name": "Colors",
+            "values": [
+              {
+                "name": "red",
+                "id": 1
+              },
+              {
+                "name": "yellow",
+                "id": 2
+              },
+              {
+                "name": "green",
+                "id": 3
+              }
+            ]
+          }
+        },
+        {
+          "type": "trait",
+          "content": {
+            "isContainer": "true",
+            "name": "Color",
+            "attributes": []
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "RgbColor",
+            "doc": [
+              "RGB Color",
+              {
+                "type": "reference",
+                "argument": "rgb",
+                "category": "full",
+                "description": "  RGB color value"
+              }
+            ],
+            "trait": {
+              "name": "Color",
+              "key": 1
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": "int32",
+                "id": 1,
+                "name": "rgb"
+              }
+            ]
+          }
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "PredefinedColor",
+            "doc": [
+              "Predefined color",
+              {
+                "type": "reference",
+                "argument": "color",
+                "category": "hidden",
+                "description": "  Predefined color value"
+              }
+            ],
+            "trait": {
+              "name": "Color",
+              "key": 2
+            },
+            "expandable": "true",
+            "attributes": [
+              {
+                "type": {
+                  "type": "enum",
+                  "childType": "Colors"
+                },
+                "id": 1,
+                "name": "color"
+              }
+            ]
+          }
+        },
+        {
           "type": "empty"
+        },
+        {
+          "type": "struct",
+          "content": {
+            "name": "FileUrlDescription",
+            "doc": [
+              "File url description",
+              {
+                "type": "reference",
+                "argument": "fileId",
+                "category": "full",
+                "description": "  File id of url"
+              },
+              {
+                "type": "reference",
+                "argument": "url",
+                "category": "full",
+                "description": "  Url for downloading"
+              },
+              {
+                "type": "reference",
+                "argument": "timeout",
+                "category": "full",
+                "description": "  Timeout of url"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "int64",
+                "id": 1,
+                "name": "fileId"
+              },
+              {
+                "type": "string",
+                "id": 2,
+                "name": "url"
+              },
+              {
+                "type": {
+                  "type": "alias",
+                  "childType": "sec"
+                },
+                "id": 3,
+                "name": "timeout"
+              }
+            ]
+          }
         },
         {
           "type": "rpc",
@@ -8461,6 +10795,60 @@
                 },
                 "id": 1,
                 "name": "file"
+              }
+            ]
+          }
+        },
+        {
+          "type": "rpc",
+          "content": {
+            "name": "GetFileUrls",
+            "header": 2573,
+            "response": {
+              "type": "anonymous",
+              "header": 2574,
+              "doc": [
+                {
+                  "type": "reference",
+                  "argument": "fileUrls",
+                  "category": "full",
+                  "description": "  File urls"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": {
+                    "type": "list",
+                    "childType": {
+                      "type": "struct",
+                      "childType": "FileUrlDescription"
+                    }
+                  },
+                  "id": 1,
+                  "name": "fileUrls"
+                }
+              ]
+            },
+            "doc": [
+              "Requesting multiple fle URL for downloading",
+              {
+                "type": "reference",
+                "argument": "files",
+                "category": "hidden",
+                "description": "File locations to load urls"
+              }
+            ],
+            "attributes": [
+              {
+                "type": {
+                  "type": "list",
+                  "childType": {
+                    "type": "struct",
+                    "childType": "FileLocation"
+                  }
+                },
+                "id": 1,
+                "name": "files"
               }
             ]
           }
@@ -8724,7 +11112,10 @@
                 "name": "key"
               },
               {
-                "type": "string",
+                "type": {
+                  "type": "opt",
+                  "childType": "string"
+                },
                 "id": 2,
                 "name": "value"
               }
@@ -8972,6 +11363,89 @@
                 },
                 "id": 1,
                 "name": "events"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Raw API",
+      "package": "raw",
+      "doc": [
+        "Schema-less API that is useful for external integrations"
+      ],
+      "items": [
+        {
+          "type": "rpc",
+          "content": {
+            "name": "RawRequest",
+            "header": 2569,
+            "response": {
+              "type": "anonymous",
+              "header": 2570,
+              "doc": [
+                "Response of a raw request",
+                {
+                  "type": "reference",
+                  "argument": "result",
+                  "category": "full",
+                  "description": "  Result of request"
+                }
+              ],
+              "attributes": [
+                {
+                  "type": {
+                    "type": "trait",
+                    "childType": "RawValue"
+                  },
+                  "id": 1,
+                  "name": "result"
+                }
+              ]
+            },
+            "doc": [
+              "Making raw request to external service via shema-less RPC request",
+              {
+                "type": "reference",
+                "argument": "service",
+                "category": "full",
+                "description": "Service name for RPC request"
+              },
+              {
+                "type": "reference",
+                "argument": "method",
+                "category": "full",
+                "description": "Method for execution"
+              },
+              {
+                "type": "reference",
+                "argument": "params",
+                "category": "full",
+                "description": "Optional params for the method"
+              }
+            ],
+            "attributes": [
+              {
+                "type": "string",
+                "id": 1,
+                "name": "service"
+              },
+              {
+                "type": "string",
+                "id": 2,
+                "name": "method"
+              },
+              {
+                "type": {
+                  "type": "opt",
+                  "childType": {
+                    "type": "trait",
+                    "childType": "RawValue"
+                  }
+                },
+                "id": 3,
+                "name": "params"
               }
             ]
           }

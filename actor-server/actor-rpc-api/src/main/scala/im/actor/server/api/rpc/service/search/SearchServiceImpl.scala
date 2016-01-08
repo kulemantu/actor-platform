@@ -1,4 +1,4 @@
-package im.actor.server.api.rpc.service
+package im.actor.server.api.rpc.service.search
 
 import akka.actor.ActorSystem
 import im.actor.api.rpc._
@@ -15,12 +15,12 @@ import im.actor.server.user.UserExtension
 
 import scala.concurrent.{ ExecutionContext, Future }
 
-final class SearchServiceImpl(implicit system: ActorSystem) extends SearchService {
+class SearchServiceImpl(implicit system: ActorSystem) extends SearchService {
   override implicit protected val ec: ExecutionContext = system.dispatcher
 
-  private val db = DbExtension(system).db
-  private val userExt = UserExtension(system)
-  private val groupExt = GroupExtension(system)
+  protected val db = DbExtension(system).db
+  protected val userExt = UserExtension(system)
+  protected val groupExt = GroupExtension(system)
 
   override def jhandlePeerSearch(query: IndexedSeq[ApiSearchCondition], clientData: ClientData): Future[HandlerResult[ResponsePeerSearch]] = {
     authorized(clientData) { implicit client ⇒
@@ -38,7 +38,11 @@ final class SearchServiceImpl(implicit system: ActorSystem) extends SearchServic
     }
   }
 
-  override def jhandleMessageSearch(query: ApiSearchCondition, clientData: ClientData): Future[HandlerResult[ResponseMessageSearch]] = Future.failed(new RuntimeException("Not implemented"))
+  override def jhandleMessageSearch(query: ApiSearchCondition, clientData: ClientData): Future[HandlerResult[ResponseMessageSearchResponse]] =
+    Future.successful(Error(CommonErrors.NotSupportedInOss))
+
+  override def jhandleMessageSearchMore(loadMoreState: Array[Byte], clientData: ClientData): Future[HandlerResult[ResponseMessageSearchResponse]] =
+    Future.successful(Error(CommonErrors.NotSupportedInOss))
 
   private def searchResult(pts: IndexedSeq[ApiSearchPeerType.Value], text: Option[String])(implicit client: AuthorizedClientData): Future[HandlerResult[ResponsePeerSearch]] = {
     for {

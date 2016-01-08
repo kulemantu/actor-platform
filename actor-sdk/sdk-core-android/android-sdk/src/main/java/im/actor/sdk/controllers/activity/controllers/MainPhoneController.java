@@ -57,7 +57,7 @@ import static im.actor.sdk.util.ActorSDKMessenger.messenger;
 
 public class MainPhoneController extends MainBaseController {
 
-    private ViewPager pager;
+    protected ViewPager pager;
 
     private HomePagerAdapter homePagerAdapter;
 
@@ -78,7 +78,7 @@ public class MainPhoneController extends MainBaseController {
     private SearchView searchView;
     private MenuItem searchMenu;
 
-    private PagerSlidingTabStrip barTabs;
+    protected PagerSlidingTabStrip barTabs;
 
     private View syncInProgressView;
     private View emptyContactsView;
@@ -125,39 +125,8 @@ public class MainPhoneController extends MainBaseController {
     public void onCreate(Bundle savedInstance) {
 
         Intent intent = getIntent();
-        if (intent != null) {
-            if (intent.getAction() != null) {
-                if (intent.getAction().equals(Intent.ACTION_VIEW) && intent.getData() != null) {
-                    joinGroupUrl = getIntent().getData().toString();
-                } else if (intent.getAction().equals(Intent.ACTION_SEND)) {
-                    if ("text/plain".equals(getIntent().getType())) {
-                        sendText = intent.getStringExtra(Intent.EXTRA_TEXT);
-                    } else {
-                        sendUriString = intent.getParcelableExtra(Intent.EXTRA_STREAM).toString();
-                    }
-                } else if (intent.getAction().equals(Intent.ACTION_SEND_MULTIPLE)) {
-                    ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-                    if (imageUris != null) {
-                        for (Uri u : imageUris) {
-                            sendUriMultiple.add(u.toString());
-                        }
-                    }
-                }
-            }
 
-            if (intent.getExtras() != null) {
-                Bundle extras = getIntent().getExtras();
-                if (extras.containsKey("share_user")) {
-                    shareUser = extras.getInt("share_user");
-                } else if (extras.containsKey("forward_text")) {
-                    forwardText = extras.getString("forward_text");
-                    forwardTextRaw = extras.getString("forward_text_raw");
-                } else if (extras.containsKey("forward_doc_descriptor")) {
-                    forwardDocDescriptor = extras.getString("forward_doc_descriptor");
-                    forwardDocIsDoc = extras.getBoolean("forward_doc_is_doc");
-                }
-            }
-        }
+        handleIntent(intent);
 
         setContentView(R.layout.actor_activity_main);
         ActorStyle style = ActorSDK.sharedActor().style;
@@ -322,6 +291,47 @@ public class MainPhoneController extends MainBaseController {
     }
 
     @Override
+    public void onNewIntent(Intent intent) {
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent != null) {
+            if (intent.getAction() != null) {
+                if (intent.getAction().equals(Intent.ACTION_VIEW) && intent.getData() != null) {
+                    joinGroupUrl = getIntent().getData().toString();
+                } else if (intent.getAction().equals(Intent.ACTION_SEND)) {
+                    if ("text/plain".equals(getIntent().getType())) {
+                        sendText = intent.getStringExtra(Intent.EXTRA_TEXT);
+                    } else if (intent.getParcelableExtra(Intent.EXTRA_STREAM) != null) {
+                        sendUriString = intent.getParcelableExtra(Intent.EXTRA_STREAM).toString();
+                    }
+                } else if (intent.getAction().equals(Intent.ACTION_SEND_MULTIPLE)) {
+                    ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+                    if (imageUris != null) {
+                        for (Uri u : imageUris) {
+                            sendUriMultiple.add(u.toString());
+                        }
+                    }
+                }
+            }
+
+            if (intent.getExtras() != null) {
+                Bundle extras = intent.getExtras();
+                if (extras.containsKey("share_user")) {
+                    shareUser = extras.getInt("share_user");
+                } else if (extras.containsKey("forward_text")) {
+                    forwardText = extras.getString("forward_text");
+                    forwardTextRaw = extras.getString("forward_text_raw");
+                } else if (extras.containsKey("forward_doc_descriptor")) {
+                    forwardDocDescriptor = extras.getString("forward_doc_descriptor");
+                    forwardDocIsDoc = extras.getBoolean("forward_doc_is_doc");
+                }
+            }
+        }
+    }
+
+    @Override
     public void onResume() {
         ActionBar ab = getActionBar();
         ab.setDisplayShowCustomEnabled(true);
@@ -333,6 +343,49 @@ public class MainPhoneController extends MainBaseController {
             ab.setBackgroundDrawable(new ColorDrawable(ActorSDK.sharedActor().style.getToolBarColor()));
         }
 
+        onConfigireToolbarCustomView(ab);
+
+        onShowToolbarCustomView();
+        emptyContactsView.setVisibility(View.GONE);
+        syncInProgressView.setVisibility(View.GONE);
+
+        getActivity().bind(messenger().getAppState().getIsAppLoaded(),
+                messenger().getAppState().getIsAppEmpty(),
+                new ValueDoubleChangedListener<Boolean, Boolean>() {
+                    @Override
+                    public void onChanged(Boolean isAppLoaded, Value<Boolean> Value,
+                                          Boolean isAppEmpty, Value<Boolean> Value2) {
+                        if (isAppEmpty) {
+                            if (isAppLoaded) {
+                                onHideToolbarCustomView();
+                                emptyContactsView.setVisibility(View.VISIBLE);
+                                syncInProgressView.setVisibility(View.GONE);
+                                getActivity().invalidateOptionsMenu();
+                            } else {
+                                onHideToolbarCustomView();
+                                emptyContactsView.setVisibility(View.GONE);
+                                syncInProgressView.setVisibility(View.VISIBLE);
+                                getActivity().invalidateOptionsMenu();
+                            }
+                        } else {
+                            onShowToolbarCustomView();
+                            emptyContactsView.setVisibility(View.GONE);
+                            syncInProgressView.setVisibility(View.GONE);
+                            getActivity().invalidateOptionsMenu();
+                        }
+                    }
+                });
+    }
+
+    protected void onShowToolbarCustomView() {
+        barTabs.setVisibility(View.VISIBLE);
+    }
+
+    protected void onHideToolbarCustomView() {
+        barTabs.setVisibility(View.GONE);
+    }
+
+    protected void onConfigireToolbarCustomView(ActionBar ab) {
         FrameLayout tabsContainer = new FrameLayout(getActivity());
         barTabs = new PagerSlidingTabStrip(getActivity());
         barTabs.setTabBackground(R.drawable.selector_bar);
@@ -348,43 +401,12 @@ public class MainPhoneController extends MainBaseController {
 
         // Icons
         // int width = Screen.dp(72 * 2);
-        int width = Screen.dp(120 * 2 + 72);
+        int width = Screen.dp(120 * 2);
 
         tabsContainer.addView(barTabs, new FrameLayout.LayoutParams(width, Screen.dp(56)));
         Toolbar.LayoutParams lp = new Toolbar.LayoutParams(width, Screen.dp(56));
         tabsContainer.setLayoutParams(lp);
         ab.setCustomView(tabsContainer);
-
-        barTabs.setVisibility(View.VISIBLE);
-        emptyContactsView.setVisibility(View.GONE);
-        syncInProgressView.setVisibility(View.GONE);
-
-        getActivity().bind(messenger().getAppState().getIsAppLoaded(),
-                messenger().getAppState().getIsAppEmpty(),
-                new ValueDoubleChangedListener<Boolean, Boolean>() {
-                    @Override
-                    public void onChanged(Boolean isAppLoaded, Value<Boolean> Value,
-                                          Boolean isAppEmpty, Value<Boolean> Value2) {
-                        if (isAppEmpty) {
-                            if (isAppLoaded) {
-                                barTabs.setVisibility(View.GONE);
-                                emptyContactsView.setVisibility(View.VISIBLE);
-                                syncInProgressView.setVisibility(View.GONE);
-                                getActivity().invalidateOptionsMenu();
-                            } else {
-                                barTabs.setVisibility(View.GONE);
-                                emptyContactsView.setVisibility(View.GONE);
-                                syncInProgressView.setVisibility(View.VISIBLE);
-                                getActivity().invalidateOptionsMenu();
-                            }
-                        } else {
-                            barTabs.setVisibility(View.VISIBLE);
-                            emptyContactsView.setVisibility(View.GONE);
-                            syncInProgressView.setVisibility(View.GONE);
-                            getActivity().invalidateOptionsMenu();
-                        }
-                    }
-                });
     }
 
 
@@ -498,7 +520,7 @@ public class MainPhoneController extends MainBaseController {
 
         searchList.setAdapter(recyclerAdapter);
         searchDisplay.addListener(searchListener);
-
+        onHideToolbarCustomView();
         showView(searchHintView, false);
         goneView(searchEmptyView, false);
 
@@ -533,7 +555,7 @@ public class MainPhoneController extends MainBaseController {
         searchList.setAdapter(null);
 
         goneView(searchContainer);
-
+        onShowToolbarCustomView();
         if (searchMenu != null) {
             if (searchMenu.isActionViewExpanded()) {
                 searchMenu.collapseActionView();
@@ -548,7 +570,7 @@ public class MainPhoneController extends MainBaseController {
             startActivity(new Intent(getActivity(), HelpActivity.class));
             return true;
         } else if (i == R.id.profile) {
-            startActivity(new Intent(getActivity(), MyProfileActivity.class));
+            ActorSDK.sharedActor().startSettingActivity(getActivity());
             return true;
         }
 

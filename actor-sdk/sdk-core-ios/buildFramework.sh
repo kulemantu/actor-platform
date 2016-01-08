@@ -15,19 +15,23 @@ xcodebuild \
   -configuration Release \
   -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=4 \
   OTHER_CFLAGS="-fembed-bitcode" \
-  build
+  build \
+  CODE_SIGN_IDENTITY="" \
+  CODE_SIGNING_REQUIRED=NO
 
 xcodebuild \
   -workspace "ActorSDK.xcworkspace" \
   -scheme "ActorSDK" \
   -derivedDataPath build \
-  -arch x86_64 \
   -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 6' \
   ONLY_ACTIVE_ARCH=NO \
   -configuration Release \
   -IDEBuildOperationMaxNumberOfConcurrentCompileTasks=4 \
   OTHER_CFLAGS="-fembed-bitcode" \
-  build
+  build \
+  CODE_SIGN_IDENTITY="" \
+  CODE_SIGNING_REQUIRED=NO
 
 rm -f build/Output/libactor.so
 lipo -create "build/Build/Intermediates/ActorSDK.build/Release-iphoneos/j2objc/Objects/libactor.so" "build/Build/Intermediates/ActorSDK.build/Release-iphonesimulator/j2objc/Objects/libactor.so" -output build/Output/libactor.so

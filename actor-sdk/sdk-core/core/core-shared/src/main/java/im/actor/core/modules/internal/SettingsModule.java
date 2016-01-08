@@ -4,15 +4,26 @@
 
 package im.actor.core.modules.internal;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
+import im.actor.core.api.ApiStickerCollection;
+import im.actor.core.api.rpc.RequestLoadOwnStickers;
+import im.actor.core.api.rpc.ResponseLoadOwnStickers;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerType;
 import im.actor.core.modules.AbsModule;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.modules.internal.settings.SettingsSyncActor;
+import im.actor.core.network.RpcCallback;
+import im.actor.core.network.RpcException;
+import im.actor.core.viewmodel.Command;
+import im.actor.core.viewmodel.CommandCallback;
 import im.actor.runtime.actors.ActorCreator;
 import im.actor.runtime.actors.ActorRef;
 import im.actor.runtime.actors.ActorSystem;
 import im.actor.runtime.actors.Props;
+import im.actor.runtime.bser.Bser;
 
 public class SettingsModule extends AbsModule {
 
@@ -39,6 +50,8 @@ public class SettingsModule extends AbsModule {
     private final String KEY_RENAME_HINT_SHOWN;
 
     private final String KEY_WALLPAPPER;
+    private final String KEY_PRIVACY;
+    private final String KEY_CHAT_TEXT_SIZE;
 
     private ActorRef settingsSync;
 
@@ -82,6 +95,7 @@ public class SettingsModule extends AbsModule {
         KEY_SOUND_EFFECTS = "app." + platformType + "" + deviceType + ".tones_enabled";
         KEY_CHAT_SEND_BY_ENTER = "app." + platformType + "" + deviceType + ".send_by_enter";
         KEY_MARKDOWN_ENABLED = "app." + platformType + "" + deviceType + ".use_markdown";
+        KEY_CHAT_TEXT_SIZE = "app." + platformType + "." + deviceType + ".text_size";
 
         // Device-type notification settings
         KEY_NOTIFICATION_ENABLED = "category." + deviceType + ".notification.enabled";
@@ -103,6 +117,7 @@ public class SettingsModule extends AbsModule {
         KEY_RENAME_HINT_SHOWN = "hint.contact.rename";
 
         KEY_WALLPAPPER = "wallpaper.uri";
+        KEY_PRIVACY = "privacy.last_seen";
     }
 
     public void run() {
@@ -229,6 +244,15 @@ public class SettingsModule extends AbsModule {
         setBooleanValue(KEY_MARKDOWN_ENABLED, val);
     }
 
+    public int getTextSize() {
+        return getInt(KEY_CHAT_TEXT_SIZE, 15);
+    }
+
+    public void changeTextSize(int textSize) {
+        setInt(KEY_CHAT_TEXT_SIZE, textSize);
+    }
+
+
     // Peer settings
 
     public boolean isNotificationsEnabled(Peer peer) {
@@ -267,6 +291,16 @@ public class SettingsModule extends AbsModule {
         changeValue(KEY_WALLPAPPER, uri);
     }
 
+    //Privacy
+    public String getPrivacy() {
+        String privacy = readValue(KEY_PRIVACY);
+        return privacy != null ? privacy : "always";
+    }
+
+    public void setPrivacy(String privacy) {
+        changeValue(KEY_PRIVACY, privacy);
+    }
+
     // Common
 
     public boolean getBooleanValue(String key, boolean defaultVal) {
@@ -299,6 +333,32 @@ public class SettingsModule extends AbsModule {
         return sValue;
     }
 
+    private void setInt(String key, int val) {
+        changeValue(key, Integer.toString(val));
+    }
+
+    private int getInt(String key, int defaultVal) {
+        String sValue = readValue(key);
+        int res = defaultVal;
+        if (sValue != null) {
+            try {
+                res = Integer.parseInt(sValue);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return res;
+    }
+
+    private byte[] getBytes(String key) {
+        return preferences().getBytes(STORAGE_PREFIX + key);
+    }
+
+    private void setBytes(String key, byte[] val) {
+        preferences().putBytes(STORAGE_PREFIX + key, val);
+    }
+
+
     public String getStringValue(String key) {
         return getStringValue(key, null);
     }
@@ -310,6 +370,13 @@ public class SettingsModule extends AbsModule {
     // Sync methods
 
     private void changeValue(String key, String val) {
+        String s = readValue(key);
+        if (s == null && val == null) {
+            return;
+        }
+        if (s != null && val != null && s.equals(val)) {
+            return;
+        }
         settingsSync.send(new SettingsSyncActor.ChangeSettings(key, val));
         onUpdatedSetting(key, val);
     }
@@ -331,7 +398,6 @@ public class SettingsModule extends AbsModule {
             throw new RuntimeException("Unsupported peer");
         }
     }
-
 
     public void resetModule() {
         // TODO: Implement

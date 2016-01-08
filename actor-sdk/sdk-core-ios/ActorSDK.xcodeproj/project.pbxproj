@@ -172,6 +172,104 @@
 		06CE898A1BD8401C005A5530 /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06CE89891BD8401C005A5530 /* Reachability.swift */; };
 		06CE898C1BD841C9005A5530 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 06CE898B1BD841C9005A5530 /* SystemConfiguration.framework */; };
 		06CE89901BD84DF5005A5530 /* ActorSDKAnalytics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06CE898F1BD84DF5005A5530 /* ActorSDKAnalytics.swift */; };
+		06E7B2471C0F8D7A0090660C /* AALocationPickerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E7B2461C0F8D7A0090660C /* AALocationPickerController.swift */; };
+		06E7B24A1C0F92140090660C /* AABubbleLocationCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E7B2491C0F92140090660C /* AABubbleLocationCell.swift */; };
+		06E7B24C1C0FAB500090660C /* AAMapFastView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E7B24B1C0FAB500090660C /* AAMapFastView.swift */; };
+		06E7B2521C1345E70090660C /* AAMapPinPointView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E7B2511C1345E70090660C /* AAMapPinPointView.swift */; };
+		06E7B2541C139B6F0090660C /* AABubbleContactCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06E7B2531C139B6F0090660C /* AABubbleContactCell.swift */; };
+		152AA8A61C2989270030DEEE /* SLKInputAccessoryView.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8921C2989270030DEEE /* SLKInputAccessoryView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8A71C2989270030DEEE /* SLKInputAccessoryView.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8931C2989270030DEEE /* SLKInputAccessoryView.m */; };
+		152AA8A81C2989270030DEEE /* SLKTextInputbar.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8941C2989270030DEEE /* SLKTextInputbar.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8A91C2989270030DEEE /* SLKTextInputbar.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8951C2989270030DEEE /* SLKTextInputbar.m */; };
+		152AA8AA1C2989270030DEEE /* SLKTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8961C2989270030DEEE /* SLKTextView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8AB1C2989270030DEEE /* SLKTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8971C2989270030DEEE /* SLKTextView.m */; };
+		152AA8AC1C2989270030DEEE /* SLKTextView+SLKAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8981C2989270030DEEE /* SLKTextView+SLKAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8AD1C2989270030DEEE /* SLKTextView+SLKAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8991C2989270030DEEE /* SLKTextView+SLKAdditions.m */; };
+		152AA8AE1C2989270030DEEE /* SLKTextViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA89A1C2989270030DEEE /* SLKTextViewController.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8AF1C2989270030DEEE /* SLKTextViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA89B1C2989270030DEEE /* SLKTextViewController.m */; };
+		152AA8B01C2989270030DEEE /* SLKTypingIndicatorProtocol.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA89C1C2989270030DEEE /* SLKTypingIndicatorProtocol.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B11C2989270030DEEE /* SLKTypingIndicatorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA89D1C2989270030DEEE /* SLKTypingIndicatorView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B21C2989270030DEEE /* SLKTypingIndicatorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA89E1C2989270030DEEE /* SLKTypingIndicatorView.m */; };
+		152AA8B31C2989270030DEEE /* SLKUIConstants.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA89F1C2989270030DEEE /* SLKUIConstants.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B41C2989270030DEEE /* UIResponder+SLKAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8A01C2989270030DEEE /* UIResponder+SLKAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B51C2989270030DEEE /* UIResponder+SLKAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8A11C2989270030DEEE /* UIResponder+SLKAdditions.m */; };
+		152AA8B61C2989270030DEEE /* UIScrollView+SLKAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8A21C2989270030DEEE /* UIScrollView+SLKAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B71C2989270030DEEE /* UIScrollView+SLKAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8A31C2989270030DEEE /* UIScrollView+SLKAdditions.m */; };
+		152AA8B81C2989270030DEEE /* UIView+SLKAdditions.h in Headers */ = {isa = PBXBuildFile; fileRef = 152AA8A41C2989270030DEEE /* UIView+SLKAdditions.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		152AA8B91C2989270030DEEE /* UIView+SLKAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8A51C2989270030DEEE /* UIView+SLKAdditions.m */; };
+		152AA8BD1C298BF00030DEEE /* AASettingsSessionsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8BC1C298BF00030DEEE /* AASettingsSessionsController.swift */; };
+		152AA8BF1C298C4B0030DEEE /* AASettingsLastSeenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 152AA8BE1C298C4B0030DEEE /* AASettingsLastSeenController.swift */; };
+		153F6B3D1C2A9B3D00C0B960 /* begin_record.caf in Resources */ = {isa = PBXBuildFile; fileRef = 153F6B3C1C2A9B1900C0B960 /* begin_record.caf */; };
+		153F6B4D1C2B03D600C0B960 /* FBShimmering.h in Headers */ = {isa = PBXBuildFile; fileRef = 153F6B481C2B03D600C0B960 /* FBShimmering.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		153F6B4E1C2B03D600C0B960 /* FBShimmeringLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 153F6B491C2B03D600C0B960 /* FBShimmeringLayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		153F6B4F1C2B03D600C0B960 /* FBShimmeringLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B4A1C2B03D600C0B960 /* FBShimmeringLayer.m */; };
+		153F6B501C2B03D600C0B960 /* FBShimmeringView.h in Headers */ = {isa = PBXBuildFile; fileRef = 153F6B4B1C2B03D600C0B960 /* FBShimmeringView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		153F6B511C2B03D600C0B960 /* FBShimmeringView.m in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B4C1C2B03D600C0B960 /* FBShimmeringView.m */; };
+		153F6B561C2B03E300C0B960 /* AASlideView.h in Headers */ = {isa = PBXBuildFile; fileRef = 153F6B521C2B03E300C0B960 /* AASlideView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		153F6B571C2B03E300C0B960 /* AASlideView.m in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B531C2B03E300C0B960 /* AASlideView.m */; };
+		153F6B581C2B03E300C0B960 /* AAGarbageView.h in Headers */ = {isa = PBXBuildFile; fileRef = 153F6B541C2B03E300C0B960 /* AAGarbageView.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		153F6B591C2B03E300C0B960 /* AAGarbageView.m in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B551C2B03E300C0B960 /* AAGarbageView.m */; };
+		153F6B5B1C2B109400C0B960 /* AABubbleVoiceCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B5A1C2B109400C0B960 /* AABubbleVoiceCell.swift */; };
+		153F6B5D1C2B3AC500C0B960 /* AABubbleStickerCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B5C1C2B3AC500C0B960 /* AABubbleStickerCell.swift */; };
+		153F6B611C2BF8EC00C0B960 /* AAAuthWelcomeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B601C2BF8EC00C0B960 /* AAAuthWelcomeController.swift */; };
+		153F6B8A1C2D7BA300C0B960 /* AATapLabelDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B881C2D7BA300C0B960 /* AATapLabelDelegate.swift */; };
+		153F6B8B1C2D7BA400C0B960 /* AATapLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B891C2D7BA300C0B960 /* AATapLabel.swift */; };
+		153F6B8E1C2D868100C0B960 /* AATermsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 153F6B8D1C2D868100C0B960 /* AATermsController.swift */; };
+		15D35F161C20185500E3717A /* diag_range.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F0C1C20185500E3717A /* diag_range.c */; };
+		15D35F171C20185500E3717A /* diag_range.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F0D1C20185500E3717A /* diag_range.h */; };
+		15D35F181C20185500E3717A /* opus_header.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F0E1C20185500E3717A /* opus_header.c */; };
+		15D35F191C20185500E3717A /* opus_header.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F0F1C20185500E3717A /* opus_header.h */; };
+		15D35F1A1C20185500E3717A /* opusenc.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F101C20185500E3717A /* opusenc.h */; };
+		15D35F1B1C20185500E3717A /* opusenc.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F111C20185500E3717A /* opusenc.m */; settings = {COMPILER_FLAGS = "-w"; }; };
+		15D35F1C1C20185500E3717A /* picture.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F121C20185500E3717A /* picture.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		15D35F1D1C20185500E3717A /* picture.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F131C20185500E3717A /* picture.h */; };
+		15D35F1E1C20185500E3717A /* wav_io.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F141C20185500E3717A /* wav_io.c */; };
+		15D35F1F1C20185500E3717A /* wav_io.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F151C20185500E3717A /* wav_io.h */; };
+		15D35F251C20186200E3717A /* bitwise.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F211C20186200E3717A /* bitwise.c */; };
+		15D35F261C20186200E3717A /* framing.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F221C20186200E3717A /* framing.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		15D35F271C20186200E3717A /* ogg.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F231C20186200E3717A /* ogg.h */; };
+		15D35F281C20186200E3717A /* os_types.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F241C20186200E3717A /* os_types.h */; };
+		15D35F301C20187200E3717A /* info.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F2A1C20187200E3717A /* info.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		15D35F311C20187200E3717A /* internal.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F2B1C20187200E3717A /* internal.c */; };
+		15D35F321C20187200E3717A /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F2C1C20187200E3717A /* internal.h */; };
+		15D35F331C20187200E3717A /* opusfile.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F2D1C20187200E3717A /* opusfile.c */; settings = {COMPILER_FLAGS = "-w"; }; };
+		15D35F341C20187200E3717A /* opusfile.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F2E1C20187200E3717A /* opusfile.h */; };
+		15D35F351C20187200E3717A /* stream.c in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F2F1C20187200E3717A /* stream.c */; };
+		15D35F511C20187E00E3717A /* ASQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F361C20187E00E3717A /* ASQueue.h */; };
+		15D35F521C20187E00E3717A /* ASQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F371C20187E00E3717A /* ASQueue.m */; };
+		15D35F531C20187E00E3717A /* AAOpusAudioRecorder.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F381C20187E00E3717A /* AAOpusAudioRecorder.h */; };
+		15D35F541C20187E00E3717A /* AAOpusAudioRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F391C20187E00E3717A /* AAOpusAudioRecorder.m */; };
+		15D35F551C20187E00E3717A /* AAAlertView.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F3A1C20187E00E3717A /* AAAlertView.h */; };
+		15D35F561C20187E00E3717A /* AAAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F3B1C20187E00E3717A /* AAAlertView.m */; };
+		15D35F571C20187E00E3717A /* AAAudioRecorder.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F3C1C20187E00E3717A /* AAAudioRecorder.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		15D35F591C20187E00E3717A /* AATimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F3E1C20187E00E3717A /* AATimer.h */; };
+		15D35F5A1C20187E00E3717A /* AATimer.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F3F1C20187E00E3717A /* AATimer.m */; };
+		15D35F5B1C20187E00E3717A /* AAAudioPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F401C20187E00E3717A /* AAAudioPlayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		15D35F5C1C20187E00E3717A /* AAAudioPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F411C20187E00E3717A /* AAAudioPlayer.m */; };
+		15D35F5D1C20187E00E3717A /* AANativeAudioPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F421C20187E00E3717A /* AANativeAudioPlayer.h */; };
+		15D35F5E1C20187E00E3717A /* AANativeAudioPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F431C20187E00E3717A /* AANativeAudioPlayer.m */; };
+		15D35F5F1C20187E00E3717A /* AAOpusAudioPlayerAU.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F441C20187E00E3717A /* AAOpusAudioPlayerAU.h */; };
+		15D35F601C20187E00E3717A /* AAOpusAudioPlayerAU.mm in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F451C20187E00E3717A /* AAOpusAudioPlayerAU.mm */; };
+		15D35F611C20187E00E3717A /* AAAudioBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F461C20187E00E3717A /* AAAudioBuffer.h */; };
+		15D35F621C20187E00E3717A /* AAModernConversationAudioPlayer.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F471C20187E00E3717A /* AAModernConversationAudioPlayer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		15D35F631C20187E00E3717A /* AAModernConversationAudioPlayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F481C20187E00E3717A /* AAModernConversationAudioPlayer.m */; };
+		15D35F641C20187E00E3717A /* AAModernConversationAudioPlayerContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F491C20187E00E3717A /* AAModernConversationAudioPlayerContext.h */; };
+		15D35F651C20187E00E3717A /* AAModernConversationAudioPlayerContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F4A1C20187E00E3717A /* AAModernConversationAudioPlayerContext.m */; };
+		15D35F661C20187E00E3717A /* NSObject+TGLock.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F4B1C20187E00E3717A /* NSObject+TGLock.h */; };
+		15D35F671C20187E00E3717A /* NSObject+TGLock.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F4C1C20187E00E3717A /* NSObject+TGLock.m */; };
+		15D35F681C20187E00E3717A /* AAModernViewInlineMediaContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F4D1C20187E00E3717A /* AAModernViewInlineMediaContext.h */; };
+		15D35F691C20187E00E3717A /* AAModernViewInlineMediaContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F4E1C20187E00E3717A /* AAModernViewInlineMediaContext.m */; };
+		15D35F6A1C20187E00E3717A /* AATimerTarget.h in Headers */ = {isa = PBXBuildFile; fileRef = 15D35F4F1C20187E00E3717A /* AATimerTarget.h */; };
+		15D35F6B1C20187E00E3717A /* AATimerTarget.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F501C20187E00E3717A /* AATimerTarget.m */; };
+		15D35F6F1C20196E00E3717A /* AARecordAudioController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F6E1C20196E00E3717A /* AARecordAudioController.swift */; };
+		15D35F751C201B6B00E3717A /* AACustomPresentationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F731C201B6B00E3717A /* AACustomPresentationController.swift */; };
+		15D35F761C201B6B00E3717A /* AACustomPresentationAnimationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F741C201B6B00E3717A /* AACustomPresentationAnimationController.swift */; };
+		15D35F781C20273D00E3717A /* AAAudioRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 15D35F3D1C20187E00E3717A /* AAAudioRecorder.m */; };
+		15F89F011C211FDE00776ACD /* libopus.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 15F89F001C211FDE00776ACD /* libopus.a */; };
+		15F89F071C211FED00776ACD /* opus_defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 15F89F031C211FED00776ACD /* opus_defines.h */; };
+		15F89F081C211FED00776ACD /* opus_multistream.h in Headers */ = {isa = PBXBuildFile; fileRef = 15F89F041C211FED00776ACD /* opus_multistream.h */; };
+		15F89F091C211FED00776ACD /* opus_types.h in Headers */ = {isa = PBXBuildFile; fileRef = 15F89F051C211FED00776ACD /* opus_types.h */; };
+		15F89F0A1C211FED00776ACD /* opus.h in Headers */ = {isa = PBXBuildFile; fileRef = 15F89F061C211FED00776ACD /* opus.h */; };
 		697B3A12994653F581459F63 /* Pods_ActorSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A22DF21664BBB34087283F6 /* Pods_ActorSDK.framework */; };
 /* End PBXBuildFile section */
 
@@ -347,6 +445,105 @@
 		06CE89891BD8401C005A5530 /* Reachability.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
 		06CE898B1BD841C9005A5530 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
 		06CE898F1BD84DF5005A5530 /* ActorSDKAnalytics.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ActorSDKAnalytics.swift; sourceTree = "<group>"; };
+		06E7B2461C0F8D7A0090660C /* AALocationPickerController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AALocationPickerController.swift; sourceTree = "<group>"; };
+		06E7B2491C0F92140090660C /* AABubbleLocationCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AABubbleLocationCell.swift; sourceTree = "<group>"; };
+		06E7B24B1C0FAB500090660C /* AAMapFastView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AAMapFastView.swift; sourceTree = "<group>"; };
+		06E7B2511C1345E70090660C /* AAMapPinPointView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AAMapPinPointView.swift; sourceTree = "<group>"; };
+		06E7B2531C139B6F0090660C /* AABubbleContactCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AABubbleContactCell.swift; sourceTree = "<group>"; };
+		152AA8921C2989270030DEEE /* SLKInputAccessoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKInputAccessoryView.h; sourceTree = "<group>"; };
+		152AA8931C2989270030DEEE /* SLKInputAccessoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKInputAccessoryView.m; sourceTree = "<group>"; };
+		152AA8941C2989270030DEEE /* SLKTextInputbar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKTextInputbar.h; sourceTree = "<group>"; };
+		152AA8951C2989270030DEEE /* SLKTextInputbar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKTextInputbar.m; sourceTree = "<group>"; };
+		152AA8961C2989270030DEEE /* SLKTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKTextView.h; sourceTree = "<group>"; };
+		152AA8971C2989270030DEEE /* SLKTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKTextView.m; sourceTree = "<group>"; };
+		152AA8981C2989270030DEEE /* SLKTextView+SLKAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "SLKTextView+SLKAdditions.h"; sourceTree = "<group>"; };
+		152AA8991C2989270030DEEE /* SLKTextView+SLKAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "SLKTextView+SLKAdditions.m"; sourceTree = "<group>"; };
+		152AA89A1C2989270030DEEE /* SLKTextViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKTextViewController.h; sourceTree = "<group>"; };
+		152AA89B1C2989270030DEEE /* SLKTextViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKTextViewController.m; sourceTree = "<group>"; };
+		152AA89C1C2989270030DEEE /* SLKTypingIndicatorProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKTypingIndicatorProtocol.h; sourceTree = "<group>"; };
+		152AA89D1C2989270030DEEE /* SLKTypingIndicatorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKTypingIndicatorView.h; sourceTree = "<group>"; };
+		152AA89E1C2989270030DEEE /* SLKTypingIndicatorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SLKTypingIndicatorView.m; sourceTree = "<group>"; };
+		152AA89F1C2989270030DEEE /* SLKUIConstants.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SLKUIConstants.h; sourceTree = "<group>"; };
+		152AA8A01C2989270030DEEE /* UIResponder+SLKAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIResponder+SLKAdditions.h"; sourceTree = "<group>"; };
+		152AA8A11C2989270030DEEE /* UIResponder+SLKAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIResponder+SLKAdditions.m"; sourceTree = "<group>"; };
+		152AA8A21C2989270030DEEE /* UIScrollView+SLKAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIScrollView+SLKAdditions.h"; sourceTree = "<group>"; };
+		152AA8A31C2989270030DEEE /* UIScrollView+SLKAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIScrollView+SLKAdditions.m"; sourceTree = "<group>"; };
+		152AA8A41C2989270030DEEE /* UIView+SLKAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+SLKAdditions.h"; sourceTree = "<group>"; };
+		152AA8A51C2989270030DEEE /* UIView+SLKAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+SLKAdditions.m"; sourceTree = "<group>"; };
+		152AA8BC1C298BF00030DEEE /* AASettingsSessionsController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AASettingsSessionsController.swift; sourceTree = "<group>"; };
+		152AA8BE1C298C4B0030DEEE /* AASettingsLastSeenController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AASettingsLastSeenController.swift; sourceTree = "<group>"; };
+		153F6B3C1C2A9B1900C0B960 /* begin_record.caf */ = {isa = PBXFileReference; lastKnownFileType = file; name = begin_record.caf; path = Resources/begin_record.caf; sourceTree = "<group>"; };
+		153F6B481C2B03D600C0B960 /* FBShimmering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBShimmering.h; sourceTree = "<group>"; };
+		153F6B491C2B03D600C0B960 /* FBShimmeringLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBShimmeringLayer.h; sourceTree = "<group>"; };
+		153F6B4A1C2B03D600C0B960 /* FBShimmeringLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FBShimmeringLayer.m; sourceTree = "<group>"; };
+		153F6B4B1C2B03D600C0B960 /* FBShimmeringView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FBShimmeringView.h; sourceTree = "<group>"; };
+		153F6B4C1C2B03D600C0B960 /* FBShimmeringView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FBShimmeringView.m; sourceTree = "<group>"; };
+		153F6B521C2B03E300C0B960 /* AASlideView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AASlideView.h; sourceTree = "<group>"; };
+		153F6B531C2B03E300C0B960 /* AASlideView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AASlideView.m; sourceTree = "<group>"; };
+		153F6B541C2B03E300C0B960 /* AAGarbageView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAGarbageView.h; sourceTree = "<group>"; };
+		153F6B551C2B03E300C0B960 /* AAGarbageView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAGarbageView.m; sourceTree = "<group>"; };
+		153F6B5A1C2B109400C0B960 /* AABubbleVoiceCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AABubbleVoiceCell.swift; sourceTree = "<group>"; };
+		153F6B5C1C2B3AC500C0B960 /* AABubbleStickerCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AABubbleStickerCell.swift; sourceTree = "<group>"; };
+		153F6B601C2BF8EC00C0B960 /* AAAuthWelcomeController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AAAuthWelcomeController.swift; path = ../AAAuthWelcomeController.swift; sourceTree = "<group>"; };
+		153F6B881C2D7BA300C0B960 /* AATapLabelDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AATapLabelDelegate.swift; sourceTree = "<group>"; };
+		153F6B891C2D7BA300C0B960 /* AATapLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AATapLabel.swift; sourceTree = "<group>"; };
+		153F6B8D1C2D868100C0B960 /* AATermsController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AATermsController.swift; sourceTree = "<group>"; };
+		15D35F0C1C20185500E3717A /* diag_range.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = diag_range.c; sourceTree = "<group>"; };
+		15D35F0D1C20185500E3717A /* diag_range.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = diag_range.h; sourceTree = "<group>"; };
+		15D35F0E1C20185500E3717A /* opus_header.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = opus_header.c; sourceTree = "<group>"; };
+		15D35F0F1C20185500E3717A /* opus_header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opus_header.h; sourceTree = "<group>"; };
+		15D35F101C20185500E3717A /* opusenc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opusenc.h; sourceTree = "<group>"; };
+		15D35F111C20185500E3717A /* opusenc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = opusenc.m; sourceTree = "<group>"; };
+		15D35F121C20185500E3717A /* picture.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = picture.c; sourceTree = "<group>"; };
+		15D35F131C20185500E3717A /* picture.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = picture.h; sourceTree = "<group>"; };
+		15D35F141C20185500E3717A /* wav_io.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = wav_io.c; sourceTree = "<group>"; };
+		15D35F151C20185500E3717A /* wav_io.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wav_io.h; sourceTree = "<group>"; };
+		15D35F211C20186200E3717A /* bitwise.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bitwise.c; sourceTree = "<group>"; };
+		15D35F221C20186200E3717A /* framing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = framing.c; sourceTree = "<group>"; };
+		15D35F231C20186200E3717A /* ogg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ogg.h; sourceTree = "<group>"; };
+		15D35F241C20186200E3717A /* os_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = os_types.h; sourceTree = "<group>"; };
+		15D35F2A1C20187200E3717A /* info.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = info.c; sourceTree = "<group>"; };
+		15D35F2B1C20187200E3717A /* internal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = internal.c; sourceTree = "<group>"; };
+		15D35F2C1C20187200E3717A /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = internal.h; sourceTree = "<group>"; };
+		15D35F2D1C20187200E3717A /* opusfile.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = opusfile.c; sourceTree = "<group>"; };
+		15D35F2E1C20187200E3717A /* opusfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opusfile.h; sourceTree = "<group>"; };
+		15D35F2F1C20187200E3717A /* stream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = stream.c; sourceTree = "<group>"; };
+		15D35F361C20187E00E3717A /* ASQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASQueue.h; sourceTree = "<group>"; };
+		15D35F371C20187E00E3717A /* ASQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ASQueue.m; sourceTree = "<group>"; };
+		15D35F381C20187E00E3717A /* AAOpusAudioRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAOpusAudioRecorder.h; sourceTree = "<group>"; };
+		15D35F391C20187E00E3717A /* AAOpusAudioRecorder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAOpusAudioRecorder.m; sourceTree = "<group>"; };
+		15D35F3A1C20187E00E3717A /* AAAlertView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAAlertView.h; sourceTree = "<group>"; };
+		15D35F3B1C20187E00E3717A /* AAAlertView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAAlertView.m; sourceTree = "<group>"; };
+		15D35F3C1C20187E00E3717A /* AAAudioRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAAudioRecorder.h; sourceTree = "<group>"; };
+		15D35F3D1C20187E00E3717A /* AAAudioRecorder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAAudioRecorder.m; sourceTree = "<group>"; };
+		15D35F3E1C20187E00E3717A /* AATimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AATimer.h; sourceTree = "<group>"; };
+		15D35F3F1C20187E00E3717A /* AATimer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AATimer.m; sourceTree = "<group>"; };
+		15D35F401C20187E00E3717A /* AAAudioPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAAudioPlayer.h; sourceTree = "<group>"; };
+		15D35F411C20187E00E3717A /* AAAudioPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAAudioPlayer.m; sourceTree = "<group>"; };
+		15D35F421C20187E00E3717A /* AANativeAudioPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AANativeAudioPlayer.h; sourceTree = "<group>"; };
+		15D35F431C20187E00E3717A /* AANativeAudioPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AANativeAudioPlayer.m; sourceTree = "<group>"; };
+		15D35F441C20187E00E3717A /* AAOpusAudioPlayerAU.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAOpusAudioPlayerAU.h; sourceTree = "<group>"; };
+		15D35F451C20187E00E3717A /* AAOpusAudioPlayerAU.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AAOpusAudioPlayerAU.mm; sourceTree = "<group>"; };
+		15D35F461C20187E00E3717A /* AAAudioBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAAudioBuffer.h; sourceTree = "<group>"; };
+		15D35F471C20187E00E3717A /* AAModernConversationAudioPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAModernConversationAudioPlayer.h; sourceTree = "<group>"; };
+		15D35F481C20187E00E3717A /* AAModernConversationAudioPlayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAModernConversationAudioPlayer.m; sourceTree = "<group>"; };
+		15D35F491C20187E00E3717A /* AAModernConversationAudioPlayerContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAModernConversationAudioPlayerContext.h; sourceTree = "<group>"; };
+		15D35F4A1C20187E00E3717A /* AAModernConversationAudioPlayerContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAModernConversationAudioPlayerContext.m; sourceTree = "<group>"; };
+		15D35F4B1C20187E00E3717A /* NSObject+TGLock.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TGLock.h"; sourceTree = "<group>"; };
+		15D35F4C1C20187E00E3717A /* NSObject+TGLock.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TGLock.m"; sourceTree = "<group>"; };
+		15D35F4D1C20187E00E3717A /* AAModernViewInlineMediaContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AAModernViewInlineMediaContext.h; sourceTree = "<group>"; };
+		15D35F4E1C20187E00E3717A /* AAModernViewInlineMediaContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AAModernViewInlineMediaContext.m; sourceTree = "<group>"; };
+		15D35F4F1C20187E00E3717A /* AATimerTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AATimerTarget.h; sourceTree = "<group>"; };
+		15D35F501C20187E00E3717A /* AATimerTarget.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AATimerTarget.m; sourceTree = "<group>"; };
+		15D35F6E1C20196E00E3717A /* AARecordAudioController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AARecordAudioController.swift; sourceTree = "<group>"; };
+		15D35F731C201B6B00E3717A /* AACustomPresentationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AACustomPresentationController.swift; sourceTree = "<group>"; };
+		15D35F741C201B6B00E3717A /* AACustomPresentationAnimationController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AACustomPresentationAnimationController.swift; sourceTree = "<group>"; };
+		15F89F001C211FDE00776ACD /* libopus.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libopus.a; sourceTree = "<group>"; };
+		15F89F031C211FED00776ACD /* opus_defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opus_defines.h; sourceTree = "<group>"; };
+		15F89F041C211FED00776ACD /* opus_multistream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opus_multistream.h; sourceTree = "<group>"; };
+		15F89F051C211FED00776ACD /* opus_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opus_types.h; sourceTree = "<group>"; };
+		15F89F061C211FED00776ACD /* opus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = opus.h; sourceTree = "<group>"; };
+		15F89F0F1C21317400776ACD /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		22BAEA363892E475F59B7E9F /* Pods-ActorSDK.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ActorSDK.debug.xcconfig"; path = "Pods/Target Support Files/Pods-ActorSDK/Pods-ActorSDK.debug.xcconfig"; sourceTree = "<group>"; };
 		333F91AE5263DD450666CC87 /* Pods-ActorSDK.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ActorSDK.release.xcconfig"; path = "Pods/Target Support Files/Pods-ActorSDK/Pods-ActorSDK.release.xcconfig"; sourceTree = "<group>"; };
 		9A22DF21664BBB34087283F6 /* Pods_ActorSDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ActorSDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -359,6 +556,7 @@
 			files = (
 				06CE898C1BD841C9005A5530 /* SystemConfiguration.framework in Frameworks */,
 				066A52001BC4E0B0000E606E /* libsqlite3.tbd in Frameworks */,
+				15F89F011C211FDE00776ACD /* libopus.a in Frameworks */,
 				697B3A12994653F581459F63 /* Pods_ActorSDK.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -375,6 +573,7 @@
 				0659753A1BC7D22200B8C7DF /* Images.xcassets */,
 				06230F431BC95C0E00A4807B /* ABPhoneFieldCodes.txt */,
 				06230F441BC95C0E00A4807B /* PhoneFormats.dat */,
+				153F6B3C1C2A9B1900C0B960 /* begin_record.caf */,
 				065975491BC7DBA000B8C7DF /* iapetus.caf */,
 				0659754A1BC7DBA000B8C7DF /* notification.caf */,
 			);
@@ -467,6 +666,9 @@
 		066A51571BC4C112000E606E /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				152AA8901C29887A0030DEEE /* Extensions */,
+				15D35F721C201B5300E3717A /* Categories */,
+				15D35F0A1C20182900E3717A /* AudioRecorder */,
 				066A53311BC534F5000E606E /* AAFileTypes.swift */,
 				066A51581BC4C14A000E606E /* AASwiftlyLRU.swift */,
 				066A515A1BC4C178000E606E /* AAHashMap.swift */,
@@ -530,6 +732,8 @@
 				069CF4C31BCB908C00C66E12 /* CLTokenInputView */,
 				066A52321BC4EEBA000E606E /* Cells */,
 				066A52141BC4EE04000E606E /* AAAvatarView.swift */,
+				06E7B24B1C0FAB500090660C /* AAMapFastView.swift */,
+				06E7B2511C1345E70090660C /* AAMapPinPointView.swift */,
 				066A52461BC4EED5000E606E /* AAProgressView.swift */,
 				066A523A1BC4EECD000E606E /* AABigPlaceholderView.swift */,
 				066A523C1BC4EECD000E606E /* AATableViewHeader.swift */,
@@ -589,6 +793,7 @@
 				066A52F91BC52FA0000E606E /* Compose */,
 				066A52601BC50E6B000E606E /* Auth */,
 				066A52C41BC521D5000E606E /* Content */,
+				06E7B2451C0F8D410090660C /* Location */,
 				066A527B1BC51EC6000E606E /* Root */,
 				066A52181BC4EE9A000E606E /* Managed Runtime */,
 			);
@@ -600,11 +805,13 @@
 			children = (
 				066A526E1BC51007000E606E /* Views */,
 				066A526B1BC50E83000E606E /* Cells */,
+				153F6B8D1C2D868100C0B960 /* AATermsController.swift */,
 				066A52611BC50E7B000E606E /* AAAuthCountriesViewController.swift */,
 				066A52621BC50E7B000E606E /* AAAuthPhoneViewController.swift */,
 				066A52631BC50E7B000E606E /* AAAuthCodeViewController.swift */,
 				066A52641BC50E7B000E606E /* AAAuthRegisterViewController.swift */,
 				066A52651BC50E7B000E606E /* AAAuthViewController.swift */,
+				153F6B601C2BF8EC00C0B960 /* AAAuthWelcomeController.swift */,
 				065974A41BC621F100B8C7DF /* AAAuthNavigationController.swift */,
 			);
 			path = Auth;
@@ -734,6 +941,8 @@
 				066A52ED1BC52B02000E606E /* AASettingsNotificationsViewController.swift */,
 				066A52EE1BC52B02000E606E /* AASettingsPrivacyViewController.swift */,
 				066A52EF1BC52B02000E606E /* AASettingsWallpapper.swift */,
+				152AA8BC1C298BF00030DEEE /* AASettingsSessionsController.swift */,
+				152AA8BE1C298C4B0030DEEE /* AASettingsLastSeenController.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -794,6 +1003,7 @@
 		066A53131BC533C5000E606E /* Conversation */ = {
 			isa = PBXGroup;
 			children = (
+				15D35F6D1C20196700E3717A /* Views */,
 				066A53241BC533FD000E606E /* Cell */,
 				066A531B1BC533EB000E606E /* Layouting */,
 				066A53181BC533E0000E606E /* Suggestion */,
@@ -832,6 +1042,10 @@
 				066A53281BC53406000E606E /* AABubbleBaseFileCell.swift */,
 				066A53291BC53406000E606E /* AABubbleMediaCell.swift */,
 				066A532A1BC53406000E606E /* AABubbleDocumentCell.swift */,
+				06E7B2491C0F92140090660C /* AABubbleLocationCell.swift */,
+				06E7B2531C139B6F0090660C /* AABubbleContactCell.swift */,
+				153F6B5A1C2B109400C0B960 /* AABubbleVoiceCell.swift */,
+				153F6B5C1C2B3AC500C0B960 /* AABubbleStickerCell.swift */,
 			);
 			path = Cell;
 			sourceTree = "<group>";
@@ -878,6 +1092,201 @@
 			name = CLTokenInputView;
 			sourceTree = "<group>";
 		};
+		06E7B2451C0F8D410090660C /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				06E7B2461C0F8D7A0090660C /* AALocationPickerController.swift */,
+			);
+			path = Location;
+			sourceTree = "<group>";
+		};
+		152AA8901C29887A0030DEEE /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				153F6B871C2D7B9700C0B960 /* TapedLabel */,
+				152AA8911C29891B0030DEEE /* SlackTextViewController */,
+			);
+			name = Extensions;
+			sourceTree = "<group>";
+		};
+		152AA8911C29891B0030DEEE /* SlackTextViewController */ = {
+			isa = PBXGroup;
+			children = (
+				153F6B471C2B03A400C0B960 /* Ext */,
+				152AA8921C2989270030DEEE /* SLKInputAccessoryView.h */,
+				152AA8931C2989270030DEEE /* SLKInputAccessoryView.m */,
+				152AA8941C2989270030DEEE /* SLKTextInputbar.h */,
+				152AA8951C2989270030DEEE /* SLKTextInputbar.m */,
+				152AA8961C2989270030DEEE /* SLKTextView.h */,
+				152AA8971C2989270030DEEE /* SLKTextView.m */,
+				152AA8981C2989270030DEEE /* SLKTextView+SLKAdditions.h */,
+				152AA8991C2989270030DEEE /* SLKTextView+SLKAdditions.m */,
+				152AA89A1C2989270030DEEE /* SLKTextViewController.h */,
+				152AA89B1C2989270030DEEE /* SLKTextViewController.m */,
+				152AA89C1C2989270030DEEE /* SLKTypingIndicatorProtocol.h */,
+				152AA89D1C2989270030DEEE /* SLKTypingIndicatorView.h */,
+				152AA89E1C2989270030DEEE /* SLKTypingIndicatorView.m */,
+				152AA89F1C2989270030DEEE /* SLKUIConstants.h */,
+				152AA8A01C2989270030DEEE /* UIResponder+SLKAdditions.h */,
+				152AA8A11C2989270030DEEE /* UIResponder+SLKAdditions.m */,
+				152AA8A21C2989270030DEEE /* UIScrollView+SLKAdditions.h */,
+				152AA8A31C2989270030DEEE /* UIScrollView+SLKAdditions.m */,
+				152AA8A41C2989270030DEEE /* UIView+SLKAdditions.h */,
+				152AA8A51C2989270030DEEE /* UIView+SLKAdditions.m */,
+			);
+			name = SlackTextViewController;
+			sourceTree = "<group>";
+		};
+		153F6B471C2B03A400C0B960 /* Ext */ = {
+			isa = PBXGroup;
+			children = (
+				153F6B521C2B03E300C0B960 /* AASlideView.h */,
+				153F6B531C2B03E300C0B960 /* AASlideView.m */,
+				153F6B541C2B03E300C0B960 /* AAGarbageView.h */,
+				153F6B551C2B03E300C0B960 /* AAGarbageView.m */,
+				153F6B481C2B03D600C0B960 /* FBShimmering.h */,
+				153F6B491C2B03D600C0B960 /* FBShimmeringLayer.h */,
+				153F6B4A1C2B03D600C0B960 /* FBShimmeringLayer.m */,
+				153F6B4B1C2B03D600C0B960 /* FBShimmeringView.h */,
+				153F6B4C1C2B03D600C0B960 /* FBShimmeringView.m */,
+			);
+			name = Ext;
+			sourceTree = "<group>";
+		};
+		153F6B871C2D7B9700C0B960 /* TapedLabel */ = {
+			isa = PBXGroup;
+			children = (
+				153F6B881C2D7BA300C0B960 /* AATapLabelDelegate.swift */,
+				153F6B891C2D7BA300C0B960 /* AATapLabel.swift */,
+			);
+			name = TapedLabel;
+			sourceTree = "<group>";
+		};
+		15D35F0A1C20182900E3717A /* AudioRecorder */ = {
+			isa = PBXGroup;
+			children = (
+				15F89EFE1C211FCE00776ACD /* libopus */,
+				15D35F291C20186400E3717A /* opusfile */,
+				15D35F201C20185B00E3717A /* ogg */,
+				15D35F0B1C20184700E3717A /* opusenc */,
+				15D35F361C20187E00E3717A /* ASQueue.h */,
+				15D35F371C20187E00E3717A /* ASQueue.m */,
+				15D35F381C20187E00E3717A /* AAOpusAudioRecorder.h */,
+				15D35F391C20187E00E3717A /* AAOpusAudioRecorder.m */,
+				15D35F3A1C20187E00E3717A /* AAAlertView.h */,
+				15D35F3B1C20187E00E3717A /* AAAlertView.m */,
+				15D35F3C1C20187E00E3717A /* AAAudioRecorder.h */,
+				15D35F3D1C20187E00E3717A /* AAAudioRecorder.m */,
+				15D35F3E1C20187E00E3717A /* AATimer.h */,
+				15D35F3F1C20187E00E3717A /* AATimer.m */,
+				15D35F401C20187E00E3717A /* AAAudioPlayer.h */,
+				15D35F411C20187E00E3717A /* AAAudioPlayer.m */,
+				15D35F421C20187E00E3717A /* AANativeAudioPlayer.h */,
+				15D35F431C20187E00E3717A /* AANativeAudioPlayer.m */,
+				15D35F441C20187E00E3717A /* AAOpusAudioPlayerAU.h */,
+				15D35F451C20187E00E3717A /* AAOpusAudioPlayerAU.mm */,
+				15D35F461C20187E00E3717A /* AAAudioBuffer.h */,
+				15D35F471C20187E00E3717A /* AAModernConversationAudioPlayer.h */,
+				15D35F481C20187E00E3717A /* AAModernConversationAudioPlayer.m */,
+				15D35F491C20187E00E3717A /* AAModernConversationAudioPlayerContext.h */,
+				15D35F4A1C20187E00E3717A /* AAModernConversationAudioPlayerContext.m */,
+				15D35F4B1C20187E00E3717A /* NSObject+TGLock.h */,
+				15D35F4C1C20187E00E3717A /* NSObject+TGLock.m */,
+				15D35F4D1C20187E00E3717A /* AAModernViewInlineMediaContext.h */,
+				15D35F4E1C20187E00E3717A /* AAModernViewInlineMediaContext.m */,
+				15D35F4F1C20187E00E3717A /* AATimerTarget.h */,
+				15D35F501C20187E00E3717A /* AATimerTarget.m */,
+			);
+			name = AudioRecorder;
+			sourceTree = "<group>";
+		};
+		15D35F0B1C20184700E3717A /* opusenc */ = {
+			isa = PBXGroup;
+			children = (
+				15D35F0C1C20185500E3717A /* diag_range.c */,
+				15D35F0D1C20185500E3717A /* diag_range.h */,
+				15D35F0E1C20185500E3717A /* opus_header.c */,
+				15D35F0F1C20185500E3717A /* opus_header.h */,
+				15D35F101C20185500E3717A /* opusenc.h */,
+				15D35F111C20185500E3717A /* opusenc.m */,
+				15D35F121C20185500E3717A /* picture.c */,
+				15D35F131C20185500E3717A /* picture.h */,
+				15D35F141C20185500E3717A /* wav_io.c */,
+				15D35F151C20185500E3717A /* wav_io.h */,
+			);
+			name = opusenc;
+			sourceTree = "<group>";
+		};
+		15D35F201C20185B00E3717A /* ogg */ = {
+			isa = PBXGroup;
+			children = (
+				15D35F211C20186200E3717A /* bitwise.c */,
+				15D35F221C20186200E3717A /* framing.c */,
+				15D35F231C20186200E3717A /* ogg.h */,
+				15D35F241C20186200E3717A /* os_types.h */,
+			);
+			name = ogg;
+			sourceTree = "<group>";
+		};
+		15D35F291C20186400E3717A /* opusfile */ = {
+			isa = PBXGroup;
+			children = (
+				15D35F2A1C20187200E3717A /* info.c */,
+				15D35F2B1C20187200E3717A /* internal.c */,
+				15D35F2C1C20187200E3717A /* internal.h */,
+				15D35F2D1C20187200E3717A /* opusfile.c */,
+				15D35F2E1C20187200E3717A /* opusfile.h */,
+				15D35F2F1C20187200E3717A /* stream.c */,
+			);
+			name = opusfile;
+			sourceTree = "<group>";
+		};
+		15D35F6D1C20196700E3717A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				15D35F6E1C20196E00E3717A /* AARecordAudioController.swift */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
+		15D35F721C201B5300E3717A /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				15D35F731C201B6B00E3717A /* AACustomPresentationController.swift */,
+				15D35F741C201B6B00E3717A /* AACustomPresentationAnimationController.swift */,
+			);
+			name = Categories;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		15F89EFE1C211FCE00776ACD /* libopus */ = {
+			isa = PBXGroup;
+			children = (
+				15F89F021C211FE100776ACD /* headers */,
+				15F89EFF1C211FD700776ACD /* lib */,
+			);
+			name = libopus;
+			sourceTree = "<group>";
+		};
+		15F89EFF1C211FD700776ACD /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				15F89F001C211FDE00776ACD /* libopus.a */,
+			);
+			name = lib;
+			sourceTree = "<group>";
+		};
+		15F89F021C211FE100776ACD /* headers */ = {
+			isa = PBXGroup;
+			children = (
+				15F89F031C211FED00776ACD /* opus_defines.h */,
+				15F89F041C211FED00776ACD /* opus_multistream.h */,
+				15F89F051C211FED00776ACD /* opus_types.h */,
+				15F89F061C211FED00776ACD /* opus.h */,
+			);
+			name = headers;
+			sourceTree = "<group>";
+		};
 		2F428D134E194A828C3DF863 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -906,6 +1315,7 @@
 			files = (
 				069CF4D21BCB909A00C66E12 /* CLTokenView.h in Headers */,
 				066A51831BC4C373000E606E /* FMResultSet.h in Headers */,
+				15F89F091C211FED00776ACD /* opus_types.h in Headers */,
 				066A517D1BC4C373000E606E /* FMDatabaseAdditions.h in Headers */,
 				069CF4D01BCB909A00C66E12 /* CLTokenInputView.h in Headers */,
 				066A517F1BC4C373000E606E /* FMDatabasePool.h in Headers */,
@@ -913,8 +1323,50 @@
 				066A517A1BC4C373000E606E /* FMDatabase.h in Headers */,
 				069CF4CC1BCB909A00C66E12 /* CLBackspaceDetectingTextField.h in Headers */,
 				066A50D61BC4AE63000E606E /* ActorSDK.h in Headers */,
+				15D35F621C20187E00E3717A /* AAModernConversationAudioPlayer.h in Headers */,
 				066A517C1BC4C373000E606E /* FMDatabase+Private.h in Headers */,
+				15D35F5B1C20187E00E3717A /* AAAudioPlayer.h in Headers */,
+				152AA8B11C2989270030DEEE /* SLKTypingIndicatorView.h in Headers */,
+				153F6B4D1C2B03D600C0B960 /* FBShimmering.h in Headers */,
+				152AA8A81C2989270030DEEE /* SLKTextInputbar.h in Headers */,
 				066A52731BC5101A000E606E /* ABPhoneField.h in Headers */,
+				152AA8AA1C2989270030DEEE /* SLKTextView.h in Headers */,
+				152AA8B01C2989270030DEEE /* SLKTypingIndicatorProtocol.h in Headers */,
+				152AA8AC1C2989270030DEEE /* SLKTextView+SLKAdditions.h in Headers */,
+				152AA8A61C2989270030DEEE /* SLKInputAccessoryView.h in Headers */,
+				152AA8AE1C2989270030DEEE /* SLKTextViewController.h in Headers */,
+				152AA8B31C2989270030DEEE /* SLKUIConstants.h in Headers */,
+				152AA8B61C2989270030DEEE /* UIScrollView+SLKAdditions.h in Headers */,
+				152AA8B81C2989270030DEEE /* UIView+SLKAdditions.h in Headers */,
+				153F6B561C2B03E300C0B960 /* AASlideView.h in Headers */,
+				153F6B501C2B03D600C0B960 /* FBShimmeringView.h in Headers */,
+				153F6B581C2B03E300C0B960 /* AAGarbageView.h in Headers */,
+				153F6B4E1C2B03D600C0B960 /* FBShimmeringLayer.h in Headers */,
+				152AA8B41C2989270030DEEE /* UIResponder+SLKAdditions.h in Headers */,
+				15D35F571C20187E00E3717A /* AAAudioRecorder.h in Headers */,
+				15D35F641C20187E00E3717A /* AAModernConversationAudioPlayerContext.h in Headers */,
+				15D35F681C20187E00E3717A /* AAModernViewInlineMediaContext.h in Headers */,
+				15F89F071C211FED00776ACD /* opus_defines.h in Headers */,
+				15D35F341C20187200E3717A /* opusfile.h in Headers */,
+				15D35F661C20187E00E3717A /* NSObject+TGLock.h in Headers */,
+				15D35F281C20186200E3717A /* os_types.h in Headers */,
+				15D35F191C20185500E3717A /* opus_header.h in Headers */,
+				15F89F081C211FED00776ACD /* opus_multistream.h in Headers */,
+				15D35F1F1C20185500E3717A /* wav_io.h in Headers */,
+				15D35F171C20185500E3717A /* diag_range.h in Headers */,
+				15D35F5F1C20187E00E3717A /* AAOpusAudioPlayerAU.h in Headers */,
+				15D35F551C20187E00E3717A /* AAAlertView.h in Headers */,
+				15D35F5D1C20187E00E3717A /* AANativeAudioPlayer.h in Headers */,
+				15D35F271C20186200E3717A /* ogg.h in Headers */,
+				15D35F321C20187200E3717A /* internal.h in Headers */,
+				15D35F1A1C20185500E3717A /* opusenc.h in Headers */,
+				15D35F591C20187E00E3717A /* AATimer.h in Headers */,
+				15D35F531C20187E00E3717A /* AAOpusAudioRecorder.h in Headers */,
+				15D35F611C20187E00E3717A /* AAAudioBuffer.h in Headers */,
+				15D35F6A1C20187E00E3717A /* AATimerTarget.h in Headers */,
+				15F89F0A1C211FED00776ACD /* opus.h in Headers */,
+				15D35F511C20187E00E3717A /* ASQueue.h in Headers */,
+				15D35F1D1C20185500E3717A /* picture.h in Headers */,
 				06230F421BC95BD200A4807B /* RMPhoneFormat.h in Headers */,
 				069CF4CE1BCB909A00C66E12 /* CLToken.h in Headers */,
 			);
@@ -969,6 +1421,7 @@
 				ru,
 				"zh-Hans",
 				Base,
+				es,
 			);
 			mainGroup = 066A50C81BC4AE63000E606E;
 			productRefGroup = 066A50D31BC4AE63000E606E /* Products */;
@@ -998,6 +1451,7 @@
 				065975521BC7DD3C00B8C7DF /* highlight.min.js in Resources */,
 				065975441BC7D34200B8C7DF /* Localizable.strings in Resources */,
 				0659754C1BC7DBA000B8C7DF /* notification.caf in Resources */,
+				153F6B3D1C2A9B3D00C0B960 /* begin_record.caf in Resources */,
 				063074191BD68E370053DEAF /* bg_3_preview.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1056,11 +1510,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				15D35F781C20273D00E3717A /* AAAudioRecorder.m in Sources */,
+				15D35F181C20185500E3717A /* opus_header.c in Sources */,
 				066A52F81BC52B13000E606E /* AAWallpapperSettingsCell.swift in Sources */,
 				066A51591BC4C14A000E606E /* AASwiftlyLRU.swift in Sources */,
+				15D35F161C20185500E3717A /* diag_range.c in Sources */,
 				066A525E1BC503BB000E606E /* ActorApplicationDelegate.swift in Sources */,
 				066A53101BC53317000E606E /* AAWallpapperPreviewController.swift in Sources */,
+				152AA8B91C2989270030DEEE /* UIView+SLKAdditions.m in Sources */,
 				066A52F21BC52B02000E606E /* AASettingsPrivacyViewController.swift in Sources */,
+				15D35F561C20187E00E3717A /* AAAlertView.m in Sources */,
+				15D35F301C20187200E3717A /* info.c in Sources */,
 				066A532E1BC53406000E606E /* AABubbleBaseFileCell.swift in Sources */,
 				066A514A1BC4BCE0000E606E /* Dispatch.swift in Sources */,
 				066A52401BC4EECD000E606E /* AABigPlaceholderView.swift in Sources */,
@@ -1072,15 +1532,22 @@
 				066A52271BC4EEAC000E606E /* AAContentTableController.swift in Sources */,
 				066A51411BC4BB5C000E606E /* AssosiatedObject.swift in Sources */,
 				066A52E51BC52A20000E606E /* AAGroupViewController.swift in Sources */,
+				15D35F691C20187E00E3717A /* AAModernViewInlineMediaContext.m in Sources */,
 				066A52251BC4EEAC000E606E /* ManagedBindedCells.swift in Sources */,
+				15D35F601C20187E00E3717A /* AAOpusAudioPlayerAU.mm in Sources */,
+				15D35F1C1C20185500E3717A /* picture.c in Sources */,
 				066A532B1BC53406000E606E /* AABubbleCell.swift in Sources */,
 				066A52C71BC521EA000E606E /* AAEditTextController.swift in Sources */,
+				153F6B5D1C2B3AC500C0B960 /* AABubbleStickerCell.swift in Sources */,
+				15D35F1E1C20185500E3717A /* wav_io.c in Sources */,
 				065974A51BC621F100B8C7DF /* AAAuthNavigationController.swift in Sources */,
 				066A518E1BC4C383000E606E /* iOSNotificationProvider.swift in Sources */,
 				066A52681BC50E7B000E606E /* AAAuthCodeViewController.swift in Sources */,
+				06E7B2541C139B6F0090660C /* AABubbleContactCell.swift in Sources */,
 				066A52CC1BC521FA000E606E /* AADialogsListContentController.swift in Sources */,
 				066A52571BC4EF61000E606E /* AACollectionViewController.swift in Sources */,
 				066A532F1BC53406000E606E /* AABubbleMediaCell.swift in Sources */,
+				15D35F631C20187E00E3717A /* AAModernConversationAudioPlayer.m in Sources */,
 				066A527F1BC51ED0000E606E /* AARootSplitViewController.swift in Sources */,
 				066A52481BC4EED5000E606E /* AAProgressView.swift in Sources */,
 				066A51921BC4C383000E606E /* CocoaFileSystemRuntime.swift in Sources */,
@@ -1089,31 +1556,41 @@
 				066A518D1BC4C383000E606E /* CocoaStorageRuntime.swift in Sources */,
 				066A52F01BC52B02000E606E /* AASettingsViewController.swift in Sources */,
 				066A52741BC5101A000E606E /* ABPhoneField.m in Sources */,
+				153F6B611C2BF8EC00C0B960 /* AAAuthWelcomeController.swift in Sources */,
+				152AA8A91C2989270030DEEE /* SLKTextInputbar.m in Sources */,
 				066A53071BC53183000E606E /* AARecentViewController.swift in Sources */,
 				06230F411BC95BD200A4807B /* RMPhoneFormat.m in Sources */,
 				066A52361BC4EEBA000E606E /* AATitledCell.swift in Sources */,
 				066A52431BC4EECD000E606E /* AATableViewSeparator.swift in Sources */,
 				066A52341BC4EEBA000E606E /* AACommonCell.swift in Sources */,
+				15D35F311C20187200E3717A /* internal.c in Sources */,
 				066A52DF1BC5241F000E606E /* AAWebActionController.swift in Sources */,
 				066A51221BC4B55C000E606E /* AADevice.swift in Sources */,
 				066A532D1BC53406000E606E /* AABubbleServiceCell.swift in Sources */,
 				065974A71BC62B3600B8C7DF /* ViewExtensions.swift in Sources */,
 				066A52F11BC52B02000E606E /* AASettingsNotificationsViewController.swift in Sources */,
+				15D35F5A1C20187E00E3717A /* AATimer.m in Sources */,
 				066A52381BC4EEBA000E606E /* AAHeaderCell.swift in Sources */,
 				066A524B1BC4EF49000E606E /* AAViewController.swift in Sources */,
 				066A51521BC4BE34000E606E /* Logs.swift in Sources */,
 				066A52D71BC52378000E606E /* AAContactsListContentControllerDelegate.swift in Sources */,
 				066A51241BC4B56D000E606E /* Colors.swift in Sources */,
 				066A53171BC533DD000E606E /* AABubbles.swift in Sources */,
+				153F6B591C2B03E300C0B960 /* AAGarbageView.m in Sources */,
+				153F6B8B1C2D7BA400C0B960 /* AATapLabel.swift in Sources */,
 				066A52081BC4E962000E606E /* Makefile in Sources */,
 				066A53231BC533F5000E606E /* Caches.swift in Sources */,
+				06E7B2471C0F8D7A0090660C /* AALocationPickerController.swift in Sources */,
 				066A52691BC50E7B000E606E /* AAAuthRegisterViewController.swift in Sources */,
 				066A51501BC4BE06000E606E /* AARegex.swift in Sources */,
 				06CE89901BD84DF5005A5530 /* ActorSDKAnalytics.swift in Sources */,
+				15D35F6F1C20196E00E3717A /* AARecordAudioController.swift in Sources */,
 				069CF4D31BCB909A00C66E12 /* CLTokenView.m in Sources */,
 				066A52F71BC52B13000E606E /* AAWallpapperPreviewCell.swift in Sources */,
 				066A51541BC4BE95000E606E /* Images.swift in Sources */,
+				152AA8A71C2989270030DEEE /* SLKInputAccessoryView.m in Sources */,
 				066A52801BC51ED0000E606E /* AARootTabViewController.swift in Sources */,
+				153F6B8E1C2D868100C0B960 /* AATermsController.swift in Sources */,
 				066A522A1BC4EEAC000E606E /* ManagedAlerts.swift in Sources */,
 				069CF4D11BCB909A00C66E12 /* CLTokenInputView.m in Sources */,
 				066A52451BC4EECD000E606E /* AAAvatarCell.swift in Sources */,
@@ -1124,59 +1601,87 @@
 				066A52151BC4EE04000E606E /* AAAvatarView.swift in Sources */,
 				066A52591BC4EF61000E606E /* Executions.swift in Sources */,
 				066A519C1BC4C390000E606E /* FMDBIndex.swift in Sources */,
+				153F6B8A1C2D7BA300C0B960 /* AATapLabelDelegate.swift in Sources */,
+				15D35F5E1C20187E00E3717A /* AANativeAudioPlayer.m in Sources */,
 				066A52DB1BC52385000E606E /* AAContactActionCell.swift in Sources */,
+				15D35F331C20187200E3717A /* opusfile.c in Sources */,
 				065975391BC7CA7B00B8C7DF /* Bundle.swift in Sources */,
+				15D35F6B1C20187E00E3717A /* AATimerTarget.m in Sources */,
+				153F6B571C2B03E300C0B960 /* AASlideView.m in Sources */,
 				066A53111BC53317000E606E /* AACorePreviewController.swift in Sources */,
 				066A519B1BC4C390000E606E /* FMDBKeyValue.swift in Sources */,
+				15D35F521C20187E00E3717A /* ASQueue.m in Sources */,
+				15D35F651C20187E00E3717A /* AAModernConversationAudioPlayerContext.m in Sources */,
 				066A52F31BC52B02000E606E /* AASettingsWallpapper.swift in Sources */,
 				066A53041BC53177000E606E /* AAContactsViewController.swift in Sources */,
 				066A51801BC4C373000E606E /* FMDatabasePool.m in Sources */,
 				066A518F1BC4C383000E606E /* iOSPhoneBookProvider.swift in Sources */,
 				066A530B1BC531A2000E606E /* AAUserViewController.swift in Sources */,
+				153F6B5B1C2B109400C0B960 /* AABubbleVoiceCell.swift in Sources */,
+				15D35F251C20186200E3717A /* bitwise.c in Sources */,
 				066A531A1BC533E7000E606E /* AAAutoCompleteCell.swift in Sources */,
 				065975051BC757A300B8C7DF /* ActorRuntime.swift in Sources */,
 				066A517B1BC4C373000E606E /* FMDatabase.m in Sources */,
 				066A52561BC4EF61000E606E /* AATableViewController.swift in Sources */,
+				152AA8AB1C2989270030DEEE /* SLKTextView.m in Sources */,
+				153F6B511C2B03D600C0B960 /* FBShimmeringView.m in Sources */,
 				066A52D61BC52378000E606E /* AAContactsListContentController.swift in Sources */,
 				065975021BC7534100B8C7DF /* FMDBBridge.swift in Sources */,
+				15D35F351C20187200E3717A /* stream.c in Sources */,
 				066A519E1BC4C390000E606E /* FMDBExtensions.swift in Sources */,
 				066A52E61BC52A20000E606E /* AAAddParticipantViewController.swift in Sources */,
 				066A52C81BC521EA000E606E /* AAEditFieldController.swift in Sources */,
 				066A532C1BC53406000E606E /* AABubbleTextCell.swift in Sources */,
 				066A52261BC4EEAC000E606E /* ManagedCells.swift in Sources */,
 				066A53221BC533F5000E606E /* AAMessagesFlowLayout.swift in Sources */,
+				15D35F541C20187E00E3717A /* AAOpusAudioRecorder.m in Sources */,
 				066A52671BC50E7B000E606E /* AAAuthPhoneViewController.swift in Sources */,
 				066A53371BC537CA000E606E /* ConversationViewController.swift in Sources */,
 				066A519D1BC4C390000E606E /* UDPreferencesStorage.swift in Sources */,
 				069CF4CD1BCB909A00C66E12 /* CLBackspaceDetectingTextField.m in Sources */,
+				15D35F1B1C20185500E3717A /* opusenc.m in Sources */,
+				152AA8BD1C298BF00030DEEE /* AASettingsSessionsController.swift in Sources */,
 				066A515B1BC4C178000E606E /* AAHashMap.swift in Sources */,
 				066A52811BC51ED0000E606E /* AANoSelectionViewController.swift in Sources */,
+				152AA8B21C2989270030DEEE /* SLKTypingIndicatorView.m in Sources */,
 				066A52281BC4EEAC000E606E /* AAManagedTableController.swift in Sources */,
 				065975541BC7DF5100B8C7DF /* CocoaAssetsRuntime.swift in Sources */,
+				06E7B2521C1345E70090660C /* AAMapPinPointView.swift in Sources */,
 				066A53121BC53317000E606E /* AAPhotoPreviewController.swift in Sources */,
 				066A52391BC4EEBA000E606E /* AAEditCell.swift in Sources */,
 				066A526D1BC50E8B000E606E /* AAAuthCountryCell.swift in Sources */,
+				152AA8AF1C2989270030DEEE /* SLKTextViewController.m in Sources */,
 				066A51911BC4C383000E606E /* CocoaHttpRuntime.swift in Sources */,
 				066A53211BC533F5000E606E /* BubbleLayouts.swift in Sources */,
 				066A51821BC4C373000E606E /* FMDatabaseQueue.m in Sources */,
 				066A525A1BC4EF61000E606E /* Navigations.swift in Sources */,
 				066A51841BC4C373000E606E /* FMResultSet.m in Sources */,
 				066A514E1BC4BDE4000E606E /* Numbers.swift in Sources */,
+				15D35F671C20187E00E3717A /* NSObject+TGLock.m in Sources */,
+				15D35F5C1C20187E00E3717A /* AAAudioPlayer.m in Sources */,
+				152AA8BF1C298C4B0030DEEE /* AASettingsLastSeenController.swift in Sources */,
 				066A51561BC4BEF5000E606E /* AALocalized.swift in Sources */,
 				069CF4CF1BCB909A00C66E12 /* CLToken.m in Sources */,
+				15D35F751C201B6B00E3717A /* AACustomPresentationController.swift in Sources */,
 				066A51441BC4BBAF000E606E /* Strings.swift in Sources */,
 				066A53331BC534F5000E606E /* AAFileTypes.swift in Sources */,
 				066A52FE1BC52FA9000E606E /* AAGroupCreateViewController.swift in Sources */,
 				066A52E71BC52A20000E606E /* AAInviteLinkViewController.swift in Sources */,
+				152AA8AD1C2989270030DEEE /* SLKTextView+SLKAdditions.m in Sources */,
+				152AA8B71C2989270030DEEE /* UIScrollView+SLKAdditions.m in Sources */,
 				066A52241BC4EEAC000E606E /* AAManagedRange.swift in Sources */,
 				066A50E21BC4AF9F000E606E /* ActorSDK.swift in Sources */,
+				15D35F761C201B6B00E3717A /* AACustomPresentationAnimationController.swift in Sources */,
 				06CE898A1BD8401C005A5530 /* Reachability.swift in Sources */,
+				06E7B24C1C0FAB500090660C /* AAMapFastView.swift in Sources */,
 				066A516D1BC4C366000E606E /* ActorCoreExt.swift in Sources */,
 				066A517E1BC4C373000E606E /* FMDatabaseAdditions.m in Sources */,
 				066A519A1BC4C390000E606E /* FMDBList.swift in Sources */,
 				066A52221BC4EEAC000E606E /* AAManagedTable.swift in Sources */,
+				152AA8B51C2989270030DEEE /* UIResponder+SLKAdditions.m in Sources */,
 				066A52EA1BC52A2B000E606E /* AAGroupMemberCell.swift in Sources */,
 				066A52291BC4EEAC000E606E /* ManagedTableExtensions.swift in Sources */,
+				153F6B4F1C2B03D600C0B960 /* FBShimmeringLayer.m in Sources */,
 				066A514C1BC4BD05000E606E /* Collections.swift in Sources */,
 				066A526A1BC50E7B000E606E /* AAAuthViewController.swift in Sources */,
 				066A52541BC4EF61000E606E /* AAImagePickerController.swift in Sources */,
@@ -1184,9 +1689,11 @@
 				066A52551BC4EF61000E606E /* AANavigationController.swift in Sources */,
 				066A52421BC4EECD000E606E /* AATableViewHeader.swift in Sources */,
 				066A52CD1BC521FA000E606E /* AADialogsListContentControllerDelegate.swift in Sources */,
+				15D35F261C20186200E3717A /* framing.c in Sources */,
 				066A52231BC4EEAC000E606E /* AAManagedSection.swift in Sources */,
 				066A52D11BC52204000E606E /* AADialogCell.swift in Sources */,
 				066A51901BC4C383000E606E /* CocoaNetworkRuntime.swift in Sources */,
+				06E7B24A1C0F92140090660C /* AABubbleLocationCell.swift in Sources */,
 				066A52581BC4EF61000E606E /* Alerts.swift in Sources */,
 				066A51691BC4C366000E606E /* AATools.swift in Sources */,
 				066A53201BC533F5000E606E /* AABubbleBackgroundProcessor.swift in Sources */,
@@ -1205,6 +1712,7 @@
 				065975471BC7D34400B8C7DF /* ru */,
 				065975481BC7D34600B8C7DF /* zh-Hans */,
 				0659754D1BC7DCED00B8C7DF /* Base */,
+				15F89F0F1C21317400776ACD /* es */,
 			);
 			name = Localizable.strings;
 			path = Resources;
@@ -1308,6 +1816,7 @@
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -1328,7 +1837,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_NO_PIE = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				LIBRARY_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/j2objc/Objects/";
+				LIBRARY_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/j2objc/Objects/",
+					"$(PROJECT_DIR)/ActorSDK/Sources/Utils",
+				);
 				MACH_O_TYPE = mh_dylib;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
@@ -1339,9 +1851,11 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = im.actor.ActorSDK;
 				PRODUCT_NAME = ActorSDK;
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 			};
 			name = Debug;
 		};
@@ -1352,6 +1866,7 @@
 				CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEFINES_MODULE = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1371,8 +1886,12 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_NO_PIE = NO;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				LIBRARY_SEARCH_PATHS = "$(CONFIGURATION_TEMP_DIR)/j2objc/Objects/";
+				LIBRARY_SEARCH_PATHS = (
+					"$(CONFIGURATION_TEMP_DIR)/j2objc/Objects/",
+					"$(PROJECT_DIR)/ActorSDK/Sources/Utils",
+				);
 				MACH_O_TYPE = mh_dylib;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-lactor",
 					"$(inherited)",
@@ -1381,8 +1900,10 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = im.actor.ActorSDK;
 				PRODUCT_NAME = ActorSDK;
+				PROVISIONING_PROFILE = "";
 				SKIP_INSTALL = YES;
 				STRIP_INSTALLED_PRODUCT = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 			};
 			name = Release;

@@ -23,6 +23,8 @@ object BotMessages {
     val WebHooks = "webhooks"
     val Users = "users"
     val Groups = "groups"
+    val Stickers = "stickers"
+    val Files = "files"
   }
 
   final case class FileLocation(
@@ -31,6 +33,13 @@ object BotMessages {
   )
 
   final case class AvatarImage(
+    @beanGetter fileLocation: FileLocation,
+    @beanGetter width:        Int,
+    @beanGetter height:       Int,
+    @beanGetter fileSize:     Int
+  )
+
+  final case class ImageLocation(
     @beanGetter fileLocation: FileLocation,
     @beanGetter width:        Int,
     @beanGetter height:       Int,
@@ -325,6 +334,7 @@ object BotMessages {
     override def readResponse(obj: Js.Obj) = readJs[ContainerList[String]](obj)
   }
 
+  //username is nickname
   @key("CreateBot")
   final case class CreateBot(
     @beanGetter username: String,
@@ -383,6 +393,17 @@ object BotMessages {
     override def readResponse(obj: Js.Obj) = readJs[Response](obj)
   }
 
+  @key("ChangeUserNickname")
+  final case class ChangeUserNickname(
+    @beanGetter userId:   Int,
+    @beanGetter nickname: Option[String]
+  ) extends RequestBody {
+    override type Response = Void
+    override val service = Services.Users
+
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+  }
+
   @key("ChangeUserAbout")
   final case class ChangeUserAbout(
     @beanGetter userId: Int,
@@ -394,6 +415,17 @@ object BotMessages {
     override def readResponse(obj: Js.Obj) = readJs[Response](obj)
 
     def getAbout = about.asJava
+  }
+
+  @key("IsAdmin")
+  final case class IsAdmin(@beanGetter userId: Int) extends RequestBody {
+    override type Response = ResponseIsAdmin
+    override val service = Services.Users
+    override def readResponse(obj: Js.Obj) = readJs[Response](obj)
+  }
+
+  final case class ResponseIsAdmin(isAdmin: Boolean) extends ResponseBody {
+    def getIsAdmin: java.lang.Boolean = isAdmin.booleanValue()
   }
 
   @key("FindUser")
@@ -432,6 +464,100 @@ object BotMessages {
     override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
   }
 
+  @key("CreateStickerPack")
+  final case class CreateStickerPack(@beanGetter creatorUserId: Int) extends RequestBody {
+    override type Response = Container[String]
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
+  @key("ShowStickerPacks")
+  final case class ShowStickerPacks(@beanGetter ownerUserId: Int) extends RequestBody {
+    override type Response = StickerPackIds
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
+  final case class StickerPackIds(ids: Seq[String]) extends ResponseBody {
+    def getIds = seqAsJavaList(ids)
+  }
+
+  @key("ShowStickers")
+  final case class ShowStickers(
+    @beanGetter ownerUserId: Int,
+    @beanGetter packId:      Int
+  ) extends RequestBody {
+    override type Response = StickerIds
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
+  final case class StickerIds(ids: Seq[String]) extends ResponseBody {
+    def getIds = seqAsJavaList(ids)
+  }
+
+  @key("DownloadFile")
+  final case class DownloadFile(@beanGetter fileLocation: FileLocation) extends RequestBody {
+    override type Response = ResponseDownloadFile
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Files
+  }
+
+  final case class ResponseDownloadFile(fileBytes: Array[Byte]) extends ResponseBody
+
+  @key("AddSticker")
+  final case class AddSticker(
+    @beanGetter ownerUserId: Int,
+    @beanGetter packId:      Int,
+    emoji:                   Option[String],
+    @beanGetter small:       Array[Byte],
+    @beanGetter smallW:      Int,
+    @beanGetter smallH:      Int,
+    @beanGetter medium:      Array[Byte],
+    @beanGetter mediumW:     Int,
+    @beanGetter mediumH:     Int,
+    @beanGetter large:       Array[Byte],
+    @beanGetter largeW:      Int,
+    @beanGetter largeH:      Int
+  ) extends RequestBody {
+    override type Response = Void
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+
+    def getEmoji = emoji.asJava
+  }
+
+  @key("DeleteSticker")
+  final case class DeleteSticker(
+    @beanGetter ownerUserId: Int,
+    @beanGetter packId:      Int,
+    @beanGetter stickerId:   Int
+  ) extends RequestBody {
+    override type Response = Void
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
+  @key("MakeStickerPackDefault")
+  final case class MakeStickerPackDefault(
+    @beanGetter userId: Int,
+    @beanGetter packId: Int
+  ) extends RequestBody {
+    override type Response = Void
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
+  @key("UnmakeStickerPackDefault")
+  final case class UnmakeStickerPackDefault(
+    @beanGetter userId: Int,
+    @beanGetter packId: Int
+  ) extends RequestBody {
+    override type Response = Void
+    override def readResponse(obj: Js.Obj): Response = readJs[Response](obj)
+    override val service: String = Services.Stickers
+  }
+
   @key("Message")
   final case class Message(
     @beanGetter peer:     OutPeer,
@@ -451,11 +577,112 @@ object BotMessages {
 
   sealed trait MessageBody
 
+  //ext has default value for backward compatibility with old bots
   @key("Text")
-  final case class TextMessage(@beanGetter text: String) extends MessageBody
+  final case class TextMessage(@beanGetter text: String, ext: Option[TextMessageEx] = None) extends MessageBody {
+    def getExt = ext.asJava
+  }
 
   @key("Json")
   final case class JsonMessage(@beanGetter rawJson: String) extends MessageBody
+
+  @key("Sticker")
+  final case class StickerMessage(
+    stickerId:                   Option[Int],
+    fastPreview:                 Option[Array[Byte]],
+    image512:                    Option[ImageLocation],
+    image256:                    Option[ImageLocation],
+    stickerCollectionId:         Option[Int],
+    stickerCollectionAccessHash: Option[Long]
+  ) extends MessageBody {
+    def getStickerId = stickerId.asPrimitive
+    def getFastPreview = fastPreview.asJava
+    def getImage512 = image512.asJava
+    def getImage256 = image256.asJava
+    def getStickerCollectionId = stickerCollectionId.asPrimitive
+    def getStickerCollectionAccessHash = stickerCollectionAccessHash.asPrimitive
+  }
+
+  sealed trait TextMessageEx
+
+  @key("TextModernMessage")
+  final case class TextModernMessage(
+    text:                Option[String],
+    senderNameOverride:  Option[String],
+    senderPhotoOverride: Option[Avatar],
+    style:               Option[ParagraphStyle],
+    attaches:            IndexedSeq[TextModernAttach]
+  ) extends TextMessageEx {
+    def this(
+      text:                String,
+      senderNameOverride:  String,
+      senderPhotoOverride: Avatar,
+      style:               ParagraphStyle,
+      attaches:            java.util.List[TextModernAttach]
+    ) =
+      this(Option(text), Option(senderNameOverride), Option(senderPhotoOverride), Option(style), attaches.toIndexedSeq)
+
+    def getText = text.asJava
+    def getSenderNameOverride = senderNameOverride.asJava
+    def getSenderPhotoOverride = senderPhotoOverride.asJava
+    def getStyle = style.asJava
+    def getAttaches = seqAsJavaList(attaches)
+  }
+
+  final case class TextModernAttach(
+    title:     Option[String],
+    titleUrl:  Option[String],
+    titleIcon: Option[ImageLocation],
+    text:      Option[String],
+    style:     Option[ParagraphStyle],
+    fields:    IndexedSeq[TextModernField]
+  ) {
+    def this(
+      title:     String,
+      titleUrl:  String,
+      titleIcon: ImageLocation,
+      text:      String,
+      style:     ParagraphStyle,
+      fields:    java.util.List[TextModernField]
+    ) = this(Option(title), Option(titleUrl), Option(titleIcon), Option(text), Option(style), fields.toIndexedSeq)
+
+    def getTitle = title.asJava
+    def getTitleUrl = titleUrl.asJava
+    def getTitleIcon = titleIcon.asJava
+    def getText = text.asJava
+    def getStyle = style.asJava
+    def getFields = seqAsJavaList(fields) //fields.toSeq.seqAsJavaList doesn't work for some reason
+  }
+
+  final case class TextModernField(@beanGetter title: String, @beanGetter value: String, isShort: Option[Boolean]) {
+    def getIsShort = isShort.asJava
+  }
+
+  final case class ParagraphStyle(
+    showParagraph:  Option[Boolean],
+    paragraphColor: Option[Color],
+    bgColor:        Option[Color]
+  ) {
+    def getShowParagraph = showParagraph.asJava
+    def getParagraphColor = paragraphColor.asJava
+    def getBgColor = bgColor.asJava
+  }
+
+  sealed trait Colors
+
+  @key("Red") case object Red extends Colors
+
+  @key("Yellow") case object Yellow extends Colors
+
+  @key("Green") case object Green extends Colors
+
+  sealed trait Color
+
+  @key("PredefinedColor")
+  final case class PredefinedColor(color: Colors) extends Color
+
+  @key("RgbColor")
+  final case class RgbColor(rgb: Int) extends Color
 
   @key("Document")
   final case class DocumentMessage(

@@ -22,6 +22,7 @@
 
     <string name="toast_no_sdcard">No SD Card</string>
     <string name="toast_phone_copied">Phone number copied to pastebin</string>
+    <string name="toast_email_copied">Email copied to pastebin</string>
     <string name="toast_messages_copied">Messages copied to pastebin</string>
     <string name="toast_unable_kick">Unable to remove member from group</string>
     <string name="toast_unable_add">Unable to add user to group</string>
@@ -153,11 +154,15 @@
     <string name="nickname_empty">Set nickname</string>
     <string name="nickname_change">Change nickname</string>
     <string name="nickname">Nickname</string>
+    <string name="nickname_hint">You can choose a username in Actor. If you do, other people will be able to find you by this username and contact you without sharing your phone number.\n\nYou can use a–z, 0–9 and underscores. Minimum length is 5 characters.</string>
+    <string name="nickname_edittext_hint">Enter your Username</string>
     <string name="about_user_me">About me</string>
     <string name="about_user">About user</string>
+    <string name="wallpaper">Wallpaper</string>
 
     <!-- Profile controls -->
     <string name="phone_menu_call">Call {0}</string>
+    <string name="email_menu_email">Email {0}</string>
     <string name="phone_menu_sms">SMS {0}</string>
     <string name="phone_menu_share">Share {0}</string>
     <string name="phone_menu_copy">Copy</string>
@@ -203,6 +208,7 @@
     <string name="chat_menu_leave_group">Leave group</string>
 
     <string name="chat_attach_place">Place</string>
+    <string name="chat_attach_contact">Contact</string>
     <string name="chat_attach_file">File</string>
     <string name="chat_attach_take_video">Take video</string>
     <string name="chat_attach_take_photo">Take photo</string>
@@ -218,10 +224,26 @@
     <string name="chat_doc_send">Send</string>
     <string name="chat_doc_stop">Stop</string>
     <string name="chat_doc_download">Download</string>
+    <string name="chat_voice_record_cancel">SLIDE TO CANCEL</string>
 
     <string name="chat_not_member">You is not member of this group</string>
 
     <string name="chat_unsupported">Message is unsupported in this version. Please, wait for application update to see message.</string>
+    <string name="online">\u25CF online</string>
+
+    <!-- Share menu-->
+    <string name="share_menu_gallery">Gallery</string>
+    <string name="share_menu_video">Video</string>
+    <string name="share_menu_file">File</string>
+    <string name="share_menu_camera">Camera</string>
+    <string name="share_menu_contact">Contact</string>
+    <string name="share_menu_location">Location</string>
+
+    <!-- Map -->
+    <string name="map_title">Location</string>
+    <string name="map_type_normal">Map</string>
+    <string name="map_type_satellite">Satellite</string>
+    <string name="map_type_hybrid">Hybrid</string>
 
     <!-- Profile -->
     <string name="profile_title">Profile</string>
@@ -358,6 +380,8 @@
     <string name="edit_nick_process">Changing nick…</string>
     <string name="edit_about_process">Changing description…</string>
     <string name="edit_theme_process">Changing theme…</string>
+    <string name="edit_about_edittext_hint">Tell people anything you want about yourself</string>
+
 
     <!-- Help -->
     <string name="help_title">Help</string>
@@ -429,6 +453,7 @@
     <string name="media">Media</string>
     <string name="media_picture">Picture</string>
     <string name="media_pager" formatted="false">%d of %d</string>
+    <string name="emoji_no_recent">no recent emoji yet</string>
 
     <!-- Dialogs -->
     <string name="alert_leave_group_message">Are you sure want to exit group "%1$s"?</string>

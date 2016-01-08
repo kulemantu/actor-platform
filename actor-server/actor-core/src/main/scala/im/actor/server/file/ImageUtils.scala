@@ -1,22 +1,25 @@
 package im.actor.server.file
 
 import akka.actor.ActorSystem
-import com.sksamuel.scrimage.{ AsyncImage, Format, Position }
+import com.sksamuel.scrimage.nio.{ JpegWriter, ImageWriter, PngWriter }
+import com.sksamuel.scrimage.{ Image, ParImage, Position }
 import im.actor.server.acl.ACLUtils
 import im.actor.server.db.DbExtension
-import im.actor.server.{ models, persist }
+import im.actor.server.{ model, persist }
 import slick.dbio.DBIO
 
 import scala.concurrent.forkjoin.ThreadLocalRandom
 import scala.concurrent.{ ExecutionContext, Future }
-import scala.util.{ Failure, Success }
+import scala.util.{ Try, Failure, Success }
 
 object ImageUtils {
   val AvatarSizeLimit = 1024L * 1024 // TODO: configurable
   val SmallSize = 100
   val LargeSize = 200
 
-  def avatar(ad: models.AvatarData) =
+  private case class ThumbDescriptor(name: String, side: Int, writer: ImageWriter)
+
+  def avatar(ad: model.AvatarData) =
     (ad.smallOpt, ad.largeOpt, ad.fullOpt) match {
       case (None, None, None) ⇒ None
       case (smallOpt, largeOpt, fullOpt) ⇒
@@ -37,24 +40,31 @@ object ImageUtils {
       case (id, hash, size, w, h) ⇒ avatarImage(Some((id, hash, size)), w, h)
     }
 
-  def resizeTo(aimg: AsyncImage, side: Int)(implicit ec: ExecutionContext): Future[AsyncImage] = {
-    for {
-      scaledImg ← scaleTo(aimg, side)
-      resizedImg ← scaledImg.resizeTo(side, side, Position.Center)
-    } yield resizedImg
-  }
+  def resizeTo(aimg: ParImage, side: Int)(implicit ec: ExecutionContext): Future[ParImage] =
+    for (scaledImg ← scaleTo(aimg, side)) yield scaledImg.resizeTo(side, side, Position.Center)
 
-  def scaleTo(aimg: AsyncImage, side: Int)(implicit ec: ExecutionContext): Future[AsyncImage] = {
+  def scaleTo(aimg: ParImage, side: Int)(implicit ec: ExecutionContext): Future[ParImage] = {
     val scaleFactor = side.toDouble / math.min(aimg.width, aimg.height)
     aimg.scale(scaleFactor)
   }
 
-  def resizeToSmall(aimg: AsyncImage)(implicit ec: ExecutionContext): Future[AsyncImage] = resizeTo(aimg, SmallSize)
-
-  def resizeToLarge(aimg: AsyncImage)(implicit ec: ExecutionContext): Future[AsyncImage] = resizeTo(aimg, LargeSize)
-
-  def dimensions(aimg: AsyncImage)(implicit ec: ExecutionContext): (Int, Int) =
+  def dimensions(aimg: ParImage)(implicit ec: ExecutionContext): (Int, Int) =
     (aimg.width, aimg.height)
+
+  def scaleStickerF(fullFileId: Long)(
+    implicit
+    fsAdapter: FileStorageAdapter,
+    ec:        ExecutionContext,
+    system:    ActorSystem
+  ): Future[Either[Throwable, Avatar]] =
+    DbExtension(system).db.run(
+      scaleAvatar(
+        fullFileId,
+        ThreadLocalRandom.current(),
+        ThumbDescriptor("small-sticker.png", 128, PngWriter()),
+        ThumbDescriptor("medium-sticker.png", 256, PngWriter())
+      )
+    )
 
   def scaleAvatarF(fullFileId: Long)(
     implicit
@@ -74,35 +84,42 @@ object ImageUtils {
 
   def scaleAvatar(
     fullFileId: Long,
-    rnd:        ThreadLocalRandom
-  )(
-    implicit
-    fsAdapter: FileStorageAdapter,
-    ec:        ExecutionContext,
-    system:    ActorSystem
-  ): DBIO[Either[Throwable, Avatar]] = {
-    val smallFileName = "small-avatar.jpg"
-    val largeFileName = "large-avatar.jpg"
+    rng:        ThreadLocalRandom
+  )(implicit system: ActorSystem): DBIO[Either[Throwable, Avatar]] =
+    scaleAvatar(
+      fullFileId,
+      rng,
+      ThumbDescriptor("small-avatar.jpg", SmallSize, JpegWriter()),
+      ThumbDescriptor("large-avatar.jpg", LargeSize, JpegWriter())
+    )
 
+  def scaleAvatar(
+    fullFileId: Long,
+    rng:        ThreadLocalRandom,
+    smallDesc:  ThumbDescriptor,
+    largeDesc:  ThumbDescriptor
+  )(implicit system: ActorSystem): DBIO[Either[Throwable, Avatar]] = {
+    implicit val ec: ExecutionContext = system.dispatcher
+    val fsAdapter = FileStorageExtension(system).fsAdapter
     persist.FileRepo.find(fullFileId) flatMap {
       case Some(fullFileModel) ⇒
         fsAdapter.downloadFile(fullFileId) flatMap {
           case Some(fullFile) ⇒
             val action = for {
-              fullAimg ← DBIO.from(AsyncImage(fullFile))
+              fullAimg ← Future.fromTry(Try(Image.fromFile(fullFile).toPar))
               (fiw, fih) = dimensions(fullAimg)
 
-              smallAimg ← DBIO.from(resizeToSmall(fullAimg))
-              largeAimg ← DBIO.from(resizeToLarge(fullAimg))
+              smallAimg ← resizeTo(fullAimg, smallDesc.side)
+              largeAimg ← resizeTo(fullAimg, largeDesc.side)
 
-              smallFile = fullFile.getParentFile.toPath.resolve(smallFileName).toFile
-              largeFile = fullFile.getParentFile.toPath.resolve(largeFileName).toFile
+              smallFile = fullFile.getParentFile.toPath.resolve(smallDesc.name).toFile
+              largeFile = fullFile.getParentFile.toPath.resolve(largeDesc.name).toFile
 
-              _ ← DBIO.from(smallAimg.writer(Format.JPEG).write(smallFile))
-              _ ← DBIO.from(largeAimg.writer(Format.JPEG).write(largeFile))
+              _ ← Future.fromTry(Try(smallAimg.toImage.forWriter(smallDesc.writer).write(smallFile)))
+              _ ← Future.fromTry(Try(largeAimg.toImage.forWriter(largeDesc.writer).write(largeFile)))
 
-              smallFileLocation ← fsAdapter.uploadFile(smallFileName, smallFile)
-              largeFileLocation ← fsAdapter.uploadFile(largeFileName, largeFile)
+              smallFileLocation ← fsAdapter.uploadFileF(UnsafeFileName(smallDesc.name), smallFile)
+              largeFileLocation ← fsAdapter.uploadFileF(UnsafeFileName(largeDesc.name), largeFile)
             } yield {
               // TODO: #perf calculate file sizes efficiently
 
@@ -130,7 +147,7 @@ object ImageUtils {
               Avatar(Some(smallImage), Some(largeImage), Some(fullImage))
             }
 
-            action.asTry map {
+            DBIO.from(action).asTry map {
               case Success(res) ⇒ Right(res)
               case Failure(e)   ⇒ Left(e)
             }
@@ -141,7 +158,7 @@ object ImageUtils {
     }
   }
 
-  def getAvatar(avatarModel: models.AvatarData): Avatar = {
+  def getAvatar(avatarModel: model.AvatarData): Avatar = {
     val smallImageOpt = avatarModel.smallOpt map {
       case (fileId, fileHash, fileSize) ⇒ AvatarImage(FileLocation(fileId, fileHash), SmallSize, SmallSize, fileSize)
     }
@@ -157,8 +174,8 @@ object ImageUtils {
     Avatar(smallImageOpt, largeImageOpt, fullImageOpt)
   }
 
-  def getAvatarData(entityType: models.AvatarData.TypeVal, entityId: Int, avatar: Avatar): models.AvatarData = {
-    models.AvatarData(
+  def getAvatarData(entityType: model.AvatarData.TypeVal, entityId: Int, avatar: Avatar): model.AvatarData = {
+    model.AvatarData(
       entityType = entityType,
       entityId = entityId.toLong,
       smallAvatarFileId = avatar.smallImage map (_.fileLocation.fileId),

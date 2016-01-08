@@ -6,6 +6,7 @@ package im.actor.core.js;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.TimeZone;
 import com.google.gwt.user.client.Event;
@@ -13,6 +14,7 @@ import com.google.gwt.user.client.Event;
 import im.actor.core.*;
 import im.actor.core.api.ApiAuthSession;
 import im.actor.core.entity.MentionFilterResult;
+import im.actor.core.entity.MessageSearchEntity;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerSearchEntity;
 import im.actor.core.entity.PeerSearchType;
@@ -66,6 +68,7 @@ public class JsFacade implements Exportable {
 
     private JsMessenger messenger;
     private JsFileSystemProvider provider;
+    private Peer lastVisiblePeer;
 
     @Export
     public static JsFacade production() {
@@ -246,7 +249,7 @@ public class JsFacade implements Exportable {
                 }
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e);
             im.actor.runtime.Runtime.postToMainThread(new Runnable() {
                 @Override
                 public void run() {
@@ -394,6 +397,22 @@ public class JsFacade implements Exportable {
         messenger.getSharedContactList().unsubscribe(callback);
     }
 
+    // Search
+
+    public void bindSearch(JsDisplayListCallback<JsSearchEntity> callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getSharedSearchList().subscribe(callback);
+    }
+
+    public void unbindSearch(JsDisplayListCallback<JsSearchEntity> callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getSharedSearchList().unsubscribe(callback);
+    }
+
     // Chats
 
     public void bindChat(JsPeer peer, JsDisplayListCallback<JsMessage> callback) {
@@ -483,6 +502,48 @@ public class JsFacade implements Exportable {
         });
     }
 
+    public JsPromise favoriteChat(final JsPeer peer) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.favouriteChat(peer.convert()).start(new CommandCallback<Boolean>() {
+                    @Override
+                    public void onResult(Boolean res) {
+                        Log.d(TAG, "favouriteChat:result");
+                        resolve();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "favouriteChat:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    public JsPromise unfavoriteChat(final JsPeer peer) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.unfavoriteChat(peer.convert()).start(new CommandCallback<Boolean>() {
+                    @Override
+                    public void onResult(Boolean res) {
+                        Log.d(TAG, "unfavouriteChat:result");
+                        resolve();
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "unfavouriteChat:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
     // Peers
 
     public JsPeer getUserPeer(int uid) {
@@ -513,6 +574,20 @@ public class JsFacade implements Exportable {
         messenger.getJsUser(uid).unsubscribe(callback);
     }
 
+    public void bindUserOnline(int uid, JsBindedValueCallback callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getJsUserOnline(uid).subscribe(callback);
+    }
+
+    public void unbindUserOnline(int uid, JsBindedValueCallback callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getJsUserOnline(uid).unsubscribe(callback);
+    }
+
     // Groups
 
     public JsGroup getGroup(int gid) {
@@ -531,6 +606,20 @@ public class JsFacade implements Exportable {
             return;
         }
         messenger.getJsGroup(gid).unsubscribe(callback);
+    }
+
+    public void bindGroupOnline(int gid, JsBindedValueCallback callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getJsGroupOnline(gid).subscribe(callback);
+    }
+
+    public void unbindGroupOnline(int gid, JsBindedValueCallback callback) {
+        if (callback == null) {
+            return;
+        }
+        messenger.getJsGroupOnline(gid).unsubscribe(callback);
     }
 
     // Actions
@@ -639,10 +728,17 @@ public class JsFacade implements Exportable {
     }
 
     public void onConversationOpen(JsPeer peer) {
-        messenger.onConversationOpen(peer.convert());
+        Log.d(TAG, "onConversationOpen | " + peer);
+        lastVisiblePeer = peer.convert();
+        messenger.onConversationOpen(lastVisiblePeer);
     }
 
     public void onConversationClosed(JsPeer peer) {
+        Log.d(TAG, "onConversationClosed | " + peer);
+        if (lastVisiblePeer != null && lastVisiblePeer.equals(peer.convert())) {
+            lastVisiblePeer = null;
+            Log.d(TAG, "onConversationClosed | Closing");
+        }
         messenger.onConversationClosed(peer.convert());
     }
 
@@ -736,6 +832,98 @@ public class JsFacade implements Exportable {
                 });
             }
         });
+    }
+
+    public JsPromise findAllText(final JsPeer peer, final String query) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.findTextMessages(peer.convert(), query).start(new CommandCallback<List<MessageSearchEntity>>() {
+                    @Override
+                    public void onResult(List<MessageSearchEntity> res) {
+                        resolve(convertSearchRes(res));
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "findAllText:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    public JsPromise findAllPhotos(final JsPeer peer) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.findAllPhotos(peer.convert()).start(new CommandCallback<List<MessageSearchEntity>>() {
+                    @Override
+                    public void onResult(List<MessageSearchEntity> res) {
+                        resolve(convertSearchRes(res));
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "findAllText:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    public JsPromise findAllDocs(final JsPeer peer) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.findAllDocs(peer.convert()).start(new CommandCallback<List<MessageSearchEntity>>() {
+                    @Override
+                    public void onResult(List<MessageSearchEntity> res) {
+                        resolve(convertSearchRes(res));
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "findAllText:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    public JsPromise findAllLinks(final JsPeer peer) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.findAllLinks(peer.convert()).start(new CommandCallback<List<MessageSearchEntity>>() {
+                    @Override
+                    public void onResult(List<MessageSearchEntity> res) {
+                        resolve(convertSearchRes(res));
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.d(TAG, "findAllText:error");
+                        reject(e.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
+    private JsArray<JsMessageSearchEntity> convertSearchRes(List<MessageSearchEntity> res) {
+        JsArray<JsMessageSearchEntity> jsRes = JsArray.createArray().cast();
+        for (MessageSearchEntity e : res) {
+            jsRes.push(JsMessageSearchEntity.create(e.getRid() + "",
+                    messenger.buildPeerInfo(Peer.user(e.getSenderId())),
+                    messenger.getFormatter().formatDate(e.getDate()),
+                    JsContent.createContent(e.getContent(),
+                            e.getSenderId())));
+        }
+        return jsRes;
     }
 
     public JsPromise findGroups() {
@@ -1074,6 +1262,48 @@ public class JsFacade implements Exportable {
         });
     }
 
+    public JsPromise addLike(final JsPeer peer, final String rid) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.addReaction(peer.convert(), Long.parseLong(rid), "\u2764")
+                        .start(new CommandCallback<Boolean>() {
+                            @Override
+                            public void onResult(Boolean res) {
+                                resolve();
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                reject(e.getMessage());
+                            }
+                        });
+
+            }
+        });
+    }
+
+    public JsPromise removeLike(final JsPeer peer, final String rid) {
+        return JsPromise.create(new JsPromiseExecutor() {
+            @Override
+            public void execute() {
+                messenger.removeReaction(peer.convert(), Long.parseLong(rid), "\u2764")
+                        .start(new CommandCallback<Boolean>() {
+                            @Override
+                            public void onResult(Boolean res) {
+                                resolve();
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                reject(e.getMessage());
+                            }
+                        });
+
+            }
+        });
+    }
+
     public JsPromise findUsers(final String query) {
         return JsPromise.create(new JsPromiseExecutor() {
             @Override
@@ -1183,11 +1413,20 @@ public class JsFacade implements Exportable {
     }
 
     public void handleLinkClick(Event event) {
-        if (JsElectronApp.isElectron()) {
-            Element target = Element.as(event.getEventTarget());
-            String href = target.getAttribute("href");
-            JsElectronApp.openUrlExternal(href);
-            event.preventDefault();
+        Element target = Element.as(event.getEventTarget());
+        String href = target.getAttribute("href");
+        if (href.startsWith("send:")) {
+            String msg = href.substring("send:".length());
+            msg = URL.decode(msg);
+            if (lastVisiblePeer != null) {
+                messenger.sendMessage(lastVisiblePeer, msg);
+                event.preventDefault();
+            }
+        } else {
+            if (JsElectronApp.isElectron()) {
+                JsElectronApp.openUrlExternal(href);
+                event.preventDefault();
+            }
         }
     }
 }

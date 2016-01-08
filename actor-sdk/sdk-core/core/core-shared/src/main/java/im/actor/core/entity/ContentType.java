@@ -9,6 +9,10 @@ public enum ContentType {
     DOCUMENT(3),
     DOCUMENT_PHOTO(4),
     DOCUMENT_VIDEO(5),
+    DOCUMENT_AUDIO(17),
+    CONTACT(18),
+    LOCATION(19),
+    STICKER(20),
     SERVICE(6),
     SERVICE_ADD(7),
     SERVICE_KICK(8),
@@ -19,6 +23,7 @@ public enum ContentType {
     SERVICE_TITLE(12),
     SERVICE_AVATAR(13),
     SERVICE_AVATAR_REMOVED(14),
+    CUSTOM_JSON_MESSAGE(21),
     UNKNOWN_CONTENT(15);
 
     int value;
@@ -64,6 +69,16 @@ public enum ContentType {
                 return SERVICE_AVATAR_REMOVED;
             case 16:
                 return SERVICE_JOINED;
+            case 17:
+                return DOCUMENT_AUDIO;
+            case 18:
+                return CONTACT;
+            case 19:
+                return LOCATION;
+            case 20:
+                return STICKER;
+            case 21:
+                return CUSTOM_JSON_MESSAGE;
         }
     }
 }

@@ -2,30 +2,38 @@ package im.actor.server.bot
 
 import java.net.URLEncoder
 
-import akka.actor.{ ActorSystem, ExtendedActorSystem, Extension, ExtensionId }
+import akka.actor._
 import akka.util.Timeout
 import com.google.protobuf.ByteString
 import im.actor.api.rpc.users.ApiSex
 import im.actor.config.ActorConfig
 import im.actor.server.acl.ACLUtils
+import im.actor.server.api.http.HttpApi
+import im.actor.server.bot.http.BotsHttpHandler
 import im.actor.server.db.DbExtension
+import im.actor.server.model.AuthSession
 import im.actor.server.office.EntityNotFound
 import im.actor.server.persist
 import im.actor.server.user.UserExtension
+import im.actor.util.misc.IdUtils
 import org.apache.commons.codec.digest.DigestUtils
+import org.joda.time.DateTime
 import shardakka.keyvalue.SimpleKeyValue
 import shardakka.{ Codec, IntCodec, ShardakkaExtension }
+import slick.dbio.DBIO
 
 import scala.concurrent.Future
 import scala.concurrent.forkjoin.ThreadLocalRandom
 
-object BotExtension extends ExtensionId[BotExtension] {
+object BotExtension extends ExtensionId[BotExtension] with ExtensionIdProvider {
   private[bot] val tokensKV = "BotsTokens"
   private[bot] val whTokensKV = "BotsWHTokens"
 
   private[bot] def whUserTokensKV(userId: Int) = s"BotsWHUserTokens-$userId"
 
   override def createExtension(system: ExtendedActorSystem): BotExtension = new BotExtension(system)
+
+  override def lookup() = BotExtension
 }
 
 private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
@@ -45,13 +53,20 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
 
   lazy val tokensKV = shardakka.simpleKeyValue(BotExtension.tokensKV, IntCodec)
 
-  private val globalHooksKV: SimpleKeyValue[BotWebHook] = shardakka.simpleKeyValue(BotExtension.whTokensKV, BotWebHookCodec)
+  private lazy val globalHooksKV: SimpleKeyValue[BotWebHook] = shardakka.simpleKeyValue(BotExtension.whTokensKV, BotWebHookCodec)
 
   private def hooksKV(userId: UserId): SimpleKeyValue[String] =
     shardakka.simpleKeyValue(BotExtension.whUserTokensKV(userId))
 
+  lazy val botServerBlueprint = new BotServerBlueprint(system)
+
+  HttpApi(system).registerHook("bots") { implicit system ⇒
+    new BotsHttpHandler(this).routes
+  }
+
   /**
    * Creates a bot user
+   *
    * @param nickname
    * @param name
    * @param isAdmin
@@ -65,6 +80,7 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
 
   /**
    * Creates a bot user
+   *
    * @param userId
    * @param nickname
    * @param name
@@ -79,7 +95,7 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
       user ← userExt.create(
         userId = userId,
         accessSalt = ACLUtils.nextAccessSalt(),
-        Some(nickname),
+        nickname = Some(nickname),
         name = name,
         countryCode = "US",
         sex = ApiSex.Unknown,
@@ -92,17 +108,19 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
 
   /**
    * Check if the bot user already exists
+   *
    * @param userId
    * @return Future containing check result
    */
   def exists(userId: UserId): Future[Boolean] = {
     userExt.getApiStruct(userId, 0, 0) map (_ ⇒ true) recover {
-      case EntityNotFound ⇒ false
+      case _: EntityNotFound ⇒ false
     }
   }
 
   /**
    * Gets userId associated with token
+   *
    * @param token
    * @return user id
    */
@@ -118,7 +136,17 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
   def findWebHook(token: String): Future[Option[BotWebHook]] = globalHooksKV.get(token)
 
   /**
+   * Gets webhook's token by name and userId
+   *
+   * @param userId
+   * @param name
+   * @return optional token
+   */
+  def findToken(userId: UserId, name: String): Future[Option[String]] = hooksKV(userId).get(name)
+
+  /**
    * Finds bot webhook
+   *
    * @param userId
    * @return
    */
@@ -127,6 +155,7 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
 
   /**
    * Check if webhook exists
+   *
    * @param userId
    * @param name
    * @return
@@ -136,6 +165,7 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
 
   /**
    * Register webhook
+   *
    * @param userId
    * @param name
    * @return
@@ -156,38 +186,45 @@ private[bot] final class BotExtension(_system: ActorSystem) extends Extension {
   def getHookUrl(token: String): String =
     s"${ActorConfig.baseUrl}/v1/bots/hooks/${URLEncoder.encode(token, "UTF-8")}"
 
-  /**
-   * Gets or creates bot auth id
-   * @param token
-   * @return auth id
-   */
-  def findAuthId(token: String): Future[Option[AuthId]] = {
-    findUserId(token) flatMap {
-      case Some(userId) ⇒ getOrCreateAuthId(userId) map (Some(_))
-      case None         ⇒ Future.successful(None)
-    }
-  }
-
-  /**
-   * Gets or creates a bot auth id
-   * @param userId
-   * @return auth id
-   */
-  def findAuthId(userId: UserId): Future[AuthId] = getOrCreateAuthId(userId)
+  def getAuthSession(userId: UserId): Future[AuthSession] = getOrCreateAuthSession(userId)
 
   private def genToken(): String =
     DigestUtils.md5Hex(ThreadLocalRandom.current().nextLong().toString)
 
-  private def getOrCreateAuthId(userId: Int): Future[AuthId] = {
-    db.run(persist.AuthIdRepo.findFirstIdByUserId(userId)) flatMap {
+  private def getOrCreateAuthSession(userId: Int): Future[AuthSession] = {
+    db.run(persist.AuthSessionRepo.findFirstByUserId(userId)) flatMap {
+      case Some(session) ⇒ Future.successful(session)
+      case None ⇒
+        for {
+          authId ← db.run(getOrCreateAuthId(userId))
+          session = AuthSession(
+            userId = userId,
+            id = IdUtils.nextIntId(),
+            authId = authId,
+            appId = 0,
+            appTitle = "Bot",
+            deviceTitle = "Bot",
+            deviceHash = Array.empty,
+            authTime = new DateTime,
+            authLocation = "",
+            latitude = None,
+            longitude = None
+          )
+          _ ← db.run(persist.AuthSessionRepo.create(session))
+        } yield session
+    }
+  }
+
+  private def getOrCreateAuthId(userId: Int): DBIO[AuthId] = {
+    persist.AuthIdRepo.findFirstIdByUserId(userId) flatMap {
       case Some(authId) ⇒
-        Future.successful(authId)
+        DBIO.successful(authId)
       case None ⇒
         val authId = ACLUtils.randomLong()
 
         for {
-          _ ← db.run(persist.AuthIdRepo.create(authId, None, None))
-          _ ← userExt.auth(userId, authId)
+          _ ← persist.AuthIdRepo.create(authId, None, None)
+          _ ← DBIO.from(userExt.auth(userId, authId))
         } yield authId
     }
   }

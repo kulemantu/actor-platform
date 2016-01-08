@@ -38,34 +38,34 @@ private[session] object SessionStream {
     updatesHandler: ActorRef,
     reSender:       ActorRef
   )(implicit context: ActorContext) = {
-    FlowGraph.partial() { implicit builder ⇒
-      import FlowGraph.Implicits._
+    GraphDSL.create() { implicit builder ⇒
+      import GraphDSL.Implicits._
 
       import SessionStreamMessage._
 
       val discr = builder.add(new SessionMessageDiscriminator)
 
       // TODO: think about buffer sizes and overflow strategies
-      val rpc = discr.outRpc.buffer(100, OverflowStrategy.backpressure)
-      val subscribe = discr.outSubscribe.buffer(100, OverflowStrategy.backpressure)
-      val incomingAck = discr.outIncomingAck.buffer(100, OverflowStrategy.backpressure).map(in)
-      val outProtoMessages = discr.outProtoMessage.buffer(100, OverflowStrategy.backpressure).map(out)
-      val outRequestResend = discr.outRequestResend.buffer(100, OverflowStrategy.backpressure).map(in)
-      val unmatched = discr.outUnmatched.buffer(100, OverflowStrategy.backpressure)
+      val rpc = discr.out1.buffer(100, OverflowStrategy.backpressure)
+      val subscribe = discr.out2.buffer(100, OverflowStrategy.backpressure)
+      val incomingAck = discr.out4.buffer(100, OverflowStrategy.backpressure).map(in)
+      val outProtoMessages = discr.out0.buffer(100, OverflowStrategy.backpressure).map(out)
+      val outRequestResend = discr.out3.buffer(100, OverflowStrategy.backpressure).map(in)
+      val unmatched = discr.out5.buffer(100, OverflowStrategy.backpressure)
 
-      val rpcRequestSubscriber = builder.add(Sink(ActorSubscriber[HandleRpcRequest](rpcHandler)))
-      val rpcResponsePublisher = builder.add(Source(ActorPublisher[ProtoMessage](rpcHandler)).map(out))
+      val rpcRequestSubscriber = builder.add(Sink.fromSubscriber(ActorSubscriber[HandleRpcRequest](rpcHandler)))
+      val rpcResponsePublisher = builder.add(Source.fromPublisher(ActorPublisher[ProtoMessage](rpcHandler)).map(out))
 
-      val updatesSubscriber = builder.add(Sink(ActorSubscriber[SubscribeCommand](updatesHandler)))
-      val updatesPublisher = builder.add(Source(ActorPublisher[OutProtoMessage](updatesHandler))).map(out)
+      val updatesSubscriber = builder.add(Sink.fromSubscriber(ActorSubscriber[SubscribeCommand](updatesHandler)))
+      val updatesPublisher = builder.add(Source.fromPublisher(ActorPublisher[OutProtoMessage](updatesHandler)).map(out))
 
-      val reSendSubscriber = builder.add(Sink(ActorSubscriber[ReSenderMessage](reSender)))
-      val reSendPublisher = builder.add(Source(ActorPublisher[MTPackage](reSender)))
+      val reSendSubscriber = builder.add(Sink.fromSubscriber(ActorSubscriber[ReSenderMessage](reSender)))
+      val reSendPublisher = builder.add(Source.fromPublisher(ActorPublisher[MTPackage](reSender)))
 
       val mergeProto = builder.add(MergePreferred[ReSenderMessage](3))
       val mergeProtoPriority = builder.add(MergePreferred[ReSenderMessage](1))
 
-      val logging = akka.event.Logging(context.system, s"SessionStream-${authId}-${sessionId}")
+      val logging = akka.event.Logging(context.system, s"SessionStream-$authId-$sessionId")
 
       val log = Sink.foreach[SessionStreamMessage](logging.warning("Unmatched {}", _))
 
@@ -82,7 +82,7 @@ private[session] object SessionStream {
 
       // @format: ON
 
-      FlowShape(discr.in, reSendPublisher.outlet)
+      FlowShape(discr.in, reSendPublisher.out)
     }
   }
 

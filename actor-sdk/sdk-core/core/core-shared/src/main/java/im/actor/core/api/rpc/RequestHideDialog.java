@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.ArrayList;
 import im.actor.core.api.*;
 
-public class RequestHideDialog extends Request<ResponseSeq> {
+public class RequestHideDialog extends Request<ResponseDialogsOrder> {
 
     public static final int HEADER = 0xe7;
     public static RequestHideDialog fromBytes(byte[] data) throws IOException {

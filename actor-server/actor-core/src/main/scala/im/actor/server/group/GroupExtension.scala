@@ -2,6 +2,8 @@ package im.actor.server.group
 
 import akka.actor._
 import akka.util.Timeout
+import im.actor.server.api.http.HttpApi
+import im.actor.server.group.http.GroupsHttpHandler
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -10,6 +12,10 @@ sealed trait GroupExtension extends Extension
 
 final class GroupExtensionImpl(system: ActorSystem) extends GroupExtension with GroupOperations {
   GroupProcessor.register()
+
+  HttpApi(system).registerHook("groups") { implicit system ⇒
+    new GroupsHttpHandler().routes
+  }
 
   lazy val processorRegion: GroupProcessorRegion = GroupProcessorRegion.start()(system)
   lazy val viewRegion: GroupViewRegion = GroupViewRegion(processorRegion.ref)

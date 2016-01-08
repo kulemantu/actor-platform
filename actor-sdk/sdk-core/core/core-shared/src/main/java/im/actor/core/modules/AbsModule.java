@@ -4,6 +4,7 @@
 
 package im.actor.core.modules;
 
+import im.actor.core.api.ApiOutPeer;
 import im.actor.core.api.ApiPeer;
 import im.actor.core.api.ApiPeerType;
 import im.actor.core.entity.Group;
@@ -16,6 +17,7 @@ import im.actor.core.network.parser.Request;
 import im.actor.core.network.parser.Response;
 import im.actor.runtime.actors.ActorRef;
 import im.actor.runtime.storage.KeyValueEngine;
+import im.actor.runtime.storage.KeyValueStorage;
 import im.actor.runtime.storage.PreferencesStorage;
 
 public abstract class AbsModule {
@@ -23,11 +25,15 @@ public abstract class AbsModule {
     public static final String STORAGE_DIALOGS = "dialogs";
     public static final String STORAGE_DIALOGS_DESC = "dialogs_desc";
     public static final String STORAGE_USERS = "users";
+    public static final String STORAGE_STICKER_PACKS = "sticker_packs";
+    public static final String STORAGE_STICKER_ALL_PACKS = "sticker_all_packs";
     public static final String STORAGE_GROUPS = "groups";
     public static final String STORAGE_DOWNLOADS = "downloads";
     public static final String STORAGE_CONTACTS = "contacts";
     public static final String STORAGE_NOTIFICATIONS = "notifications";
     public static final String STORAGE_SEARCH = "search";
+
+    public static final String STORAGE_BOOK_IMPORT = "book_import";
 
     public static final String STORAGE_CHAT_PREFIX = "chat_";
     public static final String STORAGE_CHAT_MEDIA_PREFIX = "chat_media_";
@@ -35,6 +41,7 @@ public abstract class AbsModule {
     public static final String STORAGE_CHAT_IN = "chat_pending";
     public static final String STORAGE_CHAT_OUT = "chat_pending_out";
     public static final String STORAGE_CURSOR = "chat_cursor";
+
 
     private ModuleContext context;
 
@@ -116,11 +123,27 @@ public abstract class AbsModule {
         return context.getGroupsModule().getGroups();
     }
 
+    public KeyValueStorage stickerPacksStorage() {
+        return context.getStickersModule().getStickerPacksStorage();
+    }
+
     public ApiPeer buildApiPeer(Peer peer) {
         if (peer.getPeerType() == PeerType.PRIVATE) {
             return new ApiPeer(ApiPeerType.PRIVATE, peer.getPeerId());
         } else if (peer.getPeerType() == PeerType.GROUP) {
             return new ApiPeer(ApiPeerType.GROUP, peer.getPeerId());
+        } else {
+            return null;
+        }
+    }
+
+    public ApiOutPeer buildApiOutPeer(Peer peer) {
+        if (peer.getPeerType() == PeerType.PRIVATE) {
+            return new ApiOutPeer(ApiPeerType.PRIVATE, peer.getPeerId(),
+                    users().getValue(peer.getPeerId()).getAccessHash());
+        } else if (peer.getPeerType() == PeerType.GROUP) {
+            return new ApiOutPeer(ApiPeerType.GROUP, peer.getPeerId(),
+                    groups().getValue(peer.getPeerId()).getAccessHash());
         } else {
             return null;
         }

@@ -6,12 +6,13 @@ import im.actor.api.rpc._
 import im.actor.api.rpc.messaging._
 import im.actor.api.rpc.misc.{ ResponseSeq, ResponseVoid }
 import im.actor.api.rpc.peers.{ ApiOutPeer, ApiPeerType }
-import im.actor.server.dialog.HistoryUtils
+import im.actor.server.dialog.{ DialogErrors, HistoryUtils }
 import im.actor.server.group.GroupUtils
-import im.actor.server.persist.DialogRepo
+import im.actor.server.model.Peer
+import im.actor.server.persist.messaging.ReactionEventRepo
 import im.actor.server.sequence.SeqState
 import im.actor.server.user.UserUtils
-import im.actor.server.{ models, persist }
+import im.actor.server.{ model, persist }
 import org.joda.time.DateTime
 import slick.dbio
 import slick.driver.PostgresDriver.api._
@@ -33,7 +34,7 @@ trait HistoryHandlers {
 
   override def jhandleMessageRead(peer: ApiOutPeer, date: Long, clientData: ClientData): Future[HandlerResult[ResponseVoid]] = {
     authorized(clientData) { client ⇒
-      dialogExt.messageRead(peer.asPeer, client.userId, client.authId, date) map (_ ⇒ Ok(ResponseVoid))
+      dialogExt.messageRead(peer.asPeer, client.userId, client.authSid, date) map (_ ⇒ Ok(ResponseVoid))
     }
   }
 
@@ -49,7 +50,7 @@ trait HistoryHandlers {
             DBIO.from(groupExt.isHistoryShared(peer.id)) flatMap (isHistoryShared ⇒ DBIO.successful(!isHistoryShared))
           }
         }
-        _ ← fromDBIO(persist.HistoryMessage.deleteAll(client.userId, peer.asModel))
+        _ ← fromDBIO(persist.HistoryMessageRepo.deleteAll(client.userId, peer.asModel))
         seqstate ← fromFuture(userExt.broadcastClientUpdate(update, None, isFat = false))
       } yield ResponseSeq(seqstate.seq, seqstate.state.toByteArray)
     }
@@ -58,43 +59,39 @@ trait HistoryHandlers {
   }
 
   override def jhandleDeleteChat(peer: ApiOutPeer, clientData: ClientData): Future[HandlerResult[ResponseSeq]] = {
-    val action = requireAuth(clientData).map { implicit client ⇒
-      val update = UpdateChatDelete(peer.asPeer)
-
+    authorized(clientData) { implicit client ⇒
       for {
-        _ ← persist.HistoryMessage.deleteAll(client.userId, peer.asModel)
-        _ ← persist.DialogRepo.delete(client.userId, peer.asModel)
-        seqstate ← DBIO.from(userExt.broadcastClientUpdate(update, None, isFat = false))
-      } yield Ok(ResponseSeq(seqstate.seq, seqstate.state.toByteArray))
+        SeqState(seq, state) ← dialogExt.delete(client.userId, peer.asModel)
+      } yield Ok(ResponseSeq(seq, state.toByteArray))
     }
-
-    db.run(toDBIOAction(action))
   }
 
   override def jhandleLoadDialogs(endDate: Long, limit: Int, clientData: ClientData): Future[HandlerResult[ResponseLoadDialogs]] = {
     val authorizedAction = requireAuth(clientData).map { implicit client ⇒
-      persist.DialogRepo.findNotArchived(client.userId, endDateTimeFrom(endDate), limit, fetchHidden = true) flatMap { dialogModels ⇒
-        for {
-          dialogs ← DBIO.sequence(dialogModels map getDialogStruct)
-          (users, groups) ← getDialogsUsersGroups(dialogs)
-        } yield {
-          Ok(ResponseLoadDialogs(
-            groups = groups.toVector,
-            users = users.toVector,
-            dialogs = dialogs.toVector
-          ))
+      persist.DialogRepo
+        .findNotArchived(client.userId, endDateTimeFrom(endDate), limit, fetchHidden = true)
+        .map(_ filterNot (dialogExt.dialogWithSelf(client.userId, _)))
+        .flatMap { dialogModels ⇒
+          for {
+            dialogs ← DBIO.sequence(dialogModels map getDialogStruct)
+            (users, groups) ← getDialogsUsersGroups(dialogs)
+          } yield {
+            Ok(ResponseLoadDialogs(
+              groups = groups.toVector,
+              users = users.toVector,
+              dialogs = dialogs.toVector
+            ))
+          }
         }
-      }
     }
 
     db.run(toDBIOAction(authorizedAction))
   }
 
-  override def jhandleLoadGroupedDialogs(clientData: ClientData): Future[HandlerResult[ResponseLoadGroupedDialogs]] = {
-    // TODO: #perf meh, not optimal
-    val authorizedAction = requireAuth(clientData) map { implicit client ⇒
+  override def jhandleLoadGroupedDialogs(clientData: ClientData): Future[HandlerResult[ResponseLoadGroupedDialogs]] =
+    authorized(clientData) { implicit client ⇒
       for {
-        dialogGroups ← DBIO.from(dialogExt.getGroupedDialogs(client.userId))
+        dialogGroups ← dialogExt.getGroupedDialogs(client.userId)
         (userIds, groupIds) = dialogGroups.view.flatMap(_.dialogs).foldLeft((Seq.empty[Int], Seq.empty[Int])) {
           case ((uids, gids), dialog) ⇒
             dialog.peer.`type` match {
@@ -102,62 +99,64 @@ trait HistoryHandlers {
               case ApiPeerType.Private ⇒ (uids :+ dialog.peer.id, gids)
             }
         }
-        (groups, users) ← DBIO.from(GroupUtils.getGroupsUsers(groupIds, userIds, client.userId, client.authId))
+        (groups, users) ← GroupUtils.getGroupsUsers(groupIds, userIds, client.userId, client.authId)
       } yield Ok(ResponseLoadGroupedDialogs(dialogGroups, users.toVector, groups.toVector))
     }
 
-    db.run(toDBIOAction(authorizedAction))
-  }
-
-  override def jhandleHideDialog(peer: ApiOutPeer, clientData: ClientData): Future[HandlerResult[ResponseDialogsOrder]] = {
+  override def jhandleHideDialog(peer: ApiOutPeer, clientData: ClientData): Future[HandlerResult[ResponseDialogsOrder]] =
     authorized(clientData) { implicit client ⇒
-      for {
-        _ ← db.run(DialogRepo.hide(client.userId, peer.asModel))
-        seqstate ← userExt.notifyDialogsChanged(client.userId, client.authId)
+      (for {
+        seqstate ← dialogExt.hide(client.userId, peer.asModel)
         groups ← dialogExt.getGroupedDialogs(client.userId)
-      } yield Ok(ResponseDialogsOrder(seqstate.seq, seqstate.state.toByteArray, groups = groups))
+      } yield Ok(ResponseDialogsOrder(seqstate.seq, seqstate.state.toByteArray, groups = groups))) recover {
+        case DialogErrors.DialogAlreadyHidden(peer) ⇒
+          Error(RpcError(406, "DIALOG_ALREADY_HIDDEN", "Dialog is already hidden.", canTryAgain = false, None))
+      }
     }
-  }
 
-  override def jhandleShowDialog(peer: ApiOutPeer, clientData: ClientData): Future[HandlerResult[ResponseDialogsOrder]] = {
+  override def jhandleShowDialog(peer: ApiOutPeer, clientData: ClientData): Future[HandlerResult[ResponseDialogsOrder]] =
     authorized(clientData) { implicit client ⇒
-      for {
-        _ ← db.run(DialogRepo.show(client.userId, peer.asModel))
-        SeqState(seq, state) ← userExt.notifyDialogsChanged(client.userId, client.authId)
+      (for {
+        seqstate ← dialogExt.show(client.userId, peer.asModel)
         groups ← dialogExt.getGroupedDialogs(client.userId)
-      } yield Ok(ResponseDialogsOrder(seq, state.toByteArray, groups = groups))
+      } yield Ok(ResponseDialogsOrder(seqstate.seq, seqstate.toByteArray, groups = groups))) recover {
+        case DialogErrors.DialogAlreadyHidden(peer) ⇒
+          Error(RpcError(406, "DIALOG_ALREADY_SHOWN", "Dialog is already shown.", canTryAgain = false, None))
+      }
     }
-  }
 
   override def jhandleLoadHistory(peer: ApiOutPeer, endDate: Long, limit: Int, clientData: ClientData): Future[HandlerResult[ResponseLoadHistory]] = {
     val authorizedAction = requireAuth(clientData).map { implicit client ⇒
       withOutPeer(peer) {
+        // FIXME: spaghetti OMG
         withHistoryOwner(peer.asModel, client.userId) { historyOwner ⇒
           persist.DialogRepo.find(client.userId, peer.asModel) flatMap { dialogOpt ⇒
-            persist.HistoryMessage.find(historyOwner, peer.asModel, endDateTimeFrom(endDate), limit) flatMap { messageModels ⇒
-              val lastReceivedAt = dialogOpt map (_.lastReceivedAt) getOrElse new DateTime(0)
-              val lastReadAt = dialogOpt map (_.lastReadAt) getOrElse new DateTime(0)
+            persist.HistoryMessageRepo.find(historyOwner, peer.asModel, endDateTimeFrom(endDate), limit) flatMap { messageModels ⇒
+              dialogExt.fetchReactions(peer.asModel, client.userId, messageModels.map(_.randomId).toSet) flatMap { reactions ⇒
+                val lastReceivedAt = dialogOpt map (_.lastReceivedAt) getOrElse new DateTime(0)
+                val lastReadAt = dialogOpt map (_.lastReadAt) getOrElse new DateTime(0)
 
-              val (messages, userIds) = messageModels.view
-                .map(_.ofUser(client.userId))
-                .foldLeft(Vector.empty[ApiHistoryMessage], Set.empty[Int]) {
-                  case ((msgs, userIds), message) ⇒
-                    val messageStruct = message.asStruct(lastReceivedAt, lastReadAt)
-                    val newMsgs = msgs :+ messageStruct
+                val (messages, userIds) = messageModels.view
+                  .map(_.ofUser(client.userId))
+                  .foldLeft(Vector.empty[ApiHistoryMessage], Set.empty[Int]) {
+                    case ((msgs, userIds), message) ⇒
+                      val messageStruct = message.asStruct(lastReceivedAt, lastReadAt, reactions.getOrElse(message.randomId, Vector.empty))
+                      val newMsgs = msgs :+ messageStruct
 
-                    val newUserIds = relatedUsers(messageStruct.message) ++
-                      (if (message.senderUserId != client.userId)
-                        userIds + message.senderUserId
-                      else
-                        userIds)
+                      val newUserIds = relatedUsers(messageStruct.message) ++
+                        (if (message.senderUserId != client.userId)
+                          userIds + message.senderUserId
+                        else
+                          userIds)
 
-                    (newMsgs, newUserIds)
+                      (newMsgs, newUserIds)
+                  }
+
+                for {
+                  userStructs ← DBIO.from(Future.sequence(userIds.toVector map (userExt.getApiStruct(_, client.userId, client.authId))))
+                } yield {
+                  Ok(ResponseLoadHistory(messages, userStructs))
                 }
-
-              for {
-                userStructs ← DBIO.from(Future.sequence(userIds.toVector map (userExt.getApiStruct(_, client.userId, client.authId))))
-              } yield {
-                Ok(ResponseLoadHistory(messages, userStructs))
               }
             }
           }
@@ -175,14 +174,14 @@ trait HistoryHandlers {
 
         withHistoryOwner(peer, client.userId) { historyOwner ⇒
           if (isSharedUser(historyOwner)) {
-            persist.HistoryMessage.find(historyOwner, peer, randomIds.toSet) flatMap { messages ⇒
+            persist.HistoryMessageRepo.find(historyOwner, peer, randomIds.toSet) flatMap { messages ⇒
               if (messages.exists(_.senderUserId != client.userId)) {
                 DBIO.successful(Error(CommonErrors.forbidden("You can only delete your own messages")))
               } else {
                 val update = UpdateMessageDelete(outPeer.asPeer, randomIds)
 
                 for {
-                  _ ← persist.HistoryMessage.delete(historyOwner, peer, randomIds.toSet)
+                  _ ← persist.HistoryMessageRepo.delete(historyOwner, peer, randomIds.toSet)
                   groupUserIds ← persist.GroupUserRepo.findUserIds(peer.id) map (_.toSet)
                   (seqstate, _) ← DBIO.from(userExt.broadcastClientAndUsersUpdate(groupUserIds, update, None, false))
                 } yield Ok(ResponseSeq(seqstate.seq, seqstate.state.toByteArray))
@@ -191,7 +190,7 @@ trait HistoryHandlers {
           } else {
             val update = UpdateMessageDelete(outPeer.asPeer, randomIds)
             for {
-              _ ← persist.HistoryMessage.delete(client.userId, peer, randomIds.toSet)
+              _ ← persist.HistoryMessageRepo.delete(client.userId, peer, randomIds.toSet)
               seqstate ← DBIO.from(userExt.broadcastClientUpdate(update, None, isFat = false))
             } yield Ok(ResponseSeq(seqstate.seq, seqstate.state.toByteArray))
           }
@@ -217,15 +216,16 @@ trait HistoryHandlers {
     }
   }
 
-  private def getDialogStruct(dialogModel: models.Dialog)(implicit client: AuthorizedClientData): dbio.DBIO[ApiDialog] = {
+  private def getDialogStruct(dialogModel: model.Dialog)(implicit client: AuthorizedClientData): dbio.DBIO[ApiDialog] = {
     withHistoryOwner(dialogModel.peer, client.userId) { historyOwner ⇒
       for {
-        messageOpt ← persist.HistoryMessage.findNewest(historyOwner, dialogModel.peer) map (_.map(_.ofUser(client.userId)))
+        messageOpt ← persist.HistoryMessageRepo.findNewest(historyOwner, dialogModel.peer) map (_.map(_.ofUser(client.userId)))
+        reactions ← messageOpt map (m ⇒ dialogExt.fetchReactions(dialogModel.peer, client.userId, m.randomId)) getOrElse DBIO.successful(Vector.empty)
         unreadCount ← dialogExt.getUnreadCount(client.userId, historyOwner, dialogModel.peer, dialogModel.ownerLastReadAt)
       } yield {
         val emptyMessageContent = ApiTextMessage(text = "", mentions = Vector.empty, ext = None)
-        val messageModel = messageOpt.getOrElse(models.HistoryMessage(dialogModel.userId, dialogModel.peer, new DateTime(0), 0, 0, emptyMessageContent.header, emptyMessageContent.toByteArray, None))
-        val message = messageModel.asStruct(dialogModel.lastReceivedAt, dialogModel.lastReadAt)
+        val messageModel = messageOpt.getOrElse(model.HistoryMessage(dialogModel.userId, dialogModel.peer, new DateTime(0), 0, 0, emptyMessageContent.header, emptyMessageContent.toByteArray, None))
+        val message = messageModel.asStruct(dialogModel.lastReceivedAt, dialogModel.lastReadAt, reactions)
 
         ApiDialog(
           peer = dialogModel.peer.asStruct,
@@ -264,6 +264,7 @@ trait HistoryHandlers {
       case ApiTextMessage(_, mentions, _) ⇒ mentions.toSet
       case ApiJsonMessage(_)              ⇒ Set.empty
       case _: ApiDocumentMessage          ⇒ Set.empty
+      case _: ApiStickerMessage           ⇒ Set.empty
       case _: ApiUnsupportedMessage       ⇒ Set.empty
     }
   }
@@ -273,6 +274,8 @@ trait HistoryHandlers {
       case ApiServiceExContactRegistered(userId)                  ⇒ Set(userId)
       case ApiServiceExChangedAvatar(_)                           ⇒ Set.empty
       case ApiServiceExChangedTitle(_)                            ⇒ Set.empty
+      case ApiServiceExChangedTopic(_)                            ⇒ Set.empty
+      case ApiServiceExChangedAbout(_)                            ⇒ Set.empty
       case ApiServiceExGroupCreated | _: ApiServiceExGroupCreated ⇒ Set.empty
       case ApiServiceExPhoneCall(_)                               ⇒ Set.empty
       case ApiServiceExPhoneMissed | _: ApiServiceExPhoneMissed   ⇒ Set.empty

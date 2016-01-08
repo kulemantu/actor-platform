@@ -5,8 +5,12 @@
 import Foundation
 import UIKit
 import MobileCoreServices
+import AddressBook
+import AddressBookUI
+import SVProgressHUD
 
-class ConversationViewController: AAConversationContentController, UIDocumentMenuDelegate, UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class ConversationViewController: AAConversationContentController, UIDocumentMenuDelegate, UIDocumentPickerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, AALocationPickerControllerDelegate,
+    ABPeoplePickerNavigationControllerDelegate {
     
     // Data binder
     private let binder = AABinder()
@@ -17,12 +21,19 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
     let content: ACPage!
     var appStyle: ActorStyle { get { return ActorSDK.sharedActor().style } }
     
+    // States
+    
+    private var micOn: Bool! = true
+    
     // Views
     private let titleView: UILabel = UILabel()
     private let subtitleView: UILabel = UILabel()
     private let navigationView: UIView = UIView()
     private let avatarView = AABarAvatarView(frameSize: 36, type: .Rounded)
     private let backgroundView = UIImageView()
+    private var audioButton: UIButton = UIButton()
+    
+    private let audioRecorder: AAAudioRecorder! = AAAudioRecorder()
     
     override init(peer: ACPeer) {
         
@@ -48,15 +59,50 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
         }
         
         view.insertSubview(backgroundView, atIndex: 0)
-
+        
+        // slk settings
+        self.bounces = true
+        
         // Text Input
         
         self.textInputbar.backgroundColor = appStyle.chatInputFieldBgColor
         self.textInputbar.autoHideRightButton = false;
+        self.textInputbar.translucent = false
+        
+        // Text view placeholder
         self.textView.placeholder = AALocalized("ChatPlaceholder")
+        
+        
+        // right button
+//        self.rightButton.tintColor = appStyle.chatSendColor
+//        self.rightButton.setImage(UIImage.tinted("aa_micbutton", color: appStyle.chatAttachColor), forState: UIControlState.Normal)
+//        self.rightButton.setTitle("", forState: UIControlState.Normal)
+//        self.rightButton.enabled = true
+//        self.rightButton.layoutIfNeeded()
+        
         self.rightButton.setTitle(AALocalized("ChatSend"), forState: UIControlState.Normal)
         self.rightButton.setTitleColor(appStyle.chatSendColor, forState: UIControlState.Normal)
         self.rightButton.setTitleColor(appStyle.chatSendDisabledColor, forState: UIControlState.Disabled)
+        self.rightButton.setImage(nil, forState: UIControlState.Normal)
+        
+        //
+        
+        self.audioButton = UIButton(type: UIButtonType.Custom)
+        self.audioButton.frame = textView.frame
+        self.audioButton.backgroundColor = appStyle.chatAttachColor
+        self.audioButton.setTitle("Hold to talk", forState:UIControlState.Normal)
+        self.audioButton.setTitle("Release to send", forState:UIControlState.Highlighted)
+        self.audioButton.setTitleColor(UIColor.whiteColor(),forState: .Normal)
+        self.audioButton.setTitleColor(UIColor.greenColor(),forState: .Highlighted)
+        self.audioButton.layer.cornerRadius = 5
+        self.textInputbar.addSubview(self.audioButton)
+        self.audioButton.hidden = true
+        
+        self.audioButton.addTarget(self, action: "onAudioRecordingStarted:", forControlEvents: UIControlEvents.TouchDown)
+        self.audioButton.addTarget(self, action: "onAudioRecordingFinished:", forControlEvents: UIControlEvents.TouchUpInside)
+        self.audioButton.addTarget(self, action: "onAudioRecordingCancelled:", forControlEvents: UIControlEvents.TouchUpOutside)
+        self.audioButton.addTarget(self, action: "onAudioRecordingCancelled:", forControlEvents: UIControlEvents.TouchDragOutside)
+        self.audioButton.addTarget(self, action: "onAudioRecordingCancelled:", forControlEvents: UIControlEvents.TouchDragExit)
         
         self.keyboardPanningEnabled = true
         
@@ -212,6 +258,8 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
         
+        self.audioButton.frame = textView.frame
+        
         if navigationController!.viewControllers.count > 2 {
             let firstController = navigationController!.viewControllers[0]
             let currentController = navigationController!.viewControllers[navigationController!.viewControllers.count - 1]
@@ -232,6 +280,9 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
         if !AADevice.isiPad {
             AANavigationBadge.hideBadge()
         }
+        
+        // Closing keyboard
+        self.textView.resignFirstResponder()
     }
 
     override func viewDidDisappear(animated: Bool) {
@@ -282,9 +333,96 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
         Actor.onTypingWithPeer(peer);
     }
     
+    override func textDidUpdate(animated: Bool) {
+        super.textDidUpdate(animated)
+        
+        let text = self.textView.text.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+        self.rightButton.enabled = true
+        
+        //change button
+        
+        if !text.isEmpty {
+            
+            self.rightButton.setTitle(AALocalized("ChatSend"), forState: UIControlState.Normal)
+            self.rightButton.setTitleColor(appStyle.chatSendColor, forState: UIControlState.Normal)
+            self.rightButton.setTitleColor(appStyle.chatSendDisabledColor, forState: UIControlState.Disabled)
+            self.rightButton.setImage(nil, forState: UIControlState.Normal)
+            
+            if self.micOn == true {
+                self.micOn = false
+            }
+            
+        } else {
+            
+//            if(self.audioButton.hidden){
+//                
+//                self.rightButton.tintColor = appStyle.chatSendColor
+//                self.rightButton.setImage(UIImage.tinted("aa_micbutton", color: appStyle.chatAttachColor), forState: UIControlState.Normal)
+//                self.rightButton.setTitle("", forState: UIControlState.Normal)
+//                self.rightButton.enabled = true
+//                
+//            } else {
+//                
+//                self.rightButton.tintColor = appStyle.chatSendColor
+//                self.rightButton.setImage(UIImage.tinted("aa_keyboard", color: appStyle.chatAttachColor), forState: UIControlState.Normal)
+//                self.rightButton.setTitle("", forState: UIControlState.Normal)
+//                self.rightButton.enabled = true
+//                
+//            }
+//            
+//            self.micOn = true
+            
+        }
+        
+        self.textInputbar.layoutIfNeeded()
+        self.rightButton.layoutIfNeeded()
+        
+    }
+    
     override func didPressRightButton(sender: AnyObject!) {
-        Actor.sendMessageWithMentionsDetect(peer, withText: textView.text)
-        super.didPressRightButton(sender)
+        
+        
+//        Actor.sendMessageWithMentionsDetect(peer, withText: textView.text)
+//        super.didPressRightButton(sender)
+        
+        if !self.textView.text.isEmpty {
+            
+            Actor.sendMessageWithMentionsDetect(peer, withText: textView.text)
+            super.didPressRightButton(sender)
+            
+        } else {
+            
+//            if(self.audioButton.hidden){
+//                //self.textView.resignFirstResponder()
+//                
+//                self.rightButton.tintColor = appStyle.chatSendColor
+//                self.rightButton.setImage(UIImage.tinted("aa_keyboard", color: appStyle.chatAttachColor), forState: UIControlState.Normal)
+//                self.rightButton.setTitle("", forState: UIControlState.Normal)
+//                self.rightButton.enabled = true
+//                
+//                self.textInputbar.layoutIfNeeded()
+//                self.rightButton.layoutIfNeeded()
+//                
+//                self.audioButton.frame = textView.frame
+//                self.audioButton.hidden = false;
+//                
+//                
+//            } else {
+//                self.audioButton.hidden = true;
+//                
+//                self.rightButton.tintColor = appStyle.chatSendColor
+//                self.rightButton.setImage(UIImage.tinted("aa_micbutton", color: appStyle.chatAttachColor), forState: UIControlState.Normal)
+//                self.rightButton.setTitle("", forState: UIControlState.Normal)
+//                self.rightButton.enabled = true
+//                
+//                self.textInputbar.layoutIfNeeded()
+//                self.rightButton.layoutIfNeeded()
+//            }
+
+        }
+        
+        
+        
     }
     
     override func didPressLeftButton(sender: AnyObject!) {
@@ -295,17 +433,25 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
         let builder = AAMenuBuilder()
         
         if hasCamera {
-            builder.add("PhotoCamera") { () -> () in
+            builder.add("PhotoCamera") {
                 self.pickImage(.Camera)
             }
         }
         
-        builder.add("PhotoLibrary") { () -> () in
+        builder.add("PhotoLibrary") {
             self.pickImage(.PhotoLibrary)
         }
         
-        builder.add("SendDocument") { () -> () in
+        builder.add("SendDocument") {
             self.pickDocument()
+        }
+        
+        builder.add("ShareLocation") {
+            self.pickLocation()
+        }
+        
+        builder.add("ShareContact") {
+            self.pickContact()
         }
         
         showActionSheet(builder.items, cancelButton: "AlertCancel", destructButton: nil, sourceView: self.leftButton, sourceRect: self.leftButton.bounds, tapClosure: builder.tapClosure)
@@ -452,4 +598,128 @@ class ConversationViewController: AAConversationContentController, UIDocumentMen
     func imagePickerControllerDidCancel(picker: UIImagePickerController) {
         picker.dismissViewControllerAnimated(true, completion: nil)
     }
+    
+    // Location picking
+    
+    func pickLocation() {
+        let pickerController = AALocationPickerController()
+        pickerController.delegate = self
+        self.presentViewController(AANavigationController(rootViewController:pickerController), animated: true, completion: nil)
+    }
+    
+    func locationPickerDidCancelled(controller: AALocationPickerController) {
+        controller.dismissViewControllerAnimated(true, completion: nil)
+    }
+    
+    func locationPickerDidPicked(controller: AALocationPickerController, latitude: Double, longitude: Double) {
+        Actor.sendLocationWithPeer(self.peer, withLongitude: JavaLangDouble(double: longitude), withLatitude: JavaLangDouble(double: latitude), withStreet: nil, withPlace: nil)
+        controller.dismissViewControllerAnimated(true, completion: nil)
+    }
+    
+    func pickContact() {
+        let pickerController = ABPeoplePickerNavigationController()
+        pickerController.peoplePickerDelegate = self
+        self.presentViewController(pickerController, animated: true, completion: nil)
+    }
+    
+    func peoplePickerNavigationController(peoplePicker: ABPeoplePickerNavigationController, didSelectPerson person: ABRecord) {
+        
+        // Dismissing picker
+        
+        peoplePicker.dismissViewControllerAnimated(true, completion: nil)
+        
+        // Names
+        
+        let name = ABRecordCopyCompositeName(person)?.takeRetainedValue() as String?
+        
+        // Avatar
+        
+        var jAvatarImage: String? = nil
+        let hasAvatarImage = ABPersonHasImageData(person)
+        if (hasAvatarImage) {
+            let imgData = ABPersonCopyImageDataWithFormat(person, kABPersonImageFormatOriginalSize).takeRetainedValue()
+            let image = UIImage(data: imgData)?.resizeSquare(90, maxH: 90)
+            if (image != nil) {
+                let thumbData = UIImageJPEGRepresentation(image!, 0.55)
+                jAvatarImage = thumbData?.base64EncodedStringWithOptions(NSDataBase64EncodingOptions())
+            }
+        }
+        
+        // Phones
+        
+        let jPhones = JavaUtilHashSet()
+        let phoneNumbers: ABMultiValueRef = ABRecordCopyValue(person, kABPersonPhoneProperty).takeRetainedValue()
+        let phoneCount = ABMultiValueGetCount(phoneNumbers)
+        for (var i = 0;i < phoneCount ; i++) {
+            let phone = (ABMultiValueCopyValueAtIndex(phoneNumbers, i).takeRetainedValue() as! String).trim()
+            jPhones.addWithId(phone)
+        }
+        
+        
+        // Email
+        let jEmails = JavaUtilHashSet()
+        let emails: ABMultiValueRef = ABRecordCopyValue(person, kABPersonEmailProperty).takeRetainedValue()
+        let emailsCount = ABMultiValueGetCount(emails)
+        for (var i = 0; i < emailsCount; i++) {
+            let email = (ABMultiValueCopyValueAtIndex(emails, i).takeRetainedValue() as! String).trim()
+            if (email.length > 0) {
+                jEmails.addWithId(email)
+            }
+        }
+
+        // Sending
+        
+        Actor.sendContactWithPeer(self.peer, withName: name, withPhones: jPhones, withEmails: jEmails, withPhoto: jAvatarImage)
+    }
+    
+    
+    // send audio document
+    
+    // MARK: -
+    // MARK: Audio recording callbacks
+    func onAudioRecordingStarted(sender: AnyObject) {
+        print("onAudioRecordingStarted\n")
+        stopAudioRecording()
+        SVProgressHUD.showWithStatus("Slide up to cancel")
+        audioRecorder.start()
+    }
+    
+    func onAudioRecordingFinished(sender: AnyObject) {
+        print("onAudioRecordingFinished\n")
+        SVProgressHUD.dismiss()
+        audioRecorder.finish({ (path: String!, duration: NSTimeInterval) -> Void in
+            
+            if (nil == path) {
+                print("onAudioRecordingFinished: empty path")
+                return
+            }
+            
+            NSLog("onAudioRecordingFinished: %@ [%lfs]", path, duration)
+            let range = path.rangeOfString("/tmp", options: NSStringCompareOptions(), range: nil, locale: nil)
+            let descriptor = path.substringFromIndex(range!.startIndex)
+            NSLog("Audio Recording file: \(descriptor)")
+            
+
+            Actor.sendAudioWithPeer(self.peer, withName: NSString.localizedStringWithFormat("%.0fs.ogg", duration + 0.5) as String,
+                withDuration: jint(duration), withDescriptor: descriptor)
+            
+        })
+    }
+    
+    func onAudioRecordingCancelled(sender: AnyObject) {
+        print("onAudioRecordingCancelled\n")
+        stopAudioRecording()
+        SVProgressHUD.dismiss()
+    }
+    
+    func stopAudioRecording()
+    {
+        if (audioRecorder != nil)
+        {
+            audioRecorder.delegate = nil
+            audioRecorder.cancel()
+        }
+    }
+    
+    
 }

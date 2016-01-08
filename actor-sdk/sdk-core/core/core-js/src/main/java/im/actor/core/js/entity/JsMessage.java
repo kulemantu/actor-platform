@@ -5,17 +5,27 @@
 package im.actor.core.js.entity;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsDate;
+import com.google.gwt.user.datepicker.client.CalendarUtil;
+
+import java.util.Date;
 
 import im.actor.core.api.ApiTextExMarkdown;
 import im.actor.core.entity.Message;
 import im.actor.core.entity.Peer;
+import im.actor.core.entity.Reaction;
+import im.actor.core.entity.content.ContactContent;
 import im.actor.core.entity.content.DocumentContent;
 import im.actor.core.entity.content.FileLocalSource;
 import im.actor.core.entity.content.FileRemoteSource;
+import im.actor.core.entity.content.LocationContent;
 import im.actor.core.entity.content.PhotoContent;
 import im.actor.core.entity.content.ServiceContent;
 import im.actor.core.entity.content.TextContent;
+import im.actor.core.entity.content.VoiceContent;
 import im.actor.core.js.JsMessenger;
 import im.actor.runtime.crypto.Base64Utils;
 import im.actor.runtime.js.mvvm.JsEntityConverter;
@@ -23,6 +33,39 @@ import im.actor.runtime.js.mvvm.JsEntityConverter;
 public class JsMessage extends JavaScriptObject {
 
     public static final JsEntityConverter<Message, JsMessage> CONVERTER = new JsEntityConverter<Message, JsMessage>() {
+        @Override
+        public boolean isSupportOverlays() {
+            return true;
+        }
+
+        @Override
+        public JavaScriptObject buildOverlay(Message prev, Message current, Message next) {
+            Date nextDate = next != null ? new Date(next.getDate()) : null;
+            Date currentDate = new Date(current.getDate());
+
+            boolean showDate;
+            String dateDiv = null;
+            if (next != null) {
+                showDate = !CalendarUtil.isSameDate(nextDate, currentDate);
+            } else {
+                showDate = true;
+            }
+            if (showDate) {
+                dateDiv = JsMessenger.getInstance().getFormatter().formatMonth(currentDate);
+            }
+
+            boolean useCompact = false;
+            if (next != null && !showDate) {
+                if (next.getSenderId() == current.getSenderId()) {
+                    if (next.getDate() - current.getDate() < 10 * 60 * 1000) {
+                        useCompact = true;
+                    }
+                }
+            }
+
+            return JsMessageOverlay.create(useCompact, dateDiv);
+        }
+
         @Override
         public JsMessage convert(Message value) {
             JsMessenger messenger = JsMessenger.getInstance();
@@ -36,60 +79,30 @@ public class JsMessage extends JavaScriptObject {
             String date = messenger.getFormatter().formatTime(value.getDate());
             JsDate fullDate = JsDate.create(value.getDate());
 
-            JsContent content;
-            if (value.getContent() instanceof TextContent) {
-                TextContent textContent = (TextContent) value.getContent();
+            JsContent content = JsContent.createContent(value.getContent(),
+                    value.getSenderId());
 
-                String text = ((TextContent) value.getContent()).getText();
+            JsArray<JsReaction> reactions = JsArray.createArray().cast();
 
-                String markdownText = null;
-                if (textContent.getTextMessageEx() instanceof ApiTextExMarkdown) {
-                    markdownText = ((ApiTextExMarkdown) textContent.getTextMessageEx()).getMarkdown();
+            for (Reaction r : value.getReactions()) {
+                JsArrayInteger uids = (JsArrayInteger) JsArrayInteger.createArray();
+                boolean isOwnSet = false;
+                for (Integer i : r.getUids()) {
+                    uids.push(i);
+                    if (i == messenger.myUid()) {
+                        isOwnSet = true;
+                    }
                 }
-
-                content = JsContentText.create(text, markdownText);
-            } else if (value.getContent() instanceof ServiceContent) {
-                content = JsContentService.create(messenger.getFormatter().formatFullServiceMessage(value.getSenderId(), (ServiceContent) value.getContent()));
-            } else if (value.getContent() instanceof DocumentContent) {
-                DocumentContent doc = (DocumentContent) value.getContent();
-
-                String fileName = doc.getName();
-                String fileExtension = doc.getExt();
-                String fileSize = messenger.getFormatter().formatFileSize(doc.getSource().getSize());
-                String fileUrl = null;
-
-                if (doc.getSource() instanceof FileRemoteSource) {
-                    fileUrl = messenger.getFileUrl(((FileRemoteSource) doc.getSource()).getFileReference());
-                }
-
-                boolean isUploading = doc.getSource() instanceof FileLocalSource;
-
-                String thumb = null;
-                if (doc.getFastThumb() != null) {
-                    String thumbBase64 = Base64Utils.toBase64(doc.getFastThumb().getImage());
-                    thumb = "data:image/jpg;base64," + thumbBase64;
-                }
-
-                if (value.getContent() instanceof PhotoContent && thumb != null) {
-                    PhotoContent photoContent = (PhotoContent) value.getContent();
-                    content = JsContentPhoto.create(
-                            fileName, fileExtension, fileSize,
-                            photoContent.getW(), photoContent.getH(), thumb,
-                            fileUrl, isUploading);
-                } else {
-                    content = JsContentDocument.create(fileName, fileExtension, fileSize,
-                            thumb, fileUrl, isUploading);
-                }
-
-            } else {
-                content = JsContentUnsupported.create();
+                reactions.push(JsReaction.create(r.getCode(), uids, isOwnSet));
             }
 
-            return create(rid, sortKey, sender, isOut, date, fullDate, Enums.convert(value.getMessageState()), isOnServer, content);
+            return create(rid, sortKey, sender, isOut, date, fullDate, Enums.convert(value.getMessageState()), isOnServer, content,
+                    reactions);
         }
     };
 
-    public native static JsMessage create(String rid, String sortKey, JsPeerInfo sender, boolean isOut, String date, JsDate fullDate, String state, boolean isOnServer, JsContent content)/*-{
+    public native static JsMessage create(String rid, String sortKey, JsPeerInfo sender, boolean isOut, String date, JsDate fullDate, String state, boolean isOnServer, JsContent content,
+                                          JsArray<JsReaction> reactions)/*-{
         return {
             rid: rid,
             sortKey: sortKey,
@@ -99,7 +112,8 @@ public class JsMessage extends JavaScriptObject {
             fullDate: fullDate,
             state: state,
             isOnServer: isOnServer,
-            content: content
+            content: content,
+            reactions: reactions
         };
     }-*/;
 

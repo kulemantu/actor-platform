@@ -9,17 +9,17 @@ import im.actor.api.rpc.auth._
 import im.actor.api.rpc.contacts.{ ApiPhoneToImport, ResponseGetContacts, UpdateContactRegistered }
 import im.actor.api.rpc.misc.ResponseVoid
 import im.actor.api.rpc.users.{ ApiContactRecord, ApiContactType, ApiSex }
+import im.actor.concurrent.FutureExt
 import im.actor.server._
 import im.actor.server.activation.internal.{ ActivationConfig, InternalCodeActivation }
 import im.actor.server.api.rpc.RpcApiService
 import im.actor.server.api.rpc.service.auth.AuthErrors
 import im.actor.server.api.rpc.service.contacts.ContactsServiceImpl
-import im.actor.server.models.contact.UserContact
+import im.actor.server.model.contact.UserContact
 import im.actor.server.mtproto.codecs.protocol.MessageBoxCodec
 import im.actor.server.mtproto.protocol.{ MessageBox, SessionHello }
 import im.actor.server.oauth.{ GoogleProvider, OAuth2GoogleConfig }
 import im.actor.server.persist.auth.AuthTransactionRepo
-import im.actor.server.sequence.SeqUpdatesManager
 import im.actor.server.session.{ HandleMessageBox, Session, SessionConfig, SessionEnvelope }
 import im.actor.server.email.DummyEmailSender
 import im.actor.server.sms.{ AuthCallEngine, AuthSmsEngine }
@@ -34,7 +34,7 @@ import scalaz.\/
 final class AuthServiceSpec
   extends BaseAppSuite
   with ImplicitSequenceService
-  with ImplicitSessionRegionProxy
+  with ImplicitSessionRegion
   with SeqUpdateMatchers {
   behavior of "AuthService"
 
@@ -84,25 +84,25 @@ final class AuthServiceSpec
 
   it should "associate authorizations from two different devices with different auth transactions" in s.e155
 
-  "GetOAuth2Params handler" should "respond with error when malformed url is passed" in s.e16
+  "GetOAuth2Params handler" should "respond with error when malformed url is passed" in pendingUntilFixed(s.e16)
 
-  it should "respond with error when wrong transactionHash is passed" in s.e17
+  it should "respond with error when wrong transactionHash is passed" in pendingUntilFixed(s.e17)
 
-  it should "respond with correct authUrl on correct request" in s.e18
+  it should "respond with correct authUrl on correct request" in pendingUntilFixed(s.e18)
 
-  "CompleteOAuth2 handler" should "respond with error when wrong transactionHash is passed" in s.e19
+  "CompleteOAuth2 handler" should "respond with error when wrong transactionHash is passed" in pendingUntilFixed(s.e19)
 
-  it should "respond with EmailUnoccupied error when new user oauth token retreived" in s.e20
+  it should "respond with EmailUnoccupied error when new user oauth token retreived" in pendingUntilFixed(s.e20)
 
-  it should "respond with error when unable to get oauth2 token" in s.e200
+  it should "respond with error when unable to get oauth2 token" in pendingUntilFixed(s.e200)
 
   //  it should "complete sign in process for registered user" in s.e21
 
-  "SignUp handler" should "respond with error if it was called before completeOAuth2" in s.e22
+  "SignUp handler" should "respond with error if it was called before completeOAuth2" in pendingUntilFixed(s.e22)
 
-  it should "complete sign up process for unregistered user via email oauth" in s.e23
+  it should "complete sign up process for unregistered user via email oauth" in pendingUntilFixed(s.e23)
 
-  it should "register unregistered contacts and send updates for email auth" in s.e24
+  it should "register unregistered contacts and send updates for email auth" in pendingUntilFixed(s.e24)
 
   "Logout" should "remove authId and vendor credentials" in s.e25
 
@@ -133,18 +133,18 @@ final class AuthServiceSpec
 
       whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
         inside(resp) {
-          case Ok(ResponseStartPhoneAuth(hash, false)) ⇒ hash should not be empty
+          case Ok(ResponseStartPhoneAuth(hash, false, Some(ApiPhoneActivationType.CODE))) ⇒ hash should not be empty
         }
       }
     }
 
     def e2() = {
-      val (user, authId, phoneNumber) = createUser()
-      implicit val clientData = ClientData(authId, createSessionId(), Some(user.id))
+      val (user, authId, authSid, phoneNumber) = createUser()
+      implicit val clientData = ClientData(authId, createSessionId(), Some(AuthData(user.id, authSid)))
 
       whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
         inside(resp) {
-          case Ok(ResponseStartPhoneAuth(hash, true)) ⇒ hash should not be empty
+          case Ok(ResponseStartPhoneAuth(hash, true, Some(ApiPhoneActivationType.CODE))) ⇒ hash should not be empty
         }
       }
     }
@@ -177,7 +177,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(q()) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -186,7 +186,7 @@ final class AuthServiceSpec
       whenReady(seq) { resps ⇒
         resps foreach {
           inside(_) {
-            case Ok(ResponseStartPhoneAuth(hash, false)) ⇒
+            case Ok(ResponseStartPhoneAuth(hash, false, Some(ApiPhoneActivationType.CODE))) ⇒
               hash shouldEqual transactionHash
           }
         }
@@ -206,7 +206,7 @@ final class AuthServiceSpec
         timeZone = None,
         preferredLanguages = Vector.empty
       )) { resp ⇒
-        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
         resp.toOption.get.transactionHash
       }
 
@@ -219,7 +219,7 @@ final class AuthServiceSpec
         timeZone = None,
         preferredLanguages = Vector.empty
       )) { resp ⇒
-        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
         resp.toOption.get.transactionHash
       }
       transactionHash1 should not equal transactionHash2
@@ -230,7 +230,7 @@ final class AuthServiceSpec
       implicit val clientData = ClientData(createAuthId(), createSessionId(), None)
 
       whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+        resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
       }
 
       whenReady(service.handleValidateCode("wrongHash123123", correctAuthCode)) { resp ⇒
@@ -247,7 +247,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -266,7 +266,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -297,7 +297,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -314,15 +314,15 @@ final class AuthServiceSpec
     }
 
     def e7() = {
-      val (user, authId, phoneNumber) = createUser()
+      val (user, authId, authSid, phoneNumber) = createUser()
       val sessionId = createSessionId()
-      implicit val clientData = ClientData(authId, sessionId, Some(user.id))
+      implicit val clientData = ClientData(authId, sessionId, Some(AuthData(user.id, authSid)))
 
       sendSessionHello(authId, sessionId)
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, true)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, true, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -342,7 +342,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -385,11 +385,11 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
-      whenReady(service.handleSignUp(transactionHash, userName, userSex)) { resp ⇒
+      whenReady(service.handleSignUp(transactionHash, userName, userSex, None)) { resp ⇒
         inside(resp) {
           case Error(AuthErrors.NotValidated) ⇒
         }
@@ -413,7 +413,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -423,7 +423,7 @@ final class AuthServiceSpec
         }
       }
 
-      whenReady(service.handleSignUp(transactionHash, userName, userSex)) { resp ⇒
+      whenReady(service.handleSignUp(transactionHash, userName, userSex, None)) { resp ⇒
         inside(resp) {
           case Ok(ResponseAuth(user, _)) ⇒
             user.name shouldEqual userName
@@ -446,9 +446,9 @@ final class AuthServiceSpec
       val unregClientData = ClientData(authId, sessionId, None)
 
       //make unregistered contact
-      val (regUser, regAuthId, _) = createUser()
+      val (regUser, regAuthId, regAuthSid, _) = createUser()
       whenReady(db.run(persist.contact.UnregisteredPhoneContactRepo.createIfNotExists(phoneNumber, regUser.id, Some("Local name"))))(_ ⇒ ())
-      val regClientData = ClientData(regAuthId, sessionId, Some(regUser.id))
+      val regClientData = ClientData(regAuthId, sessionId, Some(AuthData(regUser.id, regAuthSid)))
 
       sendSessionHello(authId, sessionId)
 
@@ -456,11 +456,11 @@ final class AuthServiceSpec
         implicit val clientData = unregClientData
         val transactionHash =
           whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-            resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+            resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
             resp.toOption.get.transactionHash
           }
         whenReady(service.handleValidateCode(transactionHash, correctAuthCode))(_ ⇒ ())
-        whenReady(service.handleSignUp(transactionHash, userName, userSex))(_.toOption.get.user)
+        whenReady(service.handleSignUp(transactionHash, userName, userSex, None))(_.toOption.get.user)
       }
 
       {
@@ -488,9 +488,9 @@ final class AuthServiceSpec
       val sessionId = createSessionId()
       val unregClientData = ClientData(authId, sessionId, None)
 
-      val (regUser, regAuthId, _) = createUser()
+      val (regUser, regAuthId, regAuthSid, _) = createUser()
       val localName = Some("Bloody wild goat")
-      val regClientData = ClientData(regAuthId, sessionId, Some(regUser.id))
+      val regClientData = ClientData(regAuthId, sessionId, Some(AuthData(regUser.id, regAuthSid)))
 
       {
         implicit val clientData = regClientData
@@ -500,15 +500,15 @@ final class AuthServiceSpec
 
       sendSessionHello(authId, sessionId)
 
-      val createdUser = {
+      {
         implicit val clientData = unregClientData
         val transactionHash =
           whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-            resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+            resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
             resp.toOption.get.transactionHash
           }
         whenReady(service.handleValidateCode(transactionHash, correctAuthCode))(_ ⇒ ())
-        whenReady(service.handleSignUp(transactionHash, userName, userSex))(_.toOption.get.user)
+        whenReady(service.handleSignUp(transactionHash, userName, userSex, None))(_.toOption.get.user)
       }
 
       {
@@ -533,15 +533,15 @@ final class AuthServiceSpec
     }
 
     def e10() = {
-      val (user, authId, phoneNumber) = createUser()
+      val (user, authId, authSid, phoneNumber) = createUser()
       val sessionId = createSessionId()
-      implicit val clientData = ClientData(authId, sessionId, Some(user.id))
+      implicit val clientData = ClientData(authId, sessionId, Some(AuthData(user.id, authSid)))
 
       sendSessionHello(authId, sessionId)
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, true)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, true, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
       whenReady(service.handleValidateCode(transactionHash, correctAuthCode)) { resp ⇒
@@ -568,7 +568,7 @@ final class AuthServiceSpec
 
       val transactionHash =
         whenReady(startPhoneAuth(phoneNumber)) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartPhoneAuth(_, false, Some(ApiPhoneActivationType.CODE))) ⇒ }
           resp.toOption.get.transactionHash
         }
 
@@ -576,7 +576,7 @@ final class AuthServiceSpec
         inside(resp) { case Error(AuthErrors.PhoneNumberUnoccupied) ⇒ }
       }
 
-      whenReady(service.handleSignUp(transactionHash, userName, userSex)) { resp ⇒
+      whenReady(service.handleSignUp(transactionHash, userName, userSex, None)) { resp ⇒
         inside(resp) { case Ok(ResponseAuth(user, _)) ⇒ }
       }
 
@@ -594,7 +594,7 @@ final class AuthServiceSpec
 
       whenReady(startEmailAuth(email)) { resp ⇒
         inside(resp) {
-          case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.OAUTH2)) ⇒
+          case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.CODE)) ⇒
             hash should not be empty
         }
       }
@@ -618,28 +618,31 @@ final class AuthServiceSpec
       implicit val clientData = ClientData(createAuthId(), createSessionId(), None)
 
       val deviceHash = Random.nextLong().toBinaryString.getBytes
-      def q() = service.handleStartEmailAuth(
-        email = email,
-        appId = 42,
-        apiKey = "apiKey",
-        deviceHash = deviceHash,
-        deviceTitle = "Specs virtual device",
-        timeZone = None,
-        preferredLanguages = Vector.empty
-      )
+      def q() = {
+        Thread.sleep(100)
+        service.handleStartEmailAuth(
+          email = email,
+          appId = 42,
+          apiKey = "apiKey",
+          deviceHash = deviceHash,
+          deviceTitle = "Specs virtual device",
+          timeZone = None,
+          preferredLanguages = Vector.empty
+        )
+      }
 
       val transactionHash =
         whenReady(q()) { resp ⇒
-          resp should matchPattern { case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.OAUTH2)) ⇒ }
+          resp should matchPattern { case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.CODE)) ⇒ }
           resp.toOption.get.transactionHash
         }
 
-      val seq = Future.sequence(List(q(), q(), q(), q(), q(), q()))
+      val seq = FutureExt.ftraverse(List(q(), q(), q(), q(), q(), q()))(identity)
 
       whenReady(seq) { resps ⇒
         resps foreach {
           inside(_) {
-            case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.OAUTH2)) ⇒
+            case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.CODE)) ⇒
               hash shouldEqual transactionHash
           }
         }
@@ -822,7 +825,7 @@ final class AuthServiceSpec
           resp should matchPattern { case Ok(ResponseStartEmailAuth(hash, false, ApiEmailActivationType.OAUTH2)) ⇒ }
           resp.toOption.get.transactionHash
         }
-      whenReady(service.handleSignUp(transactionHash, userName, userSex)) { resp ⇒
+      whenReady(service.handleSignUp(transactionHash, userName, userSex, None)) { resp ⇒
         inside(resp) {
           case Error(AuthErrors.NotValidated) ⇒
         }
@@ -860,7 +863,7 @@ final class AuthServiceSpec
         }
       }
       val user =
-        whenReady(service.handleSignUp(transactionHash, userName, userSex)) { resp ⇒
+        whenReady(service.handleSignUp(transactionHash, userName, userSex, None)) { resp ⇒
           inside(resp) {
             case Ok(ResponseAuth(u, _)) ⇒
               u.name shouldEqual userName
@@ -896,9 +899,9 @@ final class AuthServiceSpec
       val unregClientData = ClientData(authId, sessionId, None)
 
       //make unregistered contact
-      val (regUser, regAuthId, _) = createUser()
+      val (regUser, regAuthId, regAuthSid, _) = createUser()
       whenReady(db.run(persist.contact.UnregisteredEmailContactRepo.createIfNotExists(email, regUser.id, Some("Local name"))))(_ ⇒ ())
-      val regClientData = ClientData(regAuthId, sessionId, Some(regUser.id))
+      val regClientData = ClientData(regAuthId, sessionId, Some(AuthData(regUser.id, regAuthSid)))
 
       sendSessionHello(authId, sessionId)
 
@@ -912,7 +915,7 @@ final class AuthServiceSpec
 
         whenReady(service.handleGetOAuth2Params(transactionHash, correctUri))(_ ⇒ ())
         whenReady(service.handleCompleteOAuth2(transactionHash, "code"))(_ ⇒ ())
-        whenReady(service.handleSignUp(transactionHash, userName, userSex))(_.toOption.get.user)
+        whenReady(service.handleSignUp(transactionHash, userName, userSex, None))(_.toOption.get.user)
       }
 
       {
@@ -932,15 +935,15 @@ final class AuthServiceSpec
     }
 
     def e25() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
       val sessionId = createSessionId()
-      implicit val clientData = ClientData(authId, sessionId, Some(user.id))
+      implicit val clientData = ClientData(authId, sessionId, Some(AuthData(user.id, authSid)))
 
-      SeqUpdatesManager.setPushCredentials(authId, models.push.GooglePushCredentials(authId, 22L, "hello"))
-      SeqUpdatesManager.setPushCredentials(authId, models.push.ApplePushCredentials(authId, 22, "hello".getBytes()))
+      seqUpdExt.registerGooglePushCredentials(model.push.GooglePushCredentials(authId, 22L, "hello"))
+      seqUpdExt.registerApplePushCredentials(model.push.ApplePushCredentials(authId, 22, ByteString.copyFrom("hello".getBytes)))
 
       //let seqUpdateManager register credentials
-      Thread.sleep(1000L)
+      Thread.sleep(5000L)
       whenReady(db.run(persist.AuthIdRepo.find(authId))) { optAuthId ⇒
         optAuthId shouldBe defined
       }
@@ -958,7 +961,8 @@ final class AuthServiceSpec
 
       }
       //let seqUpdateManager register credentials
-      Thread.sleep(1000L)
+      Thread.sleep(5000L)
+
       whenReady(db.run(persist.AuthIdRepo.find(authId))) { optAuthId ⇒
         optAuthId should not be defined
       }

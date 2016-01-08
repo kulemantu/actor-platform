@@ -1,16 +1,23 @@
 package im.actor.sdk.controllers.conversation.view;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 
+import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
+import im.actor.sdk.controllers.fragment.settings.BaseActorSettingsFragment;
+import im.actor.sdk.view.BackgroundPreviewView;
+
+import static im.actor.sdk.util.ActorSDKMessenger.messenger;
 
 public class ChatBackgroundView extends View {
 
     private Drawable background;
+    SharedPreferences shp;
 
     public ChatBackgroundView(Context context) {
         super(context);
@@ -33,10 +40,19 @@ public class ChatBackgroundView extends View {
 
     public void bind() {
         if (background == null) {
-            background = getResources().getDrawable(R.drawable.img_chat_background_default);
+            shp = getContext().getSharedPreferences("wallpaper", Context.MODE_PRIVATE);
+            if (shp.getInt("wallpaper", 0) == ActorSDK.sharedActor().style.getDefaultBackgrouds().length) {
+                background = Drawable.createFromPath(BaseActorSettingsFragment.getWallpaperFile());
+            } else {
+                background = getResources().getDrawable(BackgroundPreviewView.getBackground(BackgroundPreviewView.getBackgroundIdByUri(messenger().getSelectedWallpaper(), getContext(), shp.getInt("wallpaper", 0))));
+            }
         }
     }
 
+    public void bind(int i) {
+        background = getResources().getDrawable(BackgroundPreviewView.getBackground(i));
+        invalidate();
+    }
     @Override
     protected void onDraw(Canvas canvas) {
         if (background != null) {

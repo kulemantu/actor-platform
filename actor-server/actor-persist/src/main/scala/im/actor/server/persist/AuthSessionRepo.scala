@@ -4,9 +4,9 @@ import com.github.tototoshi.slick.PostgresJodaSupport._
 import org.joda.time.DateTime
 import slick.driver.PostgresDriver.api._
 
-import im.actor.server.models
+import im.actor.server.model
 
-final class AuthSessionTable(tag: Tag) extends Table[models.AuthSession](tag, "auth_sessions") {
+final class AuthSessionTable(tag: Tag) extends Table[model.AuthSession](tag, "auth_sessions") {
   def userId = column[Int]("user_id", O.PrimaryKey)
 
   def id = column[Int]("id", O.PrimaryKey)
@@ -33,7 +33,7 @@ final class AuthSessionTable(tag: Tag) extends Table[models.AuthSession](tag, "a
 
   def * =
     (userId, id, authId, appId, appTitle, deviceTitle, deviceHash, authTime, authLocation, latitude, longitude) <>
-      ((models.AuthSession.apply _).tupled, models.AuthSession.unapply)
+      ((model.AuthSession.apply _).tupled, model.AuthSession.unapply)
 }
 
 object AuthSessionRepo {
@@ -45,20 +45,39 @@ object AuthSessionRepo {
     activeSessions.filter(_.deviceHash === deviceHash)
   val byDeviceHashC = Compiled(byDeviceHash _)
 
-  def create(session: models.AuthSession) =
+  val byAuthId = Compiled { (authId: Rep[Long]) ⇒
+    activeSessions.filter(_.authId === authId)
+  }
+
+  val appIdByAuthId = Compiled { (authId: Rep[Long]) ⇒
+    activeSessions.filter(_.authId === authId).map(_.appId)
+  }
+
+  val byUserIdAndId = Compiled { (userId: Rep[Int], id: Rep[Int]) ⇒
+    activeSessions.filter(s ⇒ s.userId === userId && s.id === id)
+  }
+
+  val byUserId = Compiled { userId: Rep[Int] ⇒
+    activeSessions.filter(_.userId === userId)
+  }
+
+  def create(session: model.AuthSession) =
     sessions += session
 
   def find(userId: Int, id: Int) =
-    activeSessions.filter(s ⇒ s.userId === userId && s.id === id).result
+    byUserIdAndId((userId, id)).result
 
   def findByUserId(userId: Int) =
-    activeSessions.filter(_.userId === userId).result
+    byUserId(userId).result
+
+  def findFirstByUserId(userId: Int) =
+    activeSessions.filter(_.userId === userId).take(1).result.headOption
 
   def findByAuthId(authId: Long) =
-    activeSessions.filter(_.authId === authId).result.headOption
+    byAuthId(authId).result.headOption
 
   def findAppIdByAuthId(authId: Long) =
-    activeSessions.filter(_.authId === authId).map(_.appId).result.headOption
+    appIdByAuthId(authId).result.headOption
 
   def findByDeviceHash(deviceHash: Array[Byte]) =
     byDeviceHashC(deviceHash).result

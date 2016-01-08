@@ -114,6 +114,7 @@ public class Intents {
         final Intent intent = new Intent(context, ChatActivity.class);
         intent.putExtra(EXTRA_CHAT_PEER, peer.getUnuqueId());
         intent.putExtra(EXTRA_CHAT_COMPOSE, compose);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return intent;
     }
 
@@ -190,6 +191,10 @@ public class Intents {
 
     public static Intent pickFile(Context context) {
         return im.actor.sdk.controllers.pickers.Intents.pickFile(context);
+    }
+
+    public static Intent pickLocation(Context context) {
+        return im.actor.sdk.controllers.pickers.Intents.pickLocation(context);
     }
 
     public static void openMedia(Activity activity, View photoView, String path, int senderId) {

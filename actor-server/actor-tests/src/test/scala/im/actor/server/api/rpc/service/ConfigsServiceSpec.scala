@@ -8,7 +8,7 @@ import im.actor.server.api.rpc.service.configs.ConfigsServiceImpl
 
 class ConfigsServiceSpec
   extends BaseAppSuite
-  with ImplicitSessionRegionProxy
+  with ImplicitSessionRegion
   with ImplicitAuthService {
   behavior of "Configs Service"
 
@@ -18,20 +18,19 @@ class ConfigsServiceSpec
 
   val service = new ConfigsServiceImpl
 
-  val (user, _, _) = createUser()
-  val authId = createAuthId()
+  val (user, authId, authSid, _) = createUser()
   val sessionId = createSessionId()
 
-  implicit val clientData = ClientData(authId, sessionId, Some(user.id))
+  implicit val clientData = ClientData(authId, sessionId, Some(AuthData(user.id, authSid)))
 
   def e1() = {
-    whenReady(service.handleEditParameter("par1", "val1")) { resp ⇒
+    whenReady(service.handleEditParameter("par1", Some("val1"))) { resp ⇒
       resp should matchPattern {
         case Ok(ResponseSeq(_, _)) ⇒
       }
     }
 
-    whenReady(service.handleEditParameter("par1", "val2")) { resp ⇒
+    whenReady(service.handleEditParameter("par1", Some("val2"))) { resp ⇒
       resp should matchPattern {
         case Ok(ResponseSeq(_, _)) ⇒
       }

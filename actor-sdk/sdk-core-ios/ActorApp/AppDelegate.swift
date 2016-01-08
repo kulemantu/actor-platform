@@ -22,8 +22,12 @@ import ActorSDK
         
         ActorSDK.sharedActor().style.searchStatusBarStyle = .Default
         
+        // Enabling experimental features
+        ActorSDK.sharedActor().enableExperimentalFeatures = true
+        
         // Creating Actor
         ActorSDK.sharedActor().createActor()
+        
     }
     
     public override func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {

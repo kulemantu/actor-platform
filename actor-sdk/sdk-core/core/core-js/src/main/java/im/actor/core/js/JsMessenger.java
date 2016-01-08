@@ -16,9 +16,13 @@ import im.actor.core.entity.FileReference;
 import im.actor.core.entity.Message;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerType;
+import im.actor.core.entity.SearchEntity;
 import im.actor.core.entity.content.FastThumb;
 import im.actor.core.js.entity.JsCounter;
 import im.actor.core.js.entity.JsDialogGroup;
+import im.actor.core.js.entity.JsOnlineGroup;
+import im.actor.core.js.entity.JsOnlineUser;
+import im.actor.core.js.entity.JsSearchEntity;
 import im.actor.core.js.modules.JsFilesModule;
 import im.actor.core.js.modules.JsBindingModule;
 import im.actor.core.js.modules.JsBindedValue;
@@ -51,6 +55,7 @@ import im.actor.runtime.mvvm.ValueChangedListener;
 
 public class JsMessenger extends Messenger {
 
+    private static final String TAG = "JsMessenger";
     private static JsMessenger instance = null;
 
     public static JsMessenger getInstance() {
@@ -119,11 +124,16 @@ public class JsMessenger extends Messenger {
     }
 
     public void sendPhoto(final Peer peer, final String fileName, final JsBlob blob) {
+        Log.d(TAG, "Resizing photo");
         JsImageResize.resize(blob, new JsResizeListener() {
             @Override
             public void onResized(String thumb, int thumbW, int thumbH, int fullW, int fullH) {
+
+                Log.d(TAG, "Photo resized");
+
                 int index = thumb.indexOf("base64,");
                 if (index < 0) {
+                    Log.d(TAG, "Unable to find base64");
                     return;
                 }
                 String rawData = thumb.substring(index + "base64,".length());
@@ -158,8 +168,16 @@ public class JsMessenger extends Messenger {
         return jsBindingModule.getUser(uid);
     }
 
+    public JsBindedValue<JsOnlineUser> getJsUserOnline(int gid) {
+        return jsBindingModule.getUserOnline(gid);
+    }
+
     public JsBindedValue<JsGroup> getJsGroup(int gid) {
         return jsBindingModule.getGroup(gid);
+    }
+
+    public JsBindedValue<JsOnlineGroup> getJsGroupOnline(int gid) {
+        return jsBindingModule.getGroupOnline(gid);
     }
 
     public JsBindedValue<JsTyping> getTyping(Peer peer) {
@@ -204,6 +222,10 @@ public class JsMessenger extends Messenger {
 
     public JsDisplayList<JsContact, Contact> getSharedContactList() {
         return jsBindingModule.getSharedContactList();
+    }
+
+    public JsDisplayList<JsSearchEntity, SearchEntity> getSharedSearchList() {
+        return jsBindingModule.getSharedSearchList();
     }
 
     public JsDisplayList<JsMessage, Message> getSharedChatList(Peer peer) {

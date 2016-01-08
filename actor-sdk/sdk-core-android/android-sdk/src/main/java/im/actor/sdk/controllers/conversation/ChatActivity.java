@@ -1,23 +1,40 @@
 package im.actor.sdk.controllers.conversation;
 
+import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.database.Cursor;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.view.ActionMode;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -30,19 +47,35 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import im.actor.core.entity.MentionFilterResult;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerType;
 import im.actor.core.viewmodel.GroupVM;
 import im.actor.core.viewmodel.UserVM;
+import im.actor.runtime.Log;
+import im.actor.runtime.actors.ActorCreator;
+import im.actor.runtime.actors.ActorRef;
+import im.actor.runtime.actors.ActorSystem;
+import im.actor.runtime.actors.Props;
+import im.actor.runtime.actors.messages.PoisonPill;
 import im.actor.sdk.ActorSDK;
+import im.actor.sdk.ActorStyle;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.Intents;
 import im.actor.sdk.controllers.conversation.mentions.MentionsAdapter;
+import im.actor.sdk.controllers.conversation.messages.AudioHolder;
 import im.actor.sdk.controllers.conversation.messages.MessagesFragment;
+import im.actor.sdk.controllers.fragment.settings.ActorSettingsFragment;
+import im.actor.sdk.controllers.fragment.settings.BaseActorChatActivity;
+import im.actor.sdk.controllers.fragment.settings.BaseActorSettingsActivity;
+import im.actor.sdk.controllers.fragment.settings.BaseActorSettingsFragment;
+import im.actor.sdk.core.audio.VoiceCaptureActor;
+import im.actor.sdk.intents.ActorIntent;
 import im.actor.sdk.util.Randoms;
 import im.actor.sdk.util.Screen;
+import im.actor.sdk.util.ViewUtils;
 import im.actor.sdk.view.avatar.AvatarView;
 import im.actor.sdk.controllers.conversation.view.TypingDrawable;
 import im.actor.sdk.view.emoji.SmileProcessor;
@@ -50,9 +83,13 @@ import im.actor.sdk.view.markdown.AndroidMarkdown;
 import im.actor.runtime.mvvm.Value;
 import im.actor.runtime.mvvm.ValueChangedListener;
 
+import static im.actor.sdk.util.ViewUtils.expand;
 import static im.actor.sdk.util.ViewUtils.expandMentions;
 import static im.actor.sdk.util.ViewUtils.goneView;
+import static im.actor.sdk.util.ViewUtils.hideView;
 import static im.actor.sdk.util.ViewUtils.showView;
+import static im.actor.sdk.util.ViewUtils.zoomInView;
+import static im.actor.sdk.util.ViewUtils.zoomOutView;
 import static im.actor.sdk.view.emoji.SmileProcessor.emoji;
 import static im.actor.sdk.util.ActorSDKMessenger.groups;
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
@@ -72,6 +109,8 @@ public class ChatActivity extends ActorEditTextActivity {
     private static final int REQUEST_VIDEO = 2;
     private static final int REQUEST_DOC = 3;
     private static final int REQUEST_LOCATION = 4;
+    private static final int REQUEST_CONTACT = 5;
+    private static final int PERMISSIONS_REQUEST_CAMERA = 6;
     // Peer of current chat
     private Peer peer;
 
@@ -88,6 +127,8 @@ public class ChatActivity extends ActorEditTextActivity {
     //////////////////////////////////
     // Toolbar views
     //////////////////////////////////
+    // Toolbar unread counter
+    private TextView counter;
     // Toolbar Avatar view
     private AvatarView barAvatar;
     // Toolbar title view
@@ -103,6 +144,21 @@ public class ChatActivity extends ActorEditTextActivity {
     // Toolbar typing text
     private TextView barTyping;
     private boolean isMentionsVisible = false;
+
+    //////////////////////////////////
+    // Voice messges
+    //////////////////////////////////
+    private View audioContainer;
+    private View recordPoint;
+    private View messageContainer;
+    private View audioSlide;
+    private int slideStart;
+    private TextView audioTimer;
+    private boolean isAudioVisible;
+    private int SLIDE_LIMIT;
+    ActorRef voiceRecordActor;
+    private String audioFile;
+    private ImageView audioButton;
 
     //////////////////////////////////
     // Mentions
@@ -134,12 +190,21 @@ public class ChatActivity extends ActorEditTextActivity {
     private String pending_fileName;
 
     //////////////////////////////////
+    //Share menu
+    //////////////////////////////////
+    private View shareContainer;
+    private View shareMenu;
+    private int shareMenuMaxHeight = 0;
+
+
+    //////////////////////////////////
     // Utility variables
     //////////////////////////////////
     // Lock typing during messageEditText change
     private boolean isTypingDisabled = false;
     // Is Activity opened from Compose
     private boolean isCompose = false;
+    private Intent intent;
 
     public static Intent build(Peer peer, boolean compose, Context context) {
         final Intent intent = new Intent(context, ChatActivity.class);
@@ -151,11 +216,12 @@ public class ChatActivity extends ActorEditTextActivity {
     @Override
     public void onCreate(Bundle saveInstance) {
         // Reading peer of chat
-        peer = Peer.fromUniqueId(getIntent().getExtras().getLong(EXTRA_CHAT_PEER));
+        intent = getIntent();
+        peer = Peer.fromUniqueId(intent.getExtras().getLong(EXTRA_CHAT_PEER));
 
         if (saveInstance == null) {
             // Set compose state for auto-showing menu
-            isCompose = getIntent().getExtras().getBoolean(EXTRA_CHAT_COMPOSE, false);
+            isCompose = intent.getExtras().getBoolean(EXTRA_CHAT_COMPOSE, false);
         } else {
             // Activity restore
             pending_fileName = saveInstance.getString(STATE_FILE_NAME, null);
@@ -165,6 +231,44 @@ public class ChatActivity extends ActorEditTextActivity {
 
         messageEditText.addTextChangedListener(new TextWatcherImp());
 
+        //Voice record
+        SLIDE_LIMIT = (int) (Screen.getDensity() * 180);
+        audioContainer = findViewById(R.id.audioContainer);
+        audioTimer = (TextView) findViewById(R.id.audioTimer);
+        audioSlide = findViewById(R.id.audioSlide);
+        recordPoint = findViewById(R.id.record_point);
+        ActorSystem.system().addDispatcher("voice_capture_dispatcher");
+
+        audioButton = (ImageView) findViewById(R.id.record_btn);
+        audioButton.setVisibility(View.VISIBLE);
+        audioButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    if (!isAudioVisible) {
+                        showAudio();
+                        slideStart = (int) event.getX();
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    if (isAudioVisible) {
+                        hideAudio(false);
+                    }
+                } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    if (isAudioVisible) {
+                        int slide = slideStart - (int) event.getX();
+                        if (slide < 0) {
+                            slide = 0;
+                        }
+                        if (slide > SLIDE_LIMIT) {
+                            hideAudio(true);
+                        } else {
+                            slideAudio(slide);
+                        }
+                    }
+                }
+                return true;
+            }
+        });
 
         // Mentions
         mentionsList = (ListView) findViewById(R.id.mentionsList);
@@ -181,32 +285,189 @@ public class ChatActivity extends ActorEditTextActivity {
             }
         });
 
+        //share menu
+        shareMenu = findViewById(R.id.share_container);
+        shareMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        shareContainer = findViewById(R.id.closeMenuLayout);
+        shareContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                hideShareMenu();
+            }
+        });
+
+        try {
+            ApplicationInfo app = ChatActivity.this.getPackageManager().getApplicationInfo(ChatActivity.this.getPackageName(), PackageManager.GET_META_DATA);
+            Bundle bundle = app.metaData;
+
+            if (bundle.containsKey("com.google.android.geo.API_KEY")) {
+                findViewById(R.id.share_location).setVisibility(View.VISIBLE);
+                findViewById(R.id.share_hide).setVisibility(View.GONE);
+                findViewById(R.id.location_hide_text).setVisibility(View.VISIBLE);
+
+            } else {
+                findViewById(R.id.share_location).setVisibility(View.GONE);
+                findViewById(R.id.share_hide).setVisibility(View.VISIBLE);
+                findViewById(R.id.location_hide_text).setVisibility(View.INVISIBLE);
+                Log.w("Actor-GoogleMaps", "please, set up google map api key in AndroidManifest metadata to enable share locations");
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+
+        View.OnClickListener shareMenuOCL = new View.OnClickListener() {
+            @Override
+            public void onClick(View item) {
+                if (item.getId() == R.id.share_gallery) {
+                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/* video/*");
+                    startActivityForResult(intent, REQUEST_GALLERY);
+                } else if (item.getId() == R.id.share_camera) {
+                    File externalFile = getExternalFilesDir(null);
+                    if (externalFile == null) {
+                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
+                    }
+                    String externalPath = externalFile.getAbsolutePath();
+                    new File(externalPath + "/actor/").mkdirs();
+
+                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".jpg";
+                    if (ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                        Log.d("Permissions", "camera - no permission :c");
+                        ActivityCompat.requestPermissions(ChatActivity.this,
+                                new String[]{Manifest.permission.CAMERA},
+                                PERMISSIONS_REQUEST_CAMERA);
+
+                    } else {
+                        startCamera();
+                    }
+                } else if (item.getId() == R.id.share_video) {
+
+                    File externalFile = getExternalFilesDir(null);
+                    if (externalFile == null) {
+                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
+                    }
+                    String externalPath = externalFile.getAbsolutePath();
+                    new File(externalPath + "/actor/").mkdirs();
+
+                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".mp4";
+
+                    Intent i = new Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                            .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName)));
+                    startActivityForResult(i, REQUEST_VIDEO);
+                } else if (item.getId() == R.id.share_file) {
+                    startActivityForResult(Intents.pickFile(ChatActivity.this), REQUEST_DOC);
+                } else if (item.getId() == R.id.share_location) {
+                    startActivityForResult(Intents.pickLocation(ChatActivity.this), REQUEST_LOCATION);
+                } else if (item.getId() == R.id.share_contact) {
+                    Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                    startActivityForResult(intent, REQUEST_CONTACT);
+                } else if (item.getId() == R.id.share_hide) {
+                    //just hide
+                }
+
+                //hide it
+                hideShareMenu();
+            }
+        };
+
+        findViewById(R.id.share_gallery).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_video).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_camera).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_location).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_file).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_hide).setOnClickListener(shareMenuOCL);
+        findViewById(R.id.share_contact).setOnClickListener(shareMenuOCL);
+        handleIntent();
+
+
+    }
+
+    private void startCamera() {
+        startActivityForResult(
+                new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                        .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName))),
+                REQUEST_PHOTO);
+    }
+
+    private void handleIntent() {
         // Sharing
-        sendUri = getIntent().getStringExtra("send_uri");
-        sendUriMultiple = getIntent().getStringArrayListExtra("send_uri_multiple");
-        shareUser = getIntent().getIntExtra("share_user", 0);
+        sendUri = intent.getStringExtra("send_uri");
+        sendUriMultiple = intent.getStringArrayListExtra("send_uri_multiple");
+        shareUser = intent.getIntExtra("share_user", 0);
 
         //Forwarding
-        forwardText = getIntent().getStringExtra("forward_text");
-        forwardTextRaw = getIntent().getStringExtra("forward_text_raw");
-        sendText = getIntent().getStringExtra("send_text");
-        forwardDocDescriptor = getIntent().getStringExtra("forward_doc_descriptor");
-        forwardDocIsDoc = getIntent().getBooleanExtra("forward_doc_is_doc", true);
+        forwardText = intent.getStringExtra("forward_text");
+        forwardTextRaw = intent.getStringExtra("forward_text_raw");
+        sendText = intent.getStringExtra("send_text");
+        forwardDocDescriptor = intent.getStringExtra("forward_doc_descriptor");
+        forwardDocIsDoc = intent.getBooleanExtra("forward_doc_is_doc", true);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        //Notify old chat closed
+        messenger().onConversationClosed(peer);
+
+        peer = Peer.fromUniqueId(intent.getExtras().getLong(EXTRA_CHAT_PEER));
+        setFragment(null);
+
+
+        onPerformBind();
+        this.intent = intent;
+        handleIntent();
+    }
+
+    private void hideShareMenu() {
+        if (shareMenu.getVisibility() == View.VISIBLE) {
+            //hideView(shareMenu);
+            expand(shareMenu, 0);
+            shareContainer.setVisibility(View.GONE);
+        }
     }
 
     @Override
     protected Fragment onCreateFragment() {
-        return MessagesFragment.create(peer);
+        MessagesFragment fragment;
+        if (ActorSDK.sharedActor().getDelegate().getChatIntent() != null) {
+            ActorIntent chatIntent = ActorSDK.sharedActor().getDelegate().getChatIntent();
+            if (chatIntent instanceof BaseActorChatActivity) {
+                return ((BaseActorChatActivity) chatIntent).getChatFragment(peer);
+            } else {
+                return MessagesFragment.create(peer);
+            }
+        } else {
+            return MessagesFragment.create(peer);
+        }
     }
 
     @Override
     protected void onCreateToolbar() {
         // Loading Toolbar header views
         // Binding to real data is performed in onResume method
+        ActorStyle style = ActorSDK.sharedActor().style;
         barView = LayoutInflater.from(this).inflate(R.layout.bar_conversation, null);
         ActionBar.LayoutParams layout = new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.MATCH_PARENT);
-        setToolbar(barView, layout);
+        setToolbar(barView, layout, false);
+        findViewById(R.id.home).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
 
+        counter = (TextView) barView.findViewById(R.id.counter);
+
+        counter.setTextColor(style.getDialogsCounterTextColor());
+        counter.setBackgroundResource(R.drawable.ic_counter_circle);
+        counter.getBackground().setColorFilter(style.getDialogsCounterBackgroundColor(), PorterDuff.Mode.MULTIPLY);
         barTitle = (TextView) barView.findViewById(R.id.title);
         barSubtitleContainer = barView.findViewById(R.id.subtitleContainer);
         barTypingIcon = (ImageView) barView.findViewById(R.id.typingImage);
@@ -236,6 +497,47 @@ public class ChatActivity extends ActorEditTextActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        emojiKeyboard.setPeer(peer);
+
+        voiceRecordActor = ActorSystem.system().actorOf(Props.create(VoiceCaptureActor.class, new ActorCreator<VoiceCaptureActor>() {
+            @Override
+            public VoiceCaptureActor create() {
+                return new VoiceCaptureActor(ChatActivity.this, new VoiceCaptureActor.VoiceCaptureCallback() {
+                    @Override
+                    public void onRecordProgress(final long time) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                audioTimer.setText(messenger().getFormatter().formatDuration((int) (time / 1000)));
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onRecordCrash() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                hideAudio(true);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onRecordStop(long progress) {
+                        if (progress < 1200) {
+                            //Cancel
+                        } else {
+                            messenger().sendVoice(peer, (int) progress, audioFile);
+                        }
+                    }
+                });
+            }
+
+
+        }).changeDispatcher("voice_capture_dispatcher"), "actor/voice_capture");
+
 
         // Force keyboard open if activity started with Compose flag
         if (isCompose) {
@@ -365,12 +667,26 @@ public class ChatActivity extends ActorEditTextActivity {
                 }
             });
         }
+
+        bindGlobalCounter(new ValueChangedListener<Integer>() {
+            @Override
+            public void onChanged(Integer val, Value<Integer> valueModel) {
+                if (val > 0) {
+                    counter.setText(Integer.toString(val));
+                    showView(counter);
+                } else {
+                    hideView(counter);
+                }
+            }
+        });
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
+        voiceRecordActor.send(PoisonPill.INSTANCE);
+        AudioHolder.stopPlaying();
         // Saving draft
         messenger().saveDraft(peer, messageEditText.getText().toString());
     }
@@ -406,74 +722,89 @@ public class ChatActivity extends ActorEditTextActivity {
 
     @Override
     protected void onAttachButtonClicked() {
-        Context wrapper = new ContextThemeWrapper(ChatActivity.this, R.style.AttachPopupTheme);
-        PopupMenu popup = new PopupMenu(wrapper, findViewById(R.id.attachAnchor));
-
-        try {
-            Field[] fields = popup.getClass().getDeclaredFields();
-            for (Field field : fields) {
-                if ("mPopup".equals(field.getName())) {
-                    field.setAccessible(true);
-                    Object menuPopupHelper = field.get(popup);
-                    Class<?> classPopupHelper = Class.forName(menuPopupHelper
-                            .getClass().getName());
-                    Method setForceIcons = classPopupHelper.getMethod(
-                            "setForceShowIcon", boolean.class);
-                    setForceIcons.invoke(menuPopupHelper, true);
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+//        Context wrapper = new ContextThemeWrapper(ChatActivity.this, R.style.AttachPopupTheme);
+//        PopupMenu popup = new PopupMenu(wrapper, findViewById(R.id.attachAnchor));
+//
+//        try {
+//            Field[] fields = popup.getClass().getDeclaredFields();
+//            for (Field field : fields) {
+//                if ("mPopup".equals(field.getName())) {
+//                    field.setAccessible(true);
+//                    Object menuPopupHelper = field.get(popup);
+//                    Class<?> classPopupHelper = Class.forName(menuPopupHelper
+//                            .getClass().getName());
+//                    Method setForceIcons = classPopupHelper.getMethod(
+//                            "setForceShowIcon", boolean.class);
+//                    setForceIcons.invoke(menuPopupHelper, true);
+//                    break;
+//                }
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//
+//        popup.getMenuInflater().inflate(R.menu.attach_popup, popup.getMenu());
+//
+//        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem item) {
+//                if (item.getItemId() == R.id.gallery) {
+//                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//                    intent.setType("image/* video/*");
+//                    startActivityForResult(intent, REQUEST_GALLERY);
+//                    return true;
+//                } else if (item.getItemId() == R.id.takePhoto) {
+//                    File externalFile = getExternalFilesDir(null);
+//                    if (externalFile == null) {
+//                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
+//                        return true;
+//                    }
+//                    String externalPath = externalFile.getAbsolutePath();
+//                    new File(externalPath + "/actor/").mkdirs();
+//
+//                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".jpg";
+//                    startActivityForResult(
+//                            new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+//                                    .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName))),
+//                            REQUEST_PHOTO);
+//                } else if (item.getItemId() == R.id.takeVideo) {
+//
+//                    File externalFile = getExternalFilesDir(null);
+//                    if (externalFile == null) {
+//                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
+//                        return true;
+//                    }
+//                    String externalPath = externalFile.getAbsolutePath();
+//                    new File(externalPath + "/actor/").mkdirs();
+//
+//                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".mp4";
+//
+//                    Intent i = new Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+//                            .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName)));
+//                    startActivityForResult(i, REQUEST_VIDEO);
+//                    return true;
+//                } else if (item.getItemId() == R.id.file) {
+//                    startActivityForResult(Intents.pickFile(ChatActivity.this), REQUEST_DOC);
+//                } else if (item.getItemId() == R.id.contact) {
+//                    Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+//                    startActivityForResult(intent, REQUEST_CONTACT);
+//                }
+//                return false;
+//            }
+//        });
+//        popup.show();
+        if (shareMenuMaxHeight == 0) {
+            shareMenuMaxHeight = Screen.dp(180);
         }
-
-        popup.getMenuInflater().inflate(R.menu.attach_popup, popup.getMenu());
-
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if (item.getItemId() == R.id.gallery) {
-                    Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    intent.setType("image/* video/*");
-                    startActivityForResult(intent, REQUEST_GALLERY);
-                    return true;
-                } else if (item.getItemId() == R.id.takePhoto) {
-                    File externalFile = getExternalFilesDir(null);
-                    if (externalFile == null) {
-                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
-                        return true;
-                    }
-                    String externalPath = externalFile.getAbsolutePath();
-                    new File(externalPath + "/actor/").mkdirs();
-
-                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".jpg";
-                    startActivityForResult(
-                            new Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                                    .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName))),
-                            REQUEST_PHOTO);
-                } else if (item.getItemId() == R.id.takeVideo) {
-
-                    File externalFile = getExternalFilesDir(null);
-                    if (externalFile == null) {
-                        Toast.makeText(ChatActivity.this, R.string.toast_no_sdcard, Toast.LENGTH_LONG).show();
-                        return true;
-                    }
-                    String externalPath = externalFile.getAbsolutePath();
-                    new File(externalPath + "/actor/").mkdirs();
-
-                    pending_fileName = externalPath + "/actor/capture_" + Randoms.randomId() + ".mp4";
-
-                    Intent i = new Intent(MediaStore.ACTION_VIDEO_CAPTURE)
-                            .putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(pending_fileName)));
-                    startActivityForResult(i, REQUEST_VIDEO);
-                    return true;
-                } else if (item.getItemId() == R.id.file) {
-                    startActivityForResult(Intents.pickFile(ChatActivity.this), REQUEST_DOC);
-                }
-                return false;
+        if (shareMenu.getVisibility() == View.VISIBLE) {
+            hideShareMenu();
+        } else {
+            shareContainer.setVisibility(View.VISIBLE);
+            expand(shareMenu, shareMenuMaxHeight);
+            if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                keyboardUtils.setImeVisibility(messageEditText, false);
             }
-        });
-        popup.show();
+        }
     }
 
     @Override
@@ -498,8 +829,75 @@ public class ChatActivity extends ActorEditTextActivity {
                         }
                     }
                 }
+            } else if (requestCode == REQUEST_CONTACT) {
+                HashSet<String> phones = new HashSet<String>();
+                HashSet<String> emails = new HashSet<String>();
+                String name = "";
+                byte[] photo = null;
+
+                Uri contactData = data.getData();
+                Cursor c = managedQuery(contactData, null, null, null, null);
+                if (c.moveToFirst()) {
+
+
+                    String id = c.getString(c.getColumnIndexOrThrow(ContactsContract.Contacts._ID));
+
+                    String hasPhone = c.getString(c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER));
+
+                    if (hasPhone.equalsIgnoreCase("1")) {
+                        Cursor phonesCursor = getContentResolver().query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + id,
+                                null, null);
+                        if (phonesCursor.moveToFirst()) {
+                            int phoneColumnIndex = phonesCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DATA);
+                            do {
+                                phones.add(phonesCursor.getString(phoneColumnIndex));
+                            } while (phonesCursor.moveToNext());
+                            phonesCursor.close();
+                        }
+
+                    }
+                    name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+
+
+                    Cursor emailCursor = getContentResolver().query(
+                            ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = " + id,
+                            null, null);
+                    if (emailCursor != null && emailCursor.moveToFirst()) {
+                        int emailColumnIndex = emailCursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
+                        do {
+                            emails.add(emailCursor.getString(emailColumnIndex));
+                        } while (emailCursor.moveToNext());
+                        emailCursor.close();
+                    }
+
+                    Uri photoUri = Uri.withAppendedPath(contactData, ContactsContract.Contacts.Photo.CONTENT_DIRECTORY);
+                    Cursor photoCursor = getContentResolver().query(photoUri,
+                            new String[]{ContactsContract.Contacts.Photo.PHOTO}, null, null, null);
+                    if (photoCursor == null) {
+
+                    } else {
+                        try {
+                            if (photoCursor.moveToFirst()) {
+                                photo = photoCursor.getBlob(0);
+
+                            }
+                        } finally {
+                            photoCursor.close();
+                        }
+                    }
+
+                }
+
+                messenger().sendContact(peer, name, phones, emails, photo != null ? (Base64.encodeToString(photo, Base64.NO_WRAP)) : null);
+
+            } else if (requestCode == REQUEST_LOCATION) {
+                messenger().sendLocation(peer, data.getDoubleExtra("longitude", 0), data.getDoubleExtra("latitude", 0), data.getStringExtra("street"), data.getStringExtra("place"));
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     // Mentions
@@ -545,7 +943,7 @@ public class ChatActivity extends ActorEditTextActivity {
                 }
             }
         });
-
+        hideShareMenu();
         expandMentions(mentionsList, 0, mentionsList.getCount());
     }
 
@@ -590,6 +988,7 @@ public class ChatActivity extends ActorEditTextActivity {
             quoteText.setText(rawQuote);
         }
         currentQuote = rawQuote;
+        hideShareMenu();
         showView(quoteContainer);
     }
 
@@ -771,12 +1170,94 @@ public class ChatActivity extends ActorEditTextActivity {
             if (s.length() > 0) {
                 sendButton.setTint(ActorSDK.sharedActor().style.getConvSendEnabledColor());
                 sendButton.setEnabled(true);
+                zoomInView(sendButton);
+                zoomOutView(audioButton);
             } else {
                 sendButton.setTint(ActorSDK.sharedActor().style.getConvSendDisabledColor());
                 sendButton.setEnabled(false);
+                zoomInView(audioButton);
+                zoomOutView(sendButton);
             }
 
 
+        }
+    }
+
+    private void showAudio() {
+        if (isAudioVisible) {
+            return;
+        }
+        isAudioVisible = true;
+
+        hideView(attachButton);
+        hideView(messageEditText);
+        hideView(emojiButton);
+        hideView(sendContainer);
+
+        audioFile = ActorSDK.sharedActor().getMessenger().getInternalTempFile("voice_msg", "opus");
+
+        long id = VoiceCaptureActor.LAST_ID.incrementAndGet();
+        voiceRecordActor.send(new VoiceCaptureActor.Start(audioFile));
+
+        slideAudio(0);
+        audioTimer.setText("00:00");
+
+        TranslateAnimation animation = new TranslateAnimation(Screen.getWidth(), 0, 0, 0);
+        animation.setDuration(160);
+        audioContainer.clearAnimation();
+        audioContainer.setAnimation(animation);
+        audioContainer.animate();
+        audioContainer.setVisibility(View.VISIBLE);
+
+
+        AlphaAnimation alphaAnimation = new AlphaAnimation(1f, 0.2f);
+        alphaAnimation.setDuration(800);
+        alphaAnimation.setRepeatMode(AlphaAnimation.REVERSE);
+        alphaAnimation.setRepeatCount(AlphaAnimation.INFINITE);
+        recordPoint.clearAnimation();
+        recordPoint.setAnimation(alphaAnimation);
+        recordPoint.animate();
+    }
+
+    private void hideAudio(boolean cancel) {
+        if (!isAudioVisible) {
+            return;
+        }
+        isAudioVisible = false;
+
+        showView(attachButton);
+        showView(messageEditText);
+        showView(emojiButton);
+        showView(sendContainer);
+
+        voiceRecordActor.send(new VoiceCaptureActor.Stop(cancel));
+        TranslateAnimation animation = new TranslateAnimation(0, Screen.getWidth(), 0, 0);
+        animation.setDuration(160);
+        audioContainer.clearAnimation();
+        audioContainer.setAnimation(animation);
+        audioContainer.animate();
+        audioContainer.setVisibility(View.GONE);
+
+
+    }
+
+    private void slideAudio(int value) {
+        ObjectAnimator oa = ObjectAnimator.ofFloat(audioSlide, "translationX", audioSlide.getX(), -value);
+        oa.setDuration(0);
+        oa.start();
+    }
+
+    public Peer getPeer() {
+        return peer;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == PERMISSIONS_REQUEST_CAMERA) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startCamera();
+            }
         }
     }
 }

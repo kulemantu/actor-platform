@@ -1,0 +1,225 @@
+/*
+ * Copyright (C) 2015 Actor LLC. <https://actor.im>
+ */
+
+$emoji-dropdown-width: 328px;
+$stem-size: 14px;
+
+.emoji-outer {
+  line-height: $message-line-height;
+
+  display: inline-block;
+
+  width: $message-line-height;
+  height: $message-line-height;
+
+  vertical-align: middle;
+}
+
+.emoji-inner {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  vertical-align: inherit;
+  text-indent: -9999px;
+}
+
+.emoji-sizer {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1px;
+
+  background-size: 100%;
+}
+
+.emoji-dropdown {
+  position: relative;
+  z-index: 15;
+
+  color: rgba($greyish-brown, .6);
+
+  &__wrapper {
+    display: none;
+    @mixin stem() {
+      position: absolute;
+      content: '';
+      bottom: - $stem-size / 2;
+      width: $stem-size;
+      height: $stem-size;
+      background-color: white;
+      right: $stem-size;
+      transform: rotate(45deg);
+    }
+    position: absolute;
+    bottom: 6px;
+    right: -3px;
+    box-shadow: 0 1px 3px 1px rgba(0, 0, 0, .1);
+    background-color: white;
+    border-radius: 3px;
+
+    &:before {
+      @include stem();
+    }
+    &:after {
+      @include stem();
+      z-index: -1;
+      box-shadow: 0 1px 3px 1px rgba(0, 0, 0, .1);
+    }
+  }
+  &__header {
+    font-size: 12px;
+    line-height: 20px;
+
+    padding: 0;
+    border-radius: 3px 3px 0 0;
+
+    background-color: white;
+    box-shadow: inset 0 -1px 0 0 #ebebeb;
+
+    @include clearfix();
+    &__title {
+      display: inline-block;
+
+      margin: 5px 0 5px 6px;
+    }
+    &__tabs {
+      line-height: 1px;
+
+      margin: 0;
+      padding: 0;
+
+      list-style: none;
+      &__tab {
+        line-height: 24px;
+
+        display: inline-block;
+
+        margin: 0;
+        padding: 4px;
+
+        cursor: pointer;
+        text-align: center;
+        & > span {
+          pointer-events: none;
+        }
+        .emoji-outer {
+          line-height: 1px;
+
+          width: 22px;
+          height: 22px;
+
+          opacity: .4;
+
+          filter: grayscale(1);
+        }
+        &:hover {
+          box-shadow: inset 0 -3px 0 0 #ebebeb;
+        }
+
+        &--active {
+          box-shadow: inset 0 -3px 0 0 $dark-sky-blue !important;
+          .emoji-outer {
+            opacity: .9 !important;
+
+            filter: none !important;
+          }
+        }
+      }
+    }
+  }
+  &__body {
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    box-sizing: border-box;
+    width: $emoji-dropdown-width;
+    height: 200px;
+    z-index: 16;
+    position: relative;
+
+    @include clearfix();
+    div {
+      padding: 4px;
+
+      border-bottom: 1px solid #ebebeb;
+
+      @include clearfix();
+      &:last-child {
+        border-bottom: 0;
+      }
+      p {
+        font-size: 12px;
+
+        display: block;
+
+        margin: 0;
+        padding: 6px 2px 10px;
+      }
+      a {
+        line-height: 1px;
+
+        display: block;
+        float: left;
+
+        padding: 2px;
+
+        cursor: pointer;
+
+        border-radius: 2px;
+        .emoji-outer {
+          pointer-events: none;
+          transform-origin: 50% 50%;
+        }
+        &:hover {
+          .emoji-outer {
+            transform: scale(1.4);
+          }
+        }
+      }
+    }
+
+    .emoji-outer {
+      width: 28px;
+      height: 28px;
+    }
+  }
+  &--opened {
+    .emoji-dropdown__wrapper {
+      display: block;
+    }
+  }
+
+  .emoji-opener {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+
+    cursor: pointer;
+    transition: 150ms;
+    transform: scale(.9);
+
+    opacity: .8;
+    color: $greyish;
+    &--active,
+    &:hover {
+      transform: scale(1);
+      color: $dark-sky-blue;
+      opacity: 1;
+    }
+
+    &--with-dot {
+      &:after {
+        content: '';
+        background-color: $coral;
+        top: 0;
+        right: 1px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        position: absolute;
+      }
+    }
+  }
+}

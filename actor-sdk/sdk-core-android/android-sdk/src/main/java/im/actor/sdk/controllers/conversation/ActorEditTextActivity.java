@@ -1,20 +1,26 @@
 package im.actor.sdk.controllers.conversation;
 
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import im.actor.sdk.ActorSDK;
 import im.actor.sdk.R;
 import im.actor.sdk.controllers.activity.BaseActivity;
 import im.actor.sdk.util.KeyboardHelper;
 import im.actor.sdk.view.TintImageView;
+import im.actor.sdk.view.emoji.keyboard.BaseKeyboard;
 import im.actor.sdk.view.emoji.keyboard.KeyboardStatusListener;
 import im.actor.sdk.view.emoji.keyboard.emoji.EmojiKeyboard;
 
@@ -40,6 +46,8 @@ public abstract class ActorEditTextActivity extends BaseActivity {
 
     // Emoji keyboard
     protected EmojiKeyboard emojiKeyboard;
+    protected ImageView emojiButton;
+    protected FrameLayout sendContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,11 +60,7 @@ public abstract class ActorEditTextActivity extends BaseActivity {
         setContentView(R.layout.activity_dialog);
 
         // Setting fragment
-        if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.messagesFragment, onCreateFragment())
-                    .commit();
-        }
+        setFragment(savedInstanceState);
 
         // Message Body
         messageEditText = (EditText) findViewById(R.id.et_message);
@@ -141,7 +145,7 @@ public abstract class ActorEditTextActivity extends BaseActivity {
         ((TextView) removedFromGroup.findViewById(R.id.kicked_text)).setTextColor(ActorSDK.sharedActor().style.getMainColor());
 
         // Emoji keyboard
-        final ImageView emojiButton = (ImageView) findViewById(R.id.ib_emoji);
+        emojiButton = (ImageView) findViewById(R.id.ib_emoji);
         emojiKeyboard = new EmojiKeyboard(this);
         emojiKeyboard.setKeyboardStatusListener(new KeyboardStatusListener() {
 
@@ -163,8 +167,18 @@ public abstract class ActorEditTextActivity extends BaseActivity {
             }
         });
 
+        sendContainer = (FrameLayout) findViewById(R.id.sendContainer);
+
         // Keyboard helper for show/hide keyboard
         keyboardUtils = new KeyboardHelper(this);
+    }
+
+    protected void setFragment(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.messagesFragment, onCreateFragment())
+                    .commit();
+        }
     }
 
     protected abstract Fragment onCreateFragment();
@@ -183,5 +197,19 @@ public abstract class ActorEditTextActivity extends BaseActivity {
         super.onPause();
         // Destroy emoji keyboard
         emojiKeyboard.destroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == BaseKeyboard.OVERLAY_PERMISSION_REQ_CODE) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!Settings.canDrawOverlays(this)) {
+                    Toast.makeText(this, "Ooops, emoji Keyboard needs overlay permission", Toast.LENGTH_LONG).show();
+                } else {
+                    emojiKeyboard.showChecked();
+                }
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

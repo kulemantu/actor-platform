@@ -31,30 +31,39 @@ import im.actor.sdk.util.images.ops.ImageLoading;
 import im.actor.sdk.view.TintImageView;
 import im.actor.runtime.files.FileSystemReference;
 
+import static im.actor.sdk.util.ActorSDKMessenger.myUid;
 import static im.actor.sdk.util.ViewUtils.goneView;
 import static im.actor.sdk.util.ViewUtils.showView;
 import static im.actor.sdk.util.ActorSDKMessenger.messenger;
 
 public class DocHolder extends MessageHolder {
 
+    private int waitColor;
+    private int sentColor;
+    private int deliveredColor;
+    private int readColor;
+    private int errorColor;
+    private final TintImageView stateIcon;
+    protected final TextView time;
+
     // Basic bubble
-    private View menu;
+    protected View menu;
 
     // Content views
-    private TextView fileName;
-    private TextView fileSize;
-    private TextView status;
-    private ImageView fileIcon;
+    protected TextView fileName;
+    protected TextView fileSize;
+    protected TextView status;
+    protected ImageView fileIcon;
 
     // Progress views
-    private TintImageView downloadIcon;
-    private CircularView progressView;
-    private TextView progressValue;
+    protected TintImageView downloadIcon;
+    protected CircularView progressView;
+    protected TextView progressValue;
 
     // Binded model
-    private FileVM downloadFileVM;
-    private UploadFileVM uploadFileVM;
-    private DocumentContent document;
+    protected FileVM downloadFileVM;
+    protected UploadFileVM uploadFileVM;
+    protected DocumentContent document;
 
     public DocHolder(final MessagesAdapter fragment, View itemView) {
         this(fragment, itemView, false);
@@ -62,6 +71,15 @@ public class DocHolder extends MessageHolder {
 
     public DocHolder(final MessagesAdapter fragment, View itemView, boolean isFullSize) {
         super(fragment, itemView, isFullSize);
+        waitColor = ActorSDK.sharedActor().style.getConvStatePendingColor();
+        sentColor = ActorSDK.sharedActor().style.getConvStateSentColor();
+        deliveredColor = ActorSDK.sharedActor().style.getConvStateDeliveredColor();
+        readColor = ActorSDK.sharedActor().style.getConvStateReadColor();
+        errorColor = ActorSDK.sharedActor().style.getConvStateErrorColor();
+
+        stateIcon = (TintImageView) itemView.findViewById(R.id.stateIcon);
+        time = (TextView) itemView.findViewById(R.id.time);
+        time.setTextColor(ActorSDK.sharedActor().style.getConvTimeColor());
 
         // Basic bubble
         View bubbleView = itemView.findViewById(R.id.bubbleContainer);
@@ -122,12 +140,46 @@ public class DocHolder extends MessageHolder {
         progressView = (CircularView) itemView.findViewById(R.id.progressView);
         progressView.setColor(ActorSDK.sharedActor().style.getMainColor());
         progressValue = (TextView) itemView.findViewById(R.id.progressValue);
-        progressValue.setTextColor(ActorSDK.sharedActor().style.getTextPrimaryColor());
+        progressValue.setTextColor(ActorSDK.sharedActor().style.getTextSecondaryColor());
+        onConfigureViewHolder();
     }
 
     @Override
     protected void bindData(Message message, boolean isUpdated, PreprocessedData preprocessedData) {
         document = (DocumentContent) message.getContent();
+
+        // Update state
+        if (message.getSenderId() == myUid()) {
+            stateIcon.setVisibility(View.VISIBLE);
+            switch (message.getMessageState()) {
+                case ERROR:
+                    stateIcon.setResource(R.drawable.msg_error);
+                    stateIcon.setTint(errorColor);
+                    break;
+                default:
+                case PENDING:
+                    stateIcon.setResource(R.drawable.msg_clock);
+                    stateIcon.setTint(waitColor);
+                    break;
+                case READ:
+                    stateIcon.setResource(R.drawable.msg_check_2);
+                    stateIcon.setTint(readColor);
+                    break;
+                case RECEIVED:
+                    stateIcon.setResource(R.drawable.msg_check_2);
+                    stateIcon.setTint(deliveredColor);
+                    break;
+                case SENT:
+                    stateIcon.setResource(R.drawable.msg_check_1);
+                    stateIcon.setTint(sentColor);
+                    break;
+            }
+        } else {
+            stateIcon.setVisibility(View.GONE);
+        }
+
+        // Update time
+        setTimeAndReactions(time);
 
         // Content data
         fileName.setText(document.getName());

@@ -8,7 +8,7 @@ import im.actor.api.rpc.files.ApiFileLocation
 import im.actor.api.rpc.misc.{ ResponseBool, ResponseSeq }
 import im.actor.api.rpc.profile.{ ProfileService, ResponseEditAvatar }
 import im.actor.server.db.DbExtension
-import im.actor.server.file.{ FileErrors, FileStorageAdapter, ImageUtils, S3StorageExtension }
+import im.actor.server.file.{ FileStorageExtension, FileErrors, FileStorageAdapter, ImageUtils }
 import im.actor.server.persist
 import im.actor.server.sequence.{ SequenceErrors, SeqState }
 import im.actor.server.social.{ SocialExtension, SocialManagerRegion }
@@ -28,7 +28,7 @@ object ProfileErrors {
     "About is too long. It should be no longer then 255 characters", false, None)
 }
 
-class ProfileServiceImpl()(
+final class ProfileServiceImpl()(
   implicit
   actorSystem: ActorSystem
 ) extends ProfileService {
@@ -43,7 +43,7 @@ class ProfileServiceImpl()(
   private val db: Database = DbExtension(actorSystem).db
   private val userExt = UserExtension(actorSystem)
   private implicit val socialRegion: SocialManagerRegion = SocialExtension(actorSystem).region
-  private implicit val fsAdapter: FileStorageAdapter = S3StorageExtension(actorSystem).s3StorageAdapter
+  private implicit val fsAdapter: FileStorageAdapter = FileStorageExtension(actorSystem).fsAdapter
 
   override def jhandleEditAvatar(fileLocation: ApiFileLocation, clientData: ClientData): Future[HandlerResult[ResponseEditAvatar]] = {
     // TODO: flatten
@@ -53,7 +53,7 @@ class ProfileServiceImpl()(
         scaleAvatar(fileLocation.fileId, ThreadLocalRandom.current()) flatMap {
           case Right(avatar) ⇒
             for {
-              UserCommands.UpdateAvatarAck(avatar, SeqState(seq, state)) ← DBIO.from(userExt.updateAvatar(client.userId, client.authId, Some(avatar)))
+              UserCommands.UpdateAvatarAck(avatar, SeqState(seq, state)) ← DBIO.from(userExt.updateAvatar(client.userId, Some(avatar)))
             } yield Ok(ResponseEditAvatar(
               avatar.get,
               seq,
@@ -73,7 +73,7 @@ class ProfileServiceImpl()(
   override def jhandleRemoveAvatar(clientData: ClientData): Future[HandlerResult[ResponseSeq]] = {
     val authorizedAction = requireAuth(clientData).map { implicit client ⇒
       for {
-        UserCommands.UpdateAvatarAck(_, SeqState(seq, state)) ← DBIO.from(userExt.updateAvatar(client.userId, client.authId, None))
+        UserCommands.UpdateAvatarAck(_, SeqState(seq, state)) ← DBIO.from(userExt.updateAvatar(client.userId, None))
       } yield Ok(ResponseSeq(seq, state.toByteArray))
     }
 
@@ -91,25 +91,19 @@ class ProfileServiceImpl()(
 
   def jhandleEditNickName(nickname: Option[String], clientData: ClientData): Future[HandlerResult[ResponseSeq]] = {
     authorized(clientData) { implicit client ⇒
-      val action = for {
-        trimmed ← point(nickname.map(_.trim))
-        _ ← fromBoolean(ProfileErrors.NicknameInvalid)(trimmed.map(StringUtils.validNickName).getOrElse(true))
-        _ ← if (trimmed.isDefined) {
-          for {
-            checkExist ← fromOption(ProfileErrors.NicknameInvalid)(trimmed)
-            _ ← fromFutureBoolean(ProfileErrors.NicknameBusy)(db.run(persist.UserRepo.nicknameExists(checkExist).map(exist ⇒ !exist)))
-          } yield ()
-        } else point(())
-        SeqState(seq, state) ← fromFuture(userExt.changeNickname(client.userId, client.authId, trimmed))
-      } yield ResponseSeq(seq, state.toByteArray)
-      action.run
+      for {
+        SeqState(seq, state) ← userExt.changeNickname(client.userId, nickname)
+      } yield Ok(ResponseSeq(seq, state.toByteArray))
+    } recover {
+      case UserErrors.NicknameTaken   ⇒ Error(ProfileErrors.NicknameBusy)
+      case UserErrors.InvalidNickname ⇒ Error(ProfileErrors.NicknameInvalid)
     }
   }
 
   def jhandleCheckNickName(nickname: String, clientData: ClientData): Future[HandlerResult[ResponseBool]] = {
     authorized(clientData) { implicit client ⇒
       (for {
-        _ ← fromBoolean(ProfileErrors.NicknameInvalid)(StringUtils.validNickName(nickname))
+        _ ← fromBoolean(ProfileErrors.NicknameInvalid)(StringUtils.validUsername(nickname))
         exists ← fromFuture(db.run(persist.UserRepo.nicknameExists(nickname.trim)))
       } yield ResponseBool(!exists)).run
     }
@@ -121,7 +115,7 @@ class ProfileServiceImpl()(
       (for {
         trimmed ← point(about.map(_.trim))
         _ ← fromBoolean(ProfileErrors.AboutTooLong)(trimmed.map(s ⇒ s.nonEmpty & s.length < 255).getOrElse(true))
-        SeqState(seq, state) ← fromFuture(userExt.changeAbout(client.userId, client.authId, trimmed))
+        SeqState(seq, state) ← fromFuture(userExt.changeAbout(client.userId, trimmed))
       } yield ResponseSeq(seq, state.toByteArray)).run
     }
   }
@@ -129,7 +123,7 @@ class ProfileServiceImpl()(
   override def jhandleEditMyTimeZone(tz: String, clientData: ClientData): Future[HandlerResult[ResponseSeq]] = {
     authorized(clientData) { implicit client ⇒
       (for {
-        SeqState(seq, state) ← fromFuture(produceError)(userExt.changeTimeZone(client.userId, client.authId, tz))
+        SeqState(seq, state) ← fromFuture(produceError)(userExt.changeTimeZone(client.userId, tz))
       } yield ResponseSeq(seq, state.toByteArray)).run
     }
   }
@@ -137,7 +131,7 @@ class ProfileServiceImpl()(
   override def jhandleEditMyPreferredLanguages(preferredLanguages: IndexedSeq[String], clientData: ClientData): Future[HandlerResult[ResponseSeq]] = {
     authorized(clientData) { implicit client ⇒
       (for {
-        SeqState(seq, state) ← fromFuture(produceError)(userExt.changePreferredLanguages(client.userId, client.authId, preferredLanguages))
+        SeqState(seq, state) ← fromFuture(produceError)(userExt.changePreferredLanguages(client.userId, preferredLanguages))
       } yield ResponseSeq(seq, state.toByteArray)).run
     }
   }

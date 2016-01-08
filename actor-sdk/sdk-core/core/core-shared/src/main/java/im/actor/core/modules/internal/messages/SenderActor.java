@@ -9,9 +9,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
+import im.actor.core.api.ApiDocumentExVoice;
 import im.actor.core.api.ApiFastThumb;
+import im.actor.core.api.ApiJsonMessage;
 import im.actor.core.api.ApiMessage;
 import im.actor.core.api.ApiPeer;
 import im.actor.core.api.ApiDocumentEx;
@@ -19,6 +22,7 @@ import im.actor.core.api.ApiDocumentExPhoto;
 import im.actor.core.api.ApiDocumentExVideo;
 import im.actor.core.api.ApiDocumentMessage;
 import im.actor.core.api.ApiOutPeer;
+import im.actor.core.api.ApiStickerMessage;
 import im.actor.core.api.ApiTextMessage;
 import im.actor.core.api.base.SeqUpdate;
 import im.actor.core.api.rpc.RequestSendMessage;
@@ -31,15 +35,22 @@ import im.actor.core.entity.Message;
 import im.actor.core.entity.MessageState;
 import im.actor.core.entity.Peer;
 import im.actor.core.entity.PeerType;
+import im.actor.core.entity.Reaction;
 import im.actor.core.entity.User;
 import im.actor.core.entity.content.AbsContent;
+import im.actor.core.entity.content.ContactContent;
 import im.actor.core.entity.content.DocumentContent;
 import im.actor.core.entity.content.FastThumb;
 import im.actor.core.entity.content.FileLocalSource;
 import im.actor.core.entity.content.FileRemoteSource;
+import im.actor.core.entity.content.JsonContent;
+import im.actor.core.entity.content.LocationContent;
 import im.actor.core.entity.content.PhotoContent;
+import im.actor.core.entity.content.StickerContent;
 import im.actor.core.entity.content.TextContent;
 import im.actor.core.entity.content.VideoContent;
+import im.actor.core.entity.content.VoiceContent;
+import im.actor.core.entity.content.internal.Sticker;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.modules.internal.file.UploadManager;
 import im.actor.core.modules.internal.messages.entity.PendingMessage;
@@ -117,7 +128,7 @@ public class SenderActor extends ModuleActor {
     // Sending text
 
     public void doSendText(@NotNull Peer peer, @NotNull String text,
-                           @Nullable ArrayList<Integer> mentions, @Nullable String markDownText,
+                           @Nullable ArrayList<Integer> mentions, /*Ignored*/ @Nullable String markDownText,
                            boolean autoDetect) {
 
         text = text.trim();
@@ -148,9 +159,10 @@ public class SenderActor extends ModuleActor {
             }
         }
 
-        TextContent content = TextContent.create(text, markDownText, mentions);
+        TextContent content = TextContent.create(text, null, mentions);
 
-        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content);
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content,
+                new ArrayList<Reaction>());
         context().getMessagesModule().getConversationActor(peer).send(message);
 
         pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, content));
@@ -158,6 +170,40 @@ public class SenderActor extends ModuleActor {
 
         performSendContent(peer, rid, content);
     }
+
+    public void doSendJson(Peer peer, JsonContent content) {
+        long rid = RandomUtils.nextRid();
+        long date = createPendingDate();
+        long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
+
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content, new ArrayList<Reaction>());
+        context().getMessagesModule().getConversationActor(peer).send(message);
+
+        pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, content));
+        savePending();
+
+        performSendContent(peer, rid, content);
+    }
+
+    // Sending sticker
+    public void doSendSticker(@NotNull Peer peer,
+                              @NotNull Sticker sticker) {
+
+        long rid = RandomUtils.nextRid();
+        long date = createPendingDate();
+        long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
+
+        StickerContent content = StickerContent.create(sticker);
+
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content, new ArrayList<Reaction>());
+        context().getMessagesModule().getConversationActor(peer).send(message);
+
+        pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, content));
+        savePending();
+
+        performSendContent(peer, rid, content);
+    }
+
 
     // Sending documents
 
@@ -169,7 +215,8 @@ public class SenderActor extends ModuleActor {
         DocumentContent documentContent = DocumentContent.createLocal(fileName, fileSize,
                 descriptor, mimeType, fastThumb);
 
-        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, documentContent);
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, documentContent,
+                new ArrayList<Reaction>());
         context().getMessagesModule().getConversationActor(peer).send(message);
 
         pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, documentContent));
@@ -185,13 +232,73 @@ public class SenderActor extends ModuleActor {
         long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
         PhotoContent photoContent = PhotoContent.createLocalPhoto(descriptor, fileName, fileSize, w, h, fastThumb);
 
-        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, photoContent);
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, photoContent,
+                new ArrayList<Reaction>());
         context().getMessagesModule().getConversationActor(peer).send(message);
 
         pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, photoContent));
         savePending();
 
         performUploadFile(rid, descriptor, fileName);
+    }
+
+    public void doSendContact(@NotNull Peer peer,
+                              @NotNull HashSet<String> emails, @NotNull HashSet<String> phones,
+                              @Nullable String name,
+                              @Nullable String base64photo) {
+
+
+        long rid = RandomUtils.nextRid();
+        long date = createPendingDate();
+        long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
+
+
+        ContactContent content = ContactContent.create(name, phones, emails, base64photo);
+
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content, new ArrayList<Reaction>());
+        context().getMessagesModule().getConversationActor(peer).send(message);
+
+        pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, content));
+        savePending();
+
+        performSendContent(peer, rid, content);
+    }
+
+    public void doSendAudio(Peer peer, String descriptor, String fileName,
+                            int fileSize, int duration) {
+        long rid = RandomUtils.nextRid();
+        long date = createPendingDate();
+        long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
+        VoiceContent audioContent = VoiceContent.createLocalAudio(descriptor, fileName, fileSize, duration);
+
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, audioContent, new ArrayList<Reaction>());
+        context().getMessagesModule().getConversationActor(peer).send(message);
+
+        pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, audioContent));
+        savePending();
+
+        performUploadFile(rid, descriptor, fileName);
+    }
+
+    public void doSendLocation(@NotNull Peer peer,
+                               @NotNull Double longitude, @NotNull Double latitude,
+                               @Nullable String street, @Nullable String place) {
+
+
+        long rid = RandomUtils.nextRid();
+        long date = createPendingDate();
+        long sortDate = date + 365 * 24 * 60 * 60 * 1000L;
+
+
+        LocationContent content = LocationContent.create(longitude, latitude, street, place);
+
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, content, new ArrayList<Reaction>());
+        context().getMessagesModule().getConversationActor(peer).send(message);
+
+        pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, content));
+        savePending();
+
+        performSendContent(peer, rid, content);
     }
 
     public void doSendVideo(Peer peer, String fileName, int w, int h, int duration,
@@ -202,7 +309,8 @@ public class SenderActor extends ModuleActor {
         VideoContent videoContent = VideoContent.createLocalVideo(descriptor,
                 fileName, fileSize, w, h, duration, fastThumb);
 
-        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, videoContent);
+        Message message = new Message(rid, sortDate, date, myUid(), MessageState.PENDING, videoContent,
+                new ArrayList<Reaction>());
         context().getMessagesModule().getConversationActor(peer).send(message);
 
         pendingMessages.getPendingMessages().add(new PendingMessage(peer, rid, videoContent));
@@ -233,6 +341,9 @@ public class SenderActor extends ModuleActor {
             nContent = VideoContent.createRemoteVideo(fileReference, baseVideoContent.getW(),
                     baseVideoContent.getH(), baseVideoContent.getDuration(),
                     baseVideoContent.getFastThumb());
+        } else if (msg.getContent() instanceof VoiceContent) {
+            VoiceContent baseVoiceContent = (VoiceContent) msg.getContent();
+            nContent = VoiceContent.createRemoteAudio(fileReference, baseVoiceContent.getDuration());
         } else if (msg.getContent() instanceof DocumentContent) {
             DocumentContent baseDocContent = (DocumentContent) msg.getContent();
             nContent = DocumentContent.createRemoteDocument(fileReference, baseDocContent.getFastThumb());
@@ -280,7 +391,11 @@ public class SenderActor extends ModuleActor {
             } else if (content instanceof VideoContent) {
                 VideoContent videoContent = (VideoContent) content;
                 documentEx = new ApiDocumentExVideo(videoContent.getW(), videoContent.getH(), videoContent.getDuration());
+            } else if (content instanceof VoiceContent) {
+                VoiceContent voiceContent = (VoiceContent) content;
+                documentEx = new ApiDocumentExVoice(voiceContent.getDuration());
             }
+
 
             ApiFastThumb fastThumb = null;
             if (documentContent.getFastThumb() != null) {
@@ -296,6 +411,15 @@ public class SenderActor extends ModuleActor {
                     source.getFileReference().getFileName(),
                     documentContent.getMimeType(),
                     fastThumb, documentEx);
+        } else if (content instanceof LocationContent) {
+            message = new ApiJsonMessage(((LocationContent) content).getRawJson());
+        } else if (content instanceof ContactContent) {
+            message = new ApiJsonMessage(((ContactContent) content).getRawJson());
+        } else if (content instanceof JsonContent) {
+            message = new ApiJsonMessage(((JsonContent) content).getRawJson());
+        } else if (content instanceof StickerContent) {
+            Sticker sticker = ((StickerContent) content).getSticker();
+            message = new ApiStickerMessage(sticker.getStickerId(), sticker.getThumb(), sticker.getApiImageLocation512(), sticker.getApiImageLocation256(), sticker.getStickerCollectionId(), sticker.getCollectionAccessHash());
         } else {
             return;
         }
@@ -386,6 +510,22 @@ public class SenderActor extends ModuleActor {
             doSendVideo(sendVideo.getPeer(), sendVideo.getFileName(),
                     sendVideo.getW(), sendVideo.getH(), sendVideo.getDuration(),
                     sendVideo.getFastThumb(), sendVideo.getDescriptor(), sendVideo.getFileSize());
+        } else if (message instanceof SendAudio) {
+            SendAudio sendAudio = (SendAudio) message;
+            doSendAudio(sendAudio.getPeer(), sendAudio.getDescriptor(), sendAudio.getFileName(),
+                    sendAudio.getFileSize(), sendAudio.getDuration());
+        } else if (message instanceof SendContact) {
+            SendContact sendContact = (SendContact) message;
+            doSendContact(sendContact.getPeer(), sendContact.getEmails(), sendContact.getPhones(), sendContact.getName(), sendContact.getBase64photo());
+        } else if (message instanceof SendLocation) {
+            SendLocation sendLocation = (SendLocation) message;
+            doSendLocation(sendLocation.getPeer(), sendLocation.getLongitude(), sendLocation.getLatitude(), sendLocation.getStreet(), sendLocation.getPlace());
+        } else if (message instanceof SendSticker) {
+            SendSticker sendSticker = (SendSticker) message;
+            doSendSticker(sendSticker.getPeer(), sendSticker.getSticker());
+        } else if (message instanceof SendJson) {
+            SendJson sendJson = (SendJson) message;
+            doSendJson(sendJson.getPeer(), sendJson.getJson());
         } else {
             drop(message);
         }
@@ -538,6 +678,44 @@ public class SenderActor extends ModuleActor {
         }
     }
 
+    public static class SendAudio {
+        private Peer peer;
+        private String descriptor;
+        private String fileName;
+        private int fileSize;
+        private int duration;
+
+        public SendAudio(Peer peer, String descriptor, String fileName,
+                         int fileSize, int duration) {
+            this.peer = peer;
+            this.descriptor = descriptor;
+            this.fileName = fileName;
+            this.fileSize = fileSize;
+            this.duration = duration;
+        }
+
+        public Peer getPeer() {
+            return peer;
+        }
+
+        public int getDuration() {
+            return duration;
+        }
+
+        public String getDescriptor() {
+            return descriptor;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public int getFileSize() {
+            return fileSize;
+        }
+
+    }
+
     public static class SendText {
         private Peer peer;
         private String text;
@@ -572,6 +750,42 @@ public class SenderActor extends ModuleActor {
 
         public boolean isAutoDetect() {
             return autoDetect;
+        }
+    }
+
+    public static class SendContact {
+        private Peer peer;
+        private HashSet<String> phones;
+        private HashSet<String> emails;
+        private String name;
+        private String base64photo;
+
+        public SendContact(Peer peer, HashSet<String> phones, HashSet<String> emails, String name, String base64photo) {
+            this.peer = peer;
+            this.phones = phones;
+            this.emails = emails;
+            this.name = name;
+            this.base64photo = base64photo;
+        }
+
+        public Peer getPeer() {
+            return peer;
+        }
+
+        public HashSet<String> getPhones() {
+            return phones;
+        }
+
+        public HashSet<String> getEmails() {
+            return emails;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getBase64photo() {
+            return base64photo;
         }
     }
 
@@ -610,6 +824,83 @@ public class SenderActor extends ModuleActor {
             return rid;
         }
     }
+
+    public static class SendLocation {
+        private Peer peer;
+        private Double longitude;
+        private Double latitude;
+        private String street;
+        private String place;
+
+        public SendLocation(@NotNull Peer peer,
+                            @NotNull Double longitude, @NotNull Double latitude,
+                            @Nullable String street, @Nullable String place) {
+            this.peer = peer;
+            this.longitude = longitude;
+            this.latitude = latitude;
+            this.place = place;
+            this.street = street;
+        }
+
+        public Peer getPeer() {
+            return peer;
+        }
+
+        public Double getLongitude() {
+            return longitude;
+        }
+
+        public Double getLatitude() {
+            return latitude;
+        }
+
+        public String getStreet() {
+            return street;
+        }
+
+        public String getPlace() {
+            return place;
+        }
+    }
+
+    public static class SendSticker {
+        private Peer peer;
+        private Sticker sticker;
+
+        public SendSticker(@NotNull Peer peer, @NotNull Sticker sticker) {
+            this.peer = peer;
+            this.sticker = sticker;
+        }
+
+        public Peer getPeer() {
+            return peer;
+        }
+
+        public Sticker getSticker() {
+            return sticker;
+        }
+    }
+
+    public static class SendJson {
+        private Peer peer;
+        private JsonContent json;
+
+        public SendJson(Peer peer, JsonContent json) {
+            this.json = json;
+            this.peer = peer;
+
+        }
+
+
+        public JsonContent getJson() {
+            return json;
+        }
+
+        public Peer getPeer() {
+            return peer;
+        }
+    }
+
 
     //endregion
 }

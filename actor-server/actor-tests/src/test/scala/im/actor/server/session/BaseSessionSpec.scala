@@ -4,7 +4,7 @@ import akka.actor._
 import akka.testkit.TestProbe
 import com.google.protobuf.ByteString
 import im.actor.api.rpc.codecs._
-import im.actor.api.rpc.sequence.{ SeqUpdate, WeakUpdate }
+import im.actor.api.rpc.sequence.{ FatSeqUpdate, SeqUpdate, WeakUpdate }
 import im.actor.api.rpc.{ Request, RpcRequest, RpcResult }
 import im.actor.server
 import im.actor.server._
@@ -24,6 +24,7 @@ import slick.driver.PostgresDriver
 
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future, blocking }
+import scala.reflect.ClassTag
 import scala.util.Random
 
 abstract class BaseSessionSpec(_system: ActorSystem = {
@@ -37,13 +38,16 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
   with ServiceSpecHelpers {
 
   override implicit def patienceConfig: PatienceConfig =
-    new PatienceConfig(timeout = Span(30, Seconds))
+    new PatienceConfig(timeout = Span(10, Seconds))
 
   protected implicit val ec = system.dispatcher
 
-  protected implicit val db: PostgresDriver.api.Database = DbExtension(_system).db
-  DbExtension(_system).clean()
-  DbExtension(_system).migrate()
+  protected implicit lazy val db: PostgresDriver.api.Database = {
+    DbExtension(_system).db
+    DbExtension(_system).clean()
+    DbExtension(_system).migrate()
+    DbExtension(_system).db
+  }
 
   protected implicit val sessionConfig = SessionConfig.load(system.settings.config.getConfig("session"))
 
@@ -55,9 +59,11 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
   protected implicit val oauth2Service = new GoogleProvider(oauthGoogleConfig)
   protected implicit val authService = new AuthServiceImpl(new DummyCodeActivation)
   protected val sequenceConfig = SequenceServiceConfig.load.toOption.get
-  protected val sequenceService = new SequenceServiceImpl(sequenceConfig)
+  protected lazy val sequenceService = new SequenceServiceImpl(sequenceConfig)
 
-  RpcApiExtension(system).register(Seq(authService, sequenceService))
+  override def beforeAll = {
+    RpcApiExtension(system).register(Seq(authService, sequenceService))
+  }
 
   protected def createAuthId(): Long = {
     val authId = Random.nextLong()
@@ -65,10 +71,19 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
     authId
   }
 
-  protected def expectSeqUpdate(authId: Long, sessionId: Long, sendAckAt: Option[Duration] = Some(0.seconds))(implicit probe: TestProbe): SeqUpdate = {
+  protected def expectSeqUpdate(authId: Long, sessionId: Long, sendAckAt: Option[Duration] = Some(0.seconds))(implicit probe: TestProbe): SeqUpdate =
+    expectUpdateBox(classOf[SeqUpdate], authId, sessionId, sendAckAt)
+
+  protected def expectFatSeqUpdate(authId: Long, sessionId: Long, sendAckAt: Option[Duration] = Some(0.seconds))(implicit probe: TestProbe): FatSeqUpdate =
+    expectUpdateBox(classOf[FatSeqUpdate], authId, sessionId, sendAckAt)
+
+  protected def expectWeakUpdate(authId: Long, sessionId: Long)(implicit probe: TestProbe): WeakUpdate =
+    expectUpdateBox(classOf[WeakUpdate], authId, sessionId, None)
+
+  protected def expectUpdateBox[T <: im.actor.api.rpc.UpdateBox](clazz: Class[T], authId: Long, sessionId: Long, sendAckAt: Option[Duration])(implicit probe: TestProbe, m: Manifest[T]): T = {
     val mb = expectMessageBox(authId, sessionId)
 
-    val update = UpdateBoxCodec.decode(mb.body.asInstanceOf[UpdateBox].bodyBytes).require.value.asInstanceOf[SeqUpdate]
+    val update = UpdateBoxCodec.decode(mb.body.asInstanceOf[UpdateBox].bodyBytes).require.value
 
     sendAckAt map { delay ⇒
       Future {
@@ -79,15 +94,13 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
       }
     }
 
-    update
-  }
+    update shouldBe a[T]
 
-  protected def expectWeakUpdate(authId: Long, sessionId: Long)(implicit probe: TestProbe): WeakUpdate = {
-    UpdateBoxCodec.decode(expectMessageBox(authId, sessionId).body.asInstanceOf[UpdateBox].bodyBytes).require.value.asInstanceOf[WeakUpdate]
+    update.asInstanceOf[T]
   }
 
   protected def expectRpcResult(sendAckAt: Option[Duration] = Some(0.seconds), expectAckFor: Set[Long] = Set.empty)(implicit probe: TestProbe, sessionRegion: SessionRegion): RpcResult = {
-    val messages = probe.receiveN(1 + expectAckFor.size).toSet
+    val messages = probe.receiveN(1 + expectAckFor.size, patienceConfig.timeout.totalNanos.nano).toSet
 
     if (messages.size != expectAckFor.size + 1) {
       fail(s"Expected response and acks for ${expectAckFor.mkString(",")}, got: ${messages.mkString(",")}")
@@ -158,7 +171,7 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
   }
 
   protected def expectMessageBoxPF[T](authId: Long, sessionId: Long, hint: String = "")(pf: PartialFunction[MessageBox, T])(implicit probe: TestProbe): T = {
-    probe.expectMsgPF() {
+    probe.expectMsgPF(max = patienceConfig.timeout.totalNanos.nano) {
       case MTPackage(aid, sid, body) if aid == authId && sid == sessionId ⇒
         val mb = MessageBoxCodec.decode(body).require.value
 
@@ -168,7 +181,7 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
   }
 
   protected def expectMessageBox(authId: Long, sessionId: Long)(implicit probe: TestProbe): MessageBox = {
-    val packageBody = probe.expectMsgPF() {
+    val packageBody = probe.expectMsgPF(max = patienceConfig.timeout.totalNanos.nano) {
       case MTPackage(aid, sid, body) if aid == authId && sid == sessionId ⇒ body
     }
 
@@ -176,7 +189,10 @@ abstract class BaseSessionSpec(_system: ActorSystem = {
   }
 
   protected def sendMessageBox(authId: Long, sessionId: Long, session: ActorRef, messageId: Long, body: ProtoMessage)(implicit probe: TestProbe) =
-    sendEnvelope(authId, sessionId, session, Payload.HandleMessageBox(HandleMessageBox(ByteString.copyFrom(MessageBoxCodec.encode(MessageBox(messageId, body)).require.toByteBuffer))))
+    sendEnvelope(authId, sessionId, session, Payload.HandleMessageBox(handleMessageBox(messageId, body)))
+
+  protected def handleMessageBox(messageId: Long, body: ProtoMessage) =
+    HandleMessageBox(ByteString.copyFrom(MessageBoxCodec.encode(MessageBox(messageId, body)).require.toByteBuffer))
 
   protected def sendEnvelope(authId: Long, sessionId: Long, session: ActorRef, payload: Payload)(implicit probe: TestProbe) = {
     session.tell(

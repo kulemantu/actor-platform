@@ -4,7 +4,7 @@ import slick.dbio.Effect.Write
 import im.actor.server.db.ActorPostgresDriver.api._
 import slick.profile.FixedSqlAction
 
-import im.actor.server.models
+import im.actor.server.model
 
 private[contact] abstract class UserContactBase[T](tag: Tag, tname: String) extends Table[T](tag, tname) {
   def ownerUserId = column[Int]("owner_user_id", O.PrimaryKey)
@@ -15,8 +15,8 @@ private[contact] abstract class UserContactBase[T](tag: Tag, tname: String) exte
   def idx = index("idx_user_contacts_owner_user_id_is_deleted", (ownerUserId, isDeleted))
 }
 
-final class UserContactTable(tag: Tag) extends UserContactBase[models.contact.UserContact](tag, "user_contacts") {
-  def * = (ownerUserId, contactUserId, name, isDeleted) <> (models.contact.UserContact.tupled, models.contact.UserContact.unapply)
+final class UserContactTable(tag: Tag) extends UserContactBase[model.contact.UserContact](tag, "user_contacts") {
+  def * = (ownerUserId, contactUserId, name, isDeleted) <> (model.contact.UserContact.tupled, model.contact.UserContact.unapply)
 }
 
 object UserContactRepo {
@@ -39,8 +39,13 @@ object UserContactRepo {
   def byPKDeleted(ownerUserId: Int, contactUserId: Int) =
     contacts.filter(c ⇒ c.ownerUserId === ownerUserId && c.contactUserId === contactUserId && c.isDeleted === true)
 
-  def fetchAll =
-    active.result
+  def existsC = Compiled { (ownerUserId: Rep[Int], contactUserId: Rep[Int]) ⇒
+    byPKNotDeleted(ownerUserId, contactUserId).exists
+  }
+
+  def fetchAll = active.result
+
+  def exists(ownerUserId: Int, contactUserId: Int) = existsC((ownerUserId, contactUserId)).result
 
   //TODO: check usages - make sure they dont need phone number
   def find(ownerUserId: Int, contactUserId: Int) =
@@ -68,6 +73,6 @@ object UserContactRepo {
   def delete(ownerUserId: Int, contactUserId: Int) =
     byPKNotDeleted(ownerUserId, contactUserId).map(_.isDeleted).update(true)
 
-  def insertOrUpdate(contact: models.contact.UserContact) =
+  def insertOrUpdate(contact: model.contact.UserContact) =
     contacts.insertOrUpdate(contact)
 }

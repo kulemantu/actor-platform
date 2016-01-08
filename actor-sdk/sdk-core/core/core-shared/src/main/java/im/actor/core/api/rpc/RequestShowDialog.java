@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.ArrayList;
 import im.actor.core.api.*;
 
-public class RequestShowDialog extends Request<ResponseSeq> {
+public class RequestShowDialog extends Request<ResponseDialogsOrder> {
 
     public static final int HEADER = 0xe8;
     public static RequestShowDialog fromBytes(byte[] data) throws IOException {

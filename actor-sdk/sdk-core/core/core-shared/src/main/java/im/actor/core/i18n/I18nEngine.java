@@ -41,7 +41,7 @@ public class I18nEngine {
 
     private static final String TAG = "I18nEngine";
 
-    private static final String[] SUPPORTED_LOCALES = new String[]{"Ru", "Ar", "Cn", "Pt"};
+    private static final String[] SUPPORTED_LOCALES = new String[]{"Ru", "Ar", "Cn", "Pt", "Es"};
 
     private final Modules modules;
     private final LocaleRuntime runtime;
@@ -128,6 +128,15 @@ public class I18nEngine {
         return y1 == y2 && m1 == m2 && d1 == d2;
     }
 
+    @ObjectiveCName("getApplicationName")
+    public String getApplicationName() {
+        String appName = modules.getConfiguration().getCustomAppName();
+        if (appName == null) {
+            appName = locale.get("AppName");
+        }
+        return appName;
+    }
+
     @ObjectiveCName("formatShortDate:")
     public String formatShortDate(long date) {
         // Not using Calendar for GWT
@@ -147,6 +156,13 @@ public class I18nEngine {
             int d = date1.getDate();
             return d + " " + MONTHS_SHORT[month].toUpperCase();
         }
+    }
+
+    @ObjectiveCName("formatMonth:")
+    public String formatMonth(Date date) {
+        int month = date.getMonth();
+        int d = date.getDate();
+        return d + " " + MONTHS[month].toUpperCase();
     }
 
     @ObjectiveCName("formatTyping")
@@ -338,10 +354,21 @@ public class I18nEngine {
                 return locale.get("ContentPhoto");
             case DOCUMENT_VIDEO:
                 return locale.get("ContentVideo");
+            case DOCUMENT_AUDIO:
+                return locale.get("ContentAudio");
+            case CONTACT:
+                return locale.get("Contact");
+            case LOCATION:
+                return locale.get("Location");
+            case STICKER:
+                return locale.get("Sticker");
+            case CUSTOM_JSON_MESSAGE:
+                return text;
             case SERVICE:
                 return text;// Should be service message
             case SERVICE_REGISTERED:
-                return getTemplateNamed(senderId, "ServiceRegistered");
+                return getTemplateNamed(senderId, "ServiceRegistered")
+                        .replace("{app_name}", getApplicationName());
             case SERVICE_CREATED:
                 return getTemplateNamed(senderId, "ServiceGroupCreated");
             case SERVICE_ADD:
@@ -390,7 +417,8 @@ public class I18nEngine {
     @ObjectiveCName("formatFullServiceMessageWithSenderId:withContent:")
     public String formatFullServiceMessage(int senderId, ServiceContent content) {
         if (content instanceof ServiceUserRegistered) {
-            return getTemplateNamed(senderId, "ServiceRegisteredFull");
+            return getTemplateNamed(senderId, "ServiceRegisteredFull")
+                    .replace("{app_name}", getApplicationName());
         } else if (content instanceof ServiceGroupCreated) {
             return getTemplateNamed(senderId, "ServiceGroupCreatedFull");
         } else if (content instanceof ServiceGroupUserInvited) {

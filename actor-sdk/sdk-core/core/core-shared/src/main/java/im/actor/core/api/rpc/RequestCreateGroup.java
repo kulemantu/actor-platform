@@ -17,7 +17,7 @@ import im.actor.core.api.*;
 
 public class RequestCreateGroup extends Request<ResponseCreateGroup> {
 
-    public static final int HEADER = 0x41;
+    public static final int HEADER = 0xe6;
     public static RequestCreateGroup fromBytes(byte[] data) throws IOException {
         return Bser.parse(new RequestCreateGroup(), data);
     }
@@ -25,11 +25,15 @@ public class RequestCreateGroup extends Request<ResponseCreateGroup> {
     private long rid;
     private String title;
     private List<ApiUserOutPeer> users;
+    private String groupType;
+    private ApiMapValue userData;
 
-    public RequestCreateGroup(long rid, @NotNull String title, @NotNull List<ApiUserOutPeer> users) {
+    public RequestCreateGroup(long rid, @NotNull String title, @NotNull List<ApiUserOutPeer> users, @Nullable String groupType, @Nullable ApiMapValue userData) {
         this.rid = rid;
         this.title = title;
         this.users = users;
+        this.groupType = groupType;
+        this.userData = userData;
     }
 
     public RequestCreateGroup() {
@@ -50,6 +54,16 @@ public class RequestCreateGroup extends Request<ResponseCreateGroup> {
         return this.users;
     }
 
+    @Nullable
+    public String getGroupType() {
+        return this.groupType;
+    }
+
+    @Nullable
+    public ApiMapValue getUserData() {
+        return this.userData;
+    }
+
     @Override
     public void parse(BserValues values) throws IOException {
         this.rid = values.getLong(1);
@@ -59,6 +73,8 @@ public class RequestCreateGroup extends Request<ResponseCreateGroup> {
             _users.add(new ApiUserOutPeer());
         }
         this.users = values.getRepeatedObj(3, _users);
+        this.groupType = values.optString(5);
+        this.userData = values.optObj(4, new ApiMapValue());
     }
 
     @Override
@@ -69,6 +85,12 @@ public class RequestCreateGroup extends Request<ResponseCreateGroup> {
         }
         writer.writeString(2, this.title);
         writer.writeRepeatedObj(3, this.users);
+        if (this.groupType != null) {
+            writer.writeString(5, this.groupType);
+        }
+        if (this.userData != null) {
+            writer.writeObject(4, this.userData);
+        }
     }
 
     @Override
@@ -76,7 +98,6 @@ public class RequestCreateGroup extends Request<ResponseCreateGroup> {
         String res = "rpc CreateGroup{";
         res += "rid=" + this.rid;
         res += ", title=" + this.title;
-        res += ", users=" + this.users.size();
         res += "}";
         return res;
     }

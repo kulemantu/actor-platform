@@ -2,24 +2,26 @@ package im.actor.server
 
 import java.net.InetSocketAddress
 
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider
 import com.amazonaws.services.s3.transfer.TransferManager
 import com.typesafe.config.ConfigFactory
 import im.actor.api.rpc.auth._
 import im.actor.api.rpc.codecs.RequestCodec
 import im.actor.api.rpc.sequence.RequestGetDifference
 import im.actor.api.rpc.{ Request, RpcOk, RpcResult }
-import im.actor.server.api.frontend.TcpFrontend
 import im.actor.server.api.rpc.service.auth.AuthServiceImpl
 import im.actor.server.api.rpc.service.contacts.ContactsServiceImpl
 import im.actor.server.api.rpc.service.messaging.MessagingServiceImpl
 import im.actor.server.api.rpc.service.sequence.{ SequenceServiceConfig, SequenceServiceImpl }
 import im.actor.server.api.rpc.{ RpcApiExtension, RpcResultCodec }
 import im.actor.server.db.DbExtension
+import im.actor.server.frontend.TcpFrontend
 import im.actor.server.mtproto.codecs.protocol._
 import im.actor.server.mtproto.protocol._
 import im.actor.server.mtproto.transport.{ MTPackage, TransportPackage }
 import im.actor.server.oauth.{ GoogleProvider, OAuth2GoogleConfig }
 import im.actor.server.session.{ Session, SessionConfig }
+import kamon.Kamon
 
 import scala.concurrent.ExecutionContext
 import scala.util.Random
@@ -32,7 +34,7 @@ class SimpleServerE2eSpec extends ActorSuite(
       |}
     """.stripMargin
   ))
-) with ImplicitFileStorageAdapter with ActorSerializerPrepare {
+) with ActorSerializerPrepare {
   behavior of "Server"
 
   it should "connect and Handshake" in Server.e1
@@ -46,6 +48,8 @@ class SimpleServerE2eSpec extends ActorSuite(
   it should "throw AuthIdInvalid if valid AuthId invalidated by some reason" in Server.e5
 
   object Server {
+    Kamon.start()
+
     DbExtension(system).clean()
     DbExtension(system).migrate()
 
@@ -58,6 +62,7 @@ class SimpleServerE2eSpec extends ActorSuite(
     Session.startRegion(Session.props)
     implicit val sessionRegion = Session.startRegionProxy()
 
+    private val awsCredentials = new EnvironmentVariableCredentialsProvider()
     implicit val transferManager = new TransferManager(awsCredentials)
     implicit val ec: ExecutionContext = system.dispatcher
     implicit val oauth2Service = new GoogleProvider(oauthGoogleConfig)
@@ -71,7 +76,7 @@ class SimpleServerE2eSpec extends ActorSuite(
 
     RpcApiExtension(system).register(services)
 
-    TcpFrontend.start("127.0.0.1", 9070, None)
+    TcpFrontend.start("127.0.0.1", 9070, Seq.empty, None)
 
     val remote = new InetSocketAddress("127.0.0.1", 9070)
 

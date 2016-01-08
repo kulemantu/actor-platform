@@ -17,8 +17,10 @@ public enum BubbleType {
     case MediaOut
     // Income media bubble
     case MediaIn
-    // Service bubbl
+    // Service bubble
     case Service
+    // Sticker bubble
+    case Sticker
 }
 
 /**
@@ -79,7 +81,9 @@ public class AABubbleCell: UICollectionViewCell {
     // Cached Date bubble images
     //
     
-    private static var dateBgImage = Imaging.roundedImage(ActorSDK.sharedActor().style.chatDateBubbleColor, size: CGSizeMake(18, 18), radius: 9)
+//    private static var dateBgImage = Imaging.roundedImage(ActorSDK.sharedActor().style.chatDateBubbleColor, size: CGSizeMake(18, 18), radius: 9)
+    
+    private static var dateBgImage = ActorSDK.sharedActor().style.statusBackgroundImage
     
     // MARK: -
     // MARK: Public vars
@@ -154,7 +158,9 @@ public class AABubbleCell: UICollectionViewCell {
         newMessage.contentMode = UIViewContentMode.Center
         newMessage.textAlignment = NSTextAlignment.Center
         newMessage.backgroundColor = appStyle.chatUnreadBgColor
-        newMessage.text = "New Messages"
+        newMessage.text = AALocalized("ChatNewMessages")
+        
+        //"New Messages"
         
         contentView.transform = CGAffineTransformMake(1, 0, 0, -1, 0, 0)
         
@@ -306,6 +312,10 @@ public class AABubbleCell: UICollectionViewCell {
             break
             case BubbleType.Service:
                 bubble.image = AABubbleCell.cachedServiceBg
+                bubbleBorder.image = nil
+            break
+            case BubbleType.Sticker:
+                bubble.image = nil;
                 bubbleBorder.image = nil
             break
         }

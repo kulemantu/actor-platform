@@ -2,14 +2,13 @@ package im.actor.server.api.rpc.service
 
 import java.nio.file.{ Files, Paths }
 
-import im.actor.server.file.ImageUtils
+import im.actor.server.file.{ UnsafeFileName, FileStorageExtension, ImageUtils }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scalaz.-\/
 
-import com.sksamuel.scrimage.AsyncImage
-import org.scalatest.Inside._
+import com.sksamuel.scrimage.Image
 
 import im.actor.api.rpc._
 import im.actor.api.rpc.files.ApiFileLocation
@@ -20,8 +19,7 @@ import im.actor.server.api.rpc.service.profile.{ ProfileErrors, ProfileServiceIm
 
 final class ProfileServiceSpec
   extends BaseAppSuite
-  with ImplicitFileStorageAdapter
-  with ImplicitSessionRegionProxy
+  with ImplicitSessionRegion
   with ImplicitAuthService {
   behavior of "Profile Service"
 
@@ -44,13 +42,15 @@ final class ProfileServiceSpec
   implicit lazy val service = new ProfileServiceImpl
   implicit lazy val filesService = new FilesServiceImpl
 
+  private val fsAdapter = FileStorageExtension(system).fsAdapter
+
   private val invalidImageFile = Paths.get(getClass.getResource("/invalid-avatar.jpg").toURI).toFile
   private val tooLargeImageFile = Paths.get(getClass.getResource("/too-large-avatar.jpg").toURI).toFile
 
   private val validOrigBytes =
     Files.readAllBytes(Paths.get(getClass.getResource("/valid-avatar.jpg").toURI))
   private val validOrigFile = Paths.get(getClass.getResource("/valid-avatar.jpg").toURI).toFile
-  private val validOrigAImg = Await.result(AsyncImage(validOrigFile), 5.seconds)
+  private val validOrigAImg = Image.fromFile(validOrigFile).toPar
 
   private val validOrigDimensions = ImageUtils.dimensions(validOrigAImg)
 
@@ -63,15 +63,13 @@ final class ProfileServiceSpec
   private val validLargeDimensions = (200, 200)
 
   object profile {
-    val (user, _, _) = createUser()
-
-    val authId = createAuthId()
+    val (user, authId, authSid, _) = createUser()
     val sessionId = createSessionId()
 
-    implicit val clientData = ClientData(authId, sessionId, Some(user.id))
+    implicit val clientData = ClientData(authId, sessionId, Some(AuthData(user.id, authSid)))
 
     def e1() = {
-      val validOrigFileModel = Await.result(db.run(fsAdapter.uploadFile("avatar.jpg", validOrigFile)), 5.seconds)
+      val validOrigFileModel = Await.result(db.run(fsAdapter.uploadFile(UnsafeFileName("/etc/passwd/avatar.jpg"), validOrigFile)), 5.seconds)
 
       whenReady(service.handleEditAvatar(ApiFileLocation(validOrigFileModel.fileId, validOrigFileModel.accessHash))) { resp ⇒
         resp should matchPattern {
@@ -105,7 +103,7 @@ final class ProfileServiceSpec
     }
 
     def e2() = {
-      val invalidImageFileModel = Await.result(db.run(fsAdapter.uploadFile("invalid-avatar.jpg", invalidImageFile)), 5.seconds)
+      val invalidImageFileModel = Await.result(db.run(fsAdapter.uploadFile(UnsafeFileName("invalid-avatar.jpg"), invalidImageFile)), 5.seconds)
 
       whenReady(service.handleEditAvatar(ApiFileLocation(invalidImageFileModel.fileId, invalidImageFileModel.accessHash))) { resp ⇒
         resp should matchPattern {
@@ -115,7 +113,7 @@ final class ProfileServiceSpec
     }
 
     def e3() = {
-      val tooLargeImageFileModel = Await.result(db.run(fsAdapter.uploadFile("too-large-avatar.jpg", tooLargeImageFile)), 30.seconds) //WTF???
+      val tooLargeImageFileModel = Await.result(db.run(fsAdapter.uploadFile(UnsafeFileName("too-large-avatar.jpg"), tooLargeImageFile)), 30.seconds) //WTF???
 
       whenReady(service.handleEditAvatar(ApiFileLocation(tooLargeImageFileModel.fileId, tooLargeImageFileModel.accessHash))) { resp ⇒
         resp should matchPattern {
@@ -125,12 +123,12 @@ final class ProfileServiceSpec
     }
 
     def e4() = {
-      val (user1, authId1, _) = createUser()
-      val (user2, authId2, _) = createUser()
+      val (user1, authId1, authSid1, _) = createUser()
+      val (user2, authId2, authSid2, _) = createUser()
       val sessionId = createSessionId()
 
-      val clientData1 = ClientData(authId1, sessionId, Some(user1.id))
-      val clientData2 = ClientData(authId2, sessionId, Some(user2.id))
+      val clientData1 = ClientData(authId1, sessionId, Some(AuthData(user1.id, authSid1)))
+      val clientData2 = ClientData(authId2, sessionId, Some(AuthData(user2.id, authSid2)))
 
       whenReady(service.jhandleCheckNickName("rockjam", clientData1)) { resp ⇒
         resp shouldEqual Ok(ResponseBool(true))
@@ -182,10 +180,10 @@ final class ProfileServiceSpec
     }
 
     def e5() = {
-      val (user1, authId1, _) = createUser()
+      val (user1, authId1, authSid1, _) = createUser()
       val sessionId = createSessionId()
 
-      val clientData1 = ClientData(authId1, sessionId, Some(user1.id))
+      val clientData1 = ClientData(authId1, sessionId, Some(AuthData(user1.id, authSid1)))
 
       val about = Some("is' me")
       whenReady(service.jhandleEditAbout(about, clientData1)) { resp ⇒
@@ -194,7 +192,7 @@ final class ProfileServiceSpec
         }
       }
 
-      whenReady(db.run(persist.UserRepo.find(user1.id).headOption)) { optUser ⇒
+      whenReady(db.run(persist.UserRepo.find(user1.id))) { optUser ⇒
         optUser shouldBe defined
         optUser.get.about shouldEqual about
       }
@@ -212,7 +210,7 @@ final class ProfileServiceSpec
         }
       }
 
-      whenReady(db.run(persist.UserRepo.find(user1.id).headOption)) { optUser ⇒
+      whenReady(db.run(persist.UserRepo.find(user1.id))) { optUser ⇒
         optUser shouldBe defined
         optUser.get.about shouldEqual None
       }
@@ -220,9 +218,9 @@ final class ProfileServiceSpec
     }
 
     def timeZone() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
 
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       whenReady(service.handleEditMyTimeZone("Africa/Addis_Ababa")) { resp ⇒
         resp should matchPattern {
           case Ok(_: ResponseSeq) ⇒
@@ -231,9 +229,9 @@ final class ProfileServiceSpec
     }
 
     def invalidTimeZone() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
 
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       whenReady(service.handleEditMyTimeZone("Africa/Addis_AbEba")) { resp ⇒
         inside(resp) {
           case Error(RpcError(400, "INVALID_TIME_ZONE", _, false, _)) ⇒
@@ -242,9 +240,9 @@ final class ProfileServiceSpec
     }
 
     def sameTimeZone() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
 
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       val tz = "Africa/Addis_Ababa"
 
       whenReady(service.handleEditMyTimeZone(tz)) { resp ⇒
@@ -260,9 +258,9 @@ final class ProfileServiceSpec
     }
 
     def preferredLanguages() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
 
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       whenReady(service.handleEditMyPreferredLanguages(Vector("pt-BR", "en-US", "ru"))) { resp ⇒
         resp should matchPattern {
           case Ok(_: ResponseSeq) ⇒
@@ -271,9 +269,9 @@ final class ProfileServiceSpec
     }
 
     def invalidPreferredLanguages() = {
-      val (user, authId, _) = createUser()
+      val (user, authId, authSid, _) = createUser()
 
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       whenReady(service.handleEditMyPreferredLanguages(Vector("pt-br"))) { resp ⇒
         inside(resp) {
           case Error(RpcError(400, "INVALID_LOCALE", _, false, _)) ⇒
@@ -288,7 +286,7 @@ final class ProfileServiceSpec
     }
 
     def samePreferredLanguages() = {
-      implicit val clientData = ClientData(authId, 1, Some(user.id))
+      implicit val clientData = ClientData(authId, 1, Some(AuthData(user.id, authSid)))
       val langs = Vector("pt-BR", "en-US", "ru")
 
       whenReady(service.handleEditMyPreferredLanguages(langs)) { resp ⇒

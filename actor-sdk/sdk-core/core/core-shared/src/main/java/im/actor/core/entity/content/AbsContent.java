@@ -10,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import im.actor.core.api.ApiDocumentExPhoto;
 import im.actor.core.api.ApiDocumentExVideo;
+import im.actor.core.api.ApiDocumentExVoice;
 import im.actor.core.api.ApiDocumentMessage;
 import im.actor.core.api.ApiJsonMessage;
 import im.actor.core.api.ApiMessage;
@@ -23,7 +24,9 @@ import im.actor.core.api.ApiServiceExUserJoined;
 import im.actor.core.api.ApiServiceExUserKicked;
 import im.actor.core.api.ApiServiceExUserLeft;
 import im.actor.core.api.ApiServiceMessage;
+import im.actor.core.api.ApiStickerMessage;
 import im.actor.core.api.ApiTextMessage;
+import im.actor.core.entity.Peer;
 import im.actor.core.entity.content.internal.AbsContentContainer;
 import im.actor.core.entity.content.internal.AbsLocalContent;
 import im.actor.core.entity.content.internal.ContentLocalContainer;
@@ -31,6 +34,9 @@ import im.actor.core.entity.content.internal.ContentRemoteContainer;
 import im.actor.core.entity.content.internal.LocalDocument;
 import im.actor.core.entity.content.internal.LocalPhoto;
 import im.actor.core.entity.content.internal.LocalVideo;
+import im.actor.core.entity.content.internal.LocalVoice;
+import im.actor.core.entity.content.internal.Sticker;
+import im.actor.core.modules.ModuleContext;
 import im.actor.runtime.bser.BserParser;
 import im.actor.runtime.bser.BserValues;
 import im.actor.runtime.bser.BserWriter;
@@ -98,8 +104,12 @@ public abstract class AbsContent {
                 return new PhotoContent(localContainer);
             } else if (content instanceof LocalVideo) {
                 return new VideoContent(localContainer);
+            } else if (content instanceof LocalVoice) {
+                return new VoiceContent(localContainer);
             } else if (content instanceof LocalDocument) {
                 return new DocumentContent(localContainer);
+            } else if (content instanceof Sticker) {
+                return new StickerContent(localContainer);
             } else {
                 throw new IOException("Unknown type");
             }
@@ -113,6 +123,8 @@ public abstract class AbsContent {
                         return new PhotoContent(remoteContainer);
                     } else if (d.getExt() instanceof ApiDocumentExVideo) {
                         return new VideoContent(remoteContainer);
+                    } else if (d.getExt() instanceof ApiDocumentExVoice) {
+                        return new VoiceContent(remoteContainer);
                     } else {
                         return new DocumentContent(remoteContainer);
                     }
@@ -144,7 +156,13 @@ public abstract class AbsContent {
                     JSONObject object = new JSONObject(json.getRawJson());
                     if (object.getString("dataType").equals("banner")) {
                         return new BannerContent(remoteContainer);
+                    } else if (object.getString("dataType").equals("contact")) {
+                        return new ContactContent(remoteContainer);
+                    } else if (object.getString("dataType").equals("location")) {
+                        return new LocationContent(remoteContainer);
                     }
+                } else if (content instanceof ApiStickerMessage) {
+                    return new StickerContent(remoteContainer);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -159,6 +177,10 @@ public abstract class AbsContent {
 
     private AbsContentContainer contentContainer;
 
+    public AbsContent() {
+        super();
+    }
+
     public AbsContent(ContentRemoteContainer contentContainer) {
         this.contentContainer = contentContainer;
     }
@@ -169,5 +191,16 @@ public abstract class AbsContent {
 
     public AbsContentContainer getContentContainer() {
         return contentContainer;
+    }
+
+    protected void setContentContainer(AbsContentContainer contentContainer) {
+        this.contentContainer = contentContainer;
+    }
+
+    public void onIncoming(Peer peer, ModuleContext context) {
+    }
+
+    public static ContentConverter[] getConverters() {
+        return converters;
     }
 }

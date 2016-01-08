@@ -4,18 +4,18 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.unmarshalling.{ FromRequestUnmarshaller, Unmarshal, Unmarshaller }
 import akka.stream.Materializer
 import de.heikoseeberger.akkahttpplayjson.PlayJsonSupport
-import im.actor.api.rpc.{ ClientData, PeersImplicits }
+import im.actor.api.rpc.{ AuthData, ClientData, PeersImplicits }
 import im.actor.api.rpc.counters.UpdateCountersChanged
 import im.actor.api.rpc.messaging._
 import im.actor.api.rpc.misc.ResponseSeq
 import im.actor.server._
 import im.actor.server.api.http.json.Text
-import im.actor.server.api.http.webhooks.WebhooksHandler
 import im.actor.server.api.rpc.service.groups.{ GroupInviteConfig, GroupsServiceImpl }
 import im.actor.server.api.rpc.service.messaging
 import im.actor.server.api.rpc.service.messaging.{ CommandParser, ReverseHooksListener }
 import im.actor.server.group.{ GroupExtension, GroupServiceMessages }
 import im.actor.server.migrations.IntegrationTokenMigrator
+import im.actor.server.webhooks.http.routes.WebhooksHttpHandler
 import play.api.libs.json.Json
 import shardakka.{ IntCodec, ShardakkaExtension }
 
@@ -27,7 +27,7 @@ class WebhookHandlerSpec
   with MessageParsing
   with PeersImplicits
   with ImplicitSequenceService
-  with ImplicitSessionRegionProxy
+  with ImplicitSessionRegion
   with ImplicitAuthService
   with SeqUpdateMatchers {
 
@@ -47,10 +47,10 @@ class WebhookHandlerSpec
   private val groupExt = GroupExtension(system)
 
   object t {
-    val (user1, authId1, _) = createUser()
-    val (user2, authId2, _) = createUser()
+    val (user1, authId1, authSid1, _) = createUser()
+    val (user2, authId2, authSid2, _) = createUser()
     val sessionId = createSessionId()
-    implicit val clientData = ClientData(authId1, sessionId, Some(user1.id))
+    implicit val clientData = ClientData(authId1, sessionId, Some(AuthData(user1.id, authSid1)))
 
     def createGroupAndBot() = {
       val groupOutPeer = createGroup("Bot test group", Set(user2.id)).groupPeer
@@ -63,7 +63,7 @@ class WebhookHandlerSpec
     }
 
     def sendInGroup() = {
-      val handler = new WebhooksHandler()
+      val handler = new WebhooksHttpHandler()
 
       val groupResponse = createGroup("Bot test group", Set(user2.id))
       val groupOutPeer = groupResponse.groupPeer
@@ -121,7 +121,7 @@ class WebhookHandlerSpec
     }
 
     def reverseHooks() = {
-      val handler = new WebhooksHandler()
+      val handler = new WebhooksHttpHandler()
 
       val hook3000 = new DummyHookListener(3000)
       val hook4000 = new DummyHookListener(4000)
@@ -167,7 +167,7 @@ class WebhookHandlerSpec
     }
   }
 
-  class DummyHookListener(port: Int)(implicit system: ActorSystem, materializer: Materializer) extends PlayJsonSupport {
+  final class DummyHookListener(port: Int)(implicit system: ActorSystem, materializer: Materializer) extends PlayJsonSupport {
 
     import akka.http.scaladsl.Http
     import akka.http.scaladsl.server.Directives._

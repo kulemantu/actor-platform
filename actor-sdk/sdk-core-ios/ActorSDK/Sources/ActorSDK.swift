@@ -43,6 +43,8 @@ public class ActorSDK {
         "tls://front2-mtproto-api-rev2.actor.im"
     ]
     
+    //
+    
     /// API ID
     public var apiId = 2
     
@@ -57,6 +59,12 @@ public class ActorSDK {
     
     /// Invitation URL for apps
     public var inviteUrl: String = "https://actor.im/dl"
+    
+    /// App name in loc. strings
+    public var appNameInLocStrings: String = "Actor"
+    
+    /// Use background on welcome screen
+    public var useBackgroundOnWelcomeScreen: Bool? = false
     
     /// Support email
     public var supportEmail: String? = nil
@@ -82,6 +90,9 @@ public class ActorSDK {
     /// Extensions
     private var extensions = [ActorExtension]()
     
+    /// Enable experimental features
+    public var enableExperimentalFeatures: Bool = false
+    
     //
     // User Onlines
     //
@@ -91,7 +102,7 @@ public class ActorSDK {
     
     /// Disable this if you want manually handle online states
     public var automaticOnlineHandling = true
-
+    
     //
     // Internal State
     //
@@ -163,6 +174,11 @@ public class ActorSDK {
         
         // Logs
         // builder.setEnableFilesLogging(true)
+        
+        // Application name
+        if (appNameInLocStrings != "Actor") {
+            builder.setCustomAppName(AALocalized(appNameInLocStrings))
+        }
         
         // Creating messenger
         messenger = ACCocoaMessenger(configuration: builder.build())
@@ -320,7 +336,8 @@ public class ActorSDK {
         } else {
             var controller: UIViewController! = delegate.actorControllerForAuthStart()
             if controller == nil {
-                controller = AAAuthNavigationController(rootViewController: AAAuthPhoneViewController())
+                //controller = AAAuthNavigationController(rootViewController: AAAuthPhoneViewController())
+                controller = AAAuthNavigationController(rootViewController: AAWelcomeController())
             }
             window.rootViewController = controller!
         }

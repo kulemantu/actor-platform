@@ -2,9 +2,11 @@ package im.actor.server.persist.auth
 
 import im.actor.server.db.ActorPostgresDriver.api._
 
-import im.actor.server.models
+import im.actor.server.model
 
-final class AuthEmailTransactionTable(tag: Tag) extends AuthTransactionBase[models.AuthEmailTransaction](tag, "auth_email_transactions") with InheritingTable {
+final class AuthEmailTransactionTable(tag: Tag)
+  extends AuthTransactionRepoBase[model.AuthEmailTransaction](tag, "auth_email_transactions")
+  with InheritingTable {
   def email = column[String]("email")
   def redirectUri = column[Option[String]]("redirect_uri")
 
@@ -21,7 +23,7 @@ final class AuthEmailTransactionTable(tag: Tag) extends AuthTransactionBase[mode
     deviceInfo,
     isChecked,
     deletedAt
-  ) <> (models.AuthEmailTransaction.tupled, models.AuthEmailTransaction.unapply)
+  ) <> (model.AuthEmailTransaction.tupled, model.AuthEmailTransaction.unapply)
 }
 
 object AuthEmailTransactionRepo {
@@ -29,14 +31,22 @@ object AuthEmailTransactionRepo {
 
   val active = emailTransactions.filter(_.deletedAt.isEmpty)
 
-  def create(transaction: models.AuthEmailTransaction) =
+  val byHash = Compiled { hash: Rep[String] ⇒
+    active.filter(_.transactionHash === hash)
+  }
+
+  val byEmailAndDeviceHash = Compiled { (email: Rep[String], deviceHash: Rep[Array[Byte]]) ⇒
+    active.filter(t ⇒ t.email === email && t.deviceHash === deviceHash)
+  }
+
+  def create(transaction: model.AuthEmailTransaction) =
     emailTransactions += transaction
 
   def find(transactionHash: String) =
-    active.filter(_.transactionHash === transactionHash).result.headOption
+    byHash(transactionHash).result.headOption
 
   def findByEmailAndDeviceHash(email: String, deviceHash: Array[Byte]) =
-    active.filter(t ⇒ t.email === email && t.deviceHash === deviceHash).result.headOption
+    byEmailAndDeviceHash((email, deviceHash)).result.headOption
 
   def updateRedirectUri(transactionHash: String, redirectUri: String) =
     emailTransactions.filter(_.transactionHash === transactionHash).map(_.redirectUri).update(Some(redirectUri))

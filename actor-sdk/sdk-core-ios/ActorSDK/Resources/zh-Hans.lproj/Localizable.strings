@@ -62,7 +62,7 @@
 
 "SettingsUsernameHintField" = "Enter your Username";
 
-"SettingsUsernameHint" = "You can choose a username in Actor. If you do, other people will be able to find you by this username and contact you without sharing your phone number.\n\nYou can use a-z, 0-9 and underscores. Minumum length is 5 characters.";
+"SettingsUsernameHint" = "You can choose a username in {appname}. If you do, other people will be able to find you by this username and contact you without sharing your phone number.\n\nYou can use a-z, 0-9 and underscores. Minumum length is 5 characters.";
 
 "SettingsChangeAboutTitle" = "About me";
 
@@ -81,6 +81,8 @@
 "SettingsAbout" = "App Homepage";
 
 "SettingsVersion" = "版本 {version}";
+
+"SettingsMobilePhone"    = "手機";
 
 /*
  * Profile
@@ -316,7 +318,7 @@
 
 "Placeholder_Empty_Title" = "邀请你的朋友";
 
-"Placeholder_Empty_Message" = "你的通讯录中没有人使用Actor，请点击下面按钮邀请他们。";
+"Placeholder_Empty_Message" = "你的通讯录中没有人使用{appname}，请点击下面按钮邀请他们。";
 
 "Placeholder_Empty_Action" = "告诉你的朋友";
 
@@ -330,7 +332,7 @@
 
 "Placeholder_Contacts_Title" = "邀请好友";
 
-"Placeholder_Contacts_Message" = "你的通讯录中没有人使用Actor，请点击下面按钮邀请他们。";
+"Placeholder_Contacts_Message" = "你的通讯录中没有人使用{appname}，请点击下面按钮邀请他们。";
 
 "Placeholder_Contacts_Action" = "告诉好友";
 
@@ -360,9 +362,9 @@
 
 "AuthCodeHint" = "已经通过短信为你发送验证码，请稍侯。";
 
-"AuthCallHint" = "Actor will call you in {time}";
+"AuthCallHint" = "{appname} will call you in {time}";
 
-"AuthCallDoneHint" = "Actor dialed your number.";
+"AuthCallDoneHint" = "{appname} dialed your number.";
 
 "AuthNoCodeHint" = "Doesn't get the code?";
 
@@ -376,13 +378,21 @@
 
 "AuthProfileHint" = "请输入你的名字并上传头像";
 
+"AuthTerms" = "By signing up to {app_name}, you agree not to: \n\n - use our service to send spam and scam users.\n\n- promote violence on publicly viewable {app_name} bots or channels.\n\nWe reserve the right to update these Terms of Service later.";
+
+/*
+ * Location
+ */
+
+"LocationTitle" = "Location";
+
 /*
  * Common Elements
  */
 
 "CurrentLocale" = "Cn";
 
-"InviteText" = "您好！让我们一起使用Actor安全开聊吧! {link}";
+"InviteText" = "您好！让我们一起使用{appname}安全开聊吧! {link}";
 
 "PhotoRemove" = "删除头像";
 
@@ -393,6 +403,10 @@
 "PhotoLibrary" = "相册";
 
 "SendDocument" = "文档";
+
+"ShareLocation" = "Location";
+
+"ShareContact" = "Contact";
 
 "NavigationEdit" = "编辑";
 
@@ -453,3 +467,5 @@
 "ErrorAlreadyJoined" = "You are already member of group";
 
 "ErrorUnableToJoin" = "Unable to join to group";
+
+"ErrorUnableToCall" = "Unable to call this number";

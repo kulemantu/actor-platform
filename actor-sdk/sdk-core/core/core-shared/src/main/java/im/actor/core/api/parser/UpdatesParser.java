@@ -41,6 +41,7 @@ public class UpdatesParser extends BaseParser<Update> {
             case 47: return UpdateChatClear.fromBytes(payload);
             case 48: return UpdateChatDelete.fromBytes(payload);
             case 1: return UpdateChatGroupsChanged.fromBytes(payload);
+            case 222: return UpdateReactionsUpdate.fromBytes(payload);
             case 36: return UpdateGroupInvite.fromBytes(payload);
             case 21: return UpdateGroupUserInvited.fromBytes(payload);
             case 23: return UpdateGroupUserLeave.fromBytes(payload);
@@ -50,6 +51,9 @@ public class UpdatesParser extends BaseParser<Update> {
             case 213: return UpdateGroupTopicChanged.fromBytes(payload);
             case 214: return UpdateGroupAboutChanged.fromBytes(payload);
             case 39: return UpdateGroupAvatarChanged.fromBytes(payload);
+            case 161: return UpdateOwnStickersChanged.fromBytes(payload);
+            case 164: return UpdateStickerCollectionsChanged.fromBytes(payload);
+            case 165: return UpdateOwnTeamsChanged.fromBytes(payload);
             case 6: return UpdateTyping.fromBytes(payload);
             case 81: return UpdateTypingStop.fromBytes(payload);
             case 7: return UpdateUserOnline.fromBytes(payload);
@@ -57,6 +61,7 @@ public class UpdatesParser extends BaseParser<Update> {
             case 9: return UpdateUserLastSeen.fromBytes(payload);
             case 33: return UpdateGroupOnline.fromBytes(payload);
             case 131: return UpdateParameterChanged.fromBytes(payload);
+            case 80: return UpdateRawUpdate.fromBytes(payload);
             case 215: return UpdateCountersChanged.fromBytes(payload);
             case 42: return UpdateConfig.fromBytes(payload);
         }

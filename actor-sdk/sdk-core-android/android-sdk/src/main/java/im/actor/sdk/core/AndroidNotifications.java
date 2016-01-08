@@ -46,6 +46,7 @@ public class AndroidNotifications implements NotificationProvider {
     private Peer visiblePeer;
 
     private Context context;
+    private Intent intent;
 
     public AndroidNotifications(Context context) {
         this.context = context;
@@ -165,9 +166,7 @@ public class AndroidNotifications implements NotificationProvider {
             builder.setContentText(messagesCount + " messages");
             visiblePeer = topNotification.getPeer();
 
-            builder.setContentIntent(PendingIntent.getActivity(context, 0,
-                    Intents.openDialog(topNotification.getPeer(), false, context),
-                    PendingIntent.FLAG_UPDATE_CURRENT));
+
 
             final NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
             for (Notification n : topNotifications) {
@@ -197,7 +196,7 @@ public class AndroidNotifications implements NotificationProvider {
 
             Drawable avatarDrawable = new AvatarPlaceholderDrawable(avatarTitle, id, 18, context);
 
-            result = buildSingleConversationNotification(builder, inboxStyle, avatarDrawable);
+            result = buildSingleConversationNotification(builder, inboxStyle, avatarDrawable, topNotification);
             final NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             manager.notify(NOTIFICATION_ID, result);
 
@@ -215,7 +214,7 @@ public class AndroidNotifications implements NotificationProvider {
                     @Override
                     public void onDownloaded(FileSystemReference reference) {
                         RoundedBitmapDrawable d = getRoundedBitmapDrawable(reference);
-                        android.app.Notification result = buildSingleConversationNotification(builder, inboxStyle, d);
+                        android.app.Notification result = buildSingleConversationNotification(builder, inboxStyle, d, topNotification);
                         manager.notify(NOTIFICATION_ID, result);
                     }
                 });
@@ -230,8 +229,10 @@ public class AndroidNotifications implements NotificationProvider {
             builder.setContentText(messagesCount + " messages in " + conversationsCount + " chats");
             visiblePeer = null;
 
+            intent = new Intent(context, ActorMainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             builder.setContentIntent(PendingIntent.getActivity(context, 0,
-                    new Intent(context, ActorMainActivity.class),
+                    intent,
                     PendingIntent.FLAG_UPDATE_CURRENT));
 
             NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
@@ -272,10 +273,13 @@ public class AndroidNotifications implements NotificationProvider {
         return d;
     }
 
-    private android.app.Notification buildSingleConversationNotification(NotificationCompat.Builder builder, NotificationCompat.InboxStyle inboxStyle, Drawable avatarDrawable) {
+    private android.app.Notification buildSingleConversationNotification(NotificationCompat.Builder builder, NotificationCompat.InboxStyle inboxStyle, Drawable avatarDrawable, Notification topNotification) {
 
         return builder
                 .setLargeIcon(drawableToBitmap(avatarDrawable))
+                .setContentIntent(PendingIntent.getActivity(context, 0,
+                        Intents.openDialog(topNotification.getPeer(), false, context),
+                        PendingIntent.FLAG_UPDATE_CURRENT))
                 .setStyle(inboxStyle)
                 .build();
     }
@@ -287,7 +291,7 @@ public class AndroidNotifications implements NotificationProvider {
                 .setLargeIcon(drawableToBitmap(d))
                 .setContentIntent(PendingIntent.getActivity(context, 0,
                         Intents.openDialog(topNotification.getPeer(), false, context),
-                        PendingIntent.FLAG_UPDATE_CURRENT))
+                        PendingIntent.FLAG_CANCEL_CURRENT))
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
                 .build();
     }

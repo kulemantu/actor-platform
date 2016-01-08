@@ -2,9 +2,9 @@ package im.actor.server.persist.auth
 
 import im.actor.server.db.ActorPostgresDriver.api._
 
-import im.actor.server.models
+import im.actor.server.model
 
-class AuthPhoneTransactionTable(tag: Tag) extends AuthTransactionBase[models.AuthPhoneTransaction](tag, "auth_phone_transactions") with InheritingTable {
+class AuthPhoneTransactionTable(tag: Tag) extends AuthTransactionRepoBase[model.AuthPhoneTransaction](tag, "auth_phone_transactions") with InheritingTable {
   def phoneNumber = column[Long]("phone_number")
 
   val inherited = AuthTransactionRepo.transactions.baseTableRow
@@ -19,7 +19,7 @@ class AuthPhoneTransactionTable(tag: Tag) extends AuthTransactionBase[models.Aut
     deviceInfo,
     isChecked,
     deletedAt
-  ) <> (models.AuthPhoneTransaction.tupled, models.AuthPhoneTransaction.unapply)
+  ) <> (model.AuthPhoneTransaction.tupled, model.AuthPhoneTransaction.unapply)
 }
 
 object AuthPhoneTransactionRepo {
@@ -27,12 +27,20 @@ object AuthPhoneTransactionRepo {
 
   val active = phoneTransactions.filter(_.deletedAt.isEmpty)
 
-  def create(transaction: models.AuthPhoneTransaction) =
+  val byHash = Compiled { hash: Rep[String] ⇒
+    active.filter(_.transactionHash === hash)
+  }
+
+  val byPhoneAndDeviceHash = Compiled { (phone: Rep[Long], deviceHash: Rep[Array[Byte]]) ⇒
+    active.filter(t ⇒ t.phoneNumber === phone && t.deviceHash === deviceHash)
+  }
+
+  def create(transaction: model.AuthPhoneTransaction) =
     phoneTransactions += transaction
 
   def find(transactionHash: String) =
-    active.filter(_.transactionHash === transactionHash).result.headOption
+    byHash(transactionHash).result.headOption
 
   def findByPhoneAndDeviceHash(phone: Long, deviceHash: Array[Byte]) =
-    active.filter(t ⇒ t.phoneNumber === phone && t.deviceHash === deviceHash).result.headOption
+    byPhoneAndDeviceHash((phone, deviceHash)).result.headOption
 }

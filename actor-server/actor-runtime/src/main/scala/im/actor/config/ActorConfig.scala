@@ -13,27 +13,19 @@ import com.typesafe.config.{ ConfigException, Config, ConfigFactory }
 import scala.util.{ Failure, Success, Try }
 
 object ActorConfig {
-  def load(): Config = {
+  def load(defaults: Config = ConfigFactory.empty()): Config = {
     val mainConfig = Option(System.getProperty("actor.home")) match {
       case Some(home) ⇒
         ConfigFactory.load(ConfigFactory.parseFile(new File(s"$home/conf/server.conf")))
       case None ⇒ ConfigFactory.load()
     }
 
-    val config = ConfigFactory.parseString(
+    val config = defaults.withFallback(ConfigFactory.parseString(
       s"""
         |akka {
         |  actor {
         |    provider: "akka.cluster.ClusterActorRefProvider"
-        |  }
         |
-        |  extensions: ["im.actor.server.db.DbExtension", "im.actor.server.bot.BotExtension", "akka.cluster.client.ClusterClientReceptionist"] $${akka.extensions}
-        |
-        |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-        |
-        |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
-        |
-        |  actor {
         |    serializers {
         |      actor = "im.actor.serialization.ActorSerializer"
         |    }
@@ -42,9 +34,34 @@ object ActorConfig {
         |      "com.trueaccord.scalapb.GeneratedMessage" = actor
         |    }
         |  }
+        |
+        |  extensions: ["im.actor.server.db.DbExtension", "im.actor.server.bot.BotExtension", "akka.cluster.client.ClusterClientReceptionist"] $${akka.extensions}
+        |
+        |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+        |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+        |
+        |  cluster.sharding.state-store-mode = "ddata"
+        |
+        |  persistence {
+        |    journal.plugin: "jdbc-journal"
+        |    snapshot-store.plugin: "jdbc-snapshot-store"
+        |  }
+        |}
+        |
+        |jdbc-journal {
+        |  class = "akka.persistence.jdbc.journal.PostgresqlSyncWriteJournal"
+        |}
+        |
+        |jdbc-snapshot-store {
+        |  class = "akka.persistence.jdbc.snapshot.PostgresqlSyncSnapshotStore"
+        |}
+        |
+        |jdbc-connection {
+        |  jndiPath: "/"
+        |  dataSourceName: "DefaultDataSource"
         |}
       """.stripMargin
-    )
+    ))
       .withFallback(mainConfig)
       .withFallback(ConfigFactory.parseResources("runtime.conf"))
       .resolve()
@@ -64,8 +81,6 @@ object ActorConfig {
 
   def baseUrl(implicit system: ActorSystem) = {
     val config = system.settings.config
-    val scheme = config.getString("webapp.scheme")
-    val host = config.getString("webapp.host")
-    s"$scheme://$host"
+    config.getString("http.base-uri")
   }
 }

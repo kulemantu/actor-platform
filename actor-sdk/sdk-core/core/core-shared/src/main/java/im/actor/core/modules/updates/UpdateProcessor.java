@@ -12,11 +12,9 @@ import im.actor.core.api.ApiGroup;
 import im.actor.core.api.ApiPeerType;
 import im.actor.core.api.ApiUser;
 import im.actor.core.api.rpc.ResponseLoadDialogs;
-import im.actor.core.api.updates.UpdateChatArchived;
 import im.actor.core.api.updates.UpdateChatClear;
 import im.actor.core.api.updates.UpdateChatDelete;
 import im.actor.core.api.updates.UpdateChatGroupsChanged;
-import im.actor.core.api.updates.UpdateChatRestored;
 import im.actor.core.api.updates.UpdateContactRegistered;
 import im.actor.core.api.updates.UpdateContactsAdded;
 import im.actor.core.api.updates.UpdateContactsRemoved;
@@ -38,7 +36,10 @@ import im.actor.core.api.updates.UpdateMessageRead;
 import im.actor.core.api.updates.UpdateMessageReadByMe;
 import im.actor.core.api.updates.UpdateMessageReceived;
 import im.actor.core.api.updates.UpdateMessageSent;
+import im.actor.core.api.updates.UpdateOwnStickersChanged;
 import im.actor.core.api.updates.UpdateParameterChanged;
+import im.actor.core.api.updates.UpdateReactionsUpdate;
+import im.actor.core.api.updates.UpdateStickerCollectionsChanged;
 import im.actor.core.api.updates.UpdateTyping;
 import im.actor.core.api.updates.UpdateTypingStop;
 import im.actor.core.api.updates.UpdateUserLastSeen;
@@ -50,6 +51,7 @@ import im.actor.core.modules.AbsModule;
 import im.actor.core.modules.ModuleContext;
 import im.actor.core.modules.internal.contacts.ContactsSyncActor;
 import im.actor.core.modules.internal.messages.OwnReadActor;
+import im.actor.core.modules.updates.internal.ChangeContent;
 import im.actor.core.modules.updates.internal.CombinedDifference;
 import im.actor.core.modules.updates.internal.ContactsLoaded;
 import im.actor.core.modules.updates.internal.DialogHistoryLoaded;
@@ -59,6 +61,7 @@ import im.actor.core.modules.updates.internal.InternalUpdate;
 import im.actor.core.modules.updates.internal.LoggedIn;
 import im.actor.core.modules.updates.internal.MessagesHistoryLoaded;
 import im.actor.core.modules.updates.internal.RelatedResponse;
+import im.actor.core.modules.updates.internal.StickersLoaded;
 import im.actor.core.modules.updates.internal.UsersFounded;
 import im.actor.core.network.parser.Update;
 import im.actor.core.viewmodel.UserVM;
@@ -76,6 +79,7 @@ public class UpdateProcessor extends AbsModule {
     private PresenceProcessor presenceProcessor;
     private TypingProcessor typingProcessor;
     private ContactsProcessor contactsProcessor;
+    private StickersProcessor stickersProcessor;
 
     public UpdateProcessor(ModuleContext context) {
         super(context);
@@ -86,6 +90,7 @@ public class UpdateProcessor extends AbsModule {
         this.groupsProcessor = new GroupsProcessor(context);
         this.presenceProcessor = new PresenceProcessor(context);
         this.typingProcessor = new TypingProcessor(context);
+        this.stickersProcessor = new StickersProcessor(context);
     }
 
     public void applyRelated(List<ApiUser> users,
@@ -142,6 +147,12 @@ public class UpdateProcessor extends AbsModule {
             RelatedResponse relatedResponse = (RelatedResponse) update;
             applyRelated(relatedResponse.getRelatedUsers(), relatedResponse.getRelatedGroups(), false);
             relatedResponse.getAfterApply().run();
+        } else if (update instanceof StickersLoaded) {
+            stickersProcessor.onOwnStickerCollectionsChanged(((StickersLoaded) update).getCollections());
+        } else if (update instanceof ChangeContent) {
+            UpdateMessageContentChanged contentChanged = ((ChangeContent) update).getUpdate();
+            messagesProcessor.onMessageContentChanged(contentChanged.getPeer(),
+                    contentChanged.getRid(), contentChanged.getMessage());
         }
     }
 
@@ -199,7 +210,7 @@ public class UpdateProcessor extends AbsModule {
         } else if (update instanceof UpdateTyping) {
             UpdateTyping typing = (UpdateTyping) update;
             typingProcessor.onTyping(typing.getPeer(), typing.getUid(), typing.getTypingType());
-        } else if (update instanceof UpdateTypingStop){
+        } else if (update instanceof UpdateTypingStop) {
             UpdateTypingStop typing = (UpdateTypingStop) update;
             typingProcessor.onTypingStop(typing.getPeer(), typing.getUid(), typing.getTypingType());
         }
@@ -305,10 +316,13 @@ public class UpdateProcessor extends AbsModule {
             messagesProcessor.onCountersChanged(((UpdateCountersChanged) update).getCounters());
         } else if (update instanceof UpdateChatGroupsChanged) {
             messagesProcessor.onChatGroupsChanged(((UpdateChatGroupsChanged) update).getDialogs());
-        } else if (update instanceof UpdateChatArchived) {
-            messagesProcessor.onChatArchived(convert(((UpdateChatArchived) update).getPeer()));
-        } else if (update instanceof UpdateChatRestored) {
-            messagesProcessor.onChatRestored(convert(((UpdateChatRestored) update).getPeer()));
+        } else if (update instanceof UpdateReactionsUpdate) {
+            messagesProcessor.onReactionsChanged(((UpdateReactionsUpdate) update).getPeer(),
+                    ((UpdateReactionsUpdate) update).getRid(), ((UpdateReactionsUpdate) update).getReactions());
+        } else if (update instanceof UpdateOwnStickersChanged) {
+            stickersProcessor.onOwnStickerCollectionsChanged(((UpdateOwnStickersChanged) update).getCollections());
+        } else if (update instanceof UpdateStickerCollectionsChanged) {
+            stickersProcessor.onStickerCollectionsChanged(((UpdateStickerCollectionsChanged) update).getCollections());
         }
     }
 

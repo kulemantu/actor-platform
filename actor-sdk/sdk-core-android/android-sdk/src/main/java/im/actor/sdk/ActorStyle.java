@@ -6,6 +6,9 @@ import android.graphics.Color;
  * Actor Styling class
  */
 public class ActorStyle {
+
+    private int[] defaultBackgrouds = new int[]{R.drawable.img_chat_background_default, R.drawable.bg_8, R.drawable.bg_2, R.drawable.bg_1};
+
     private int toolBarColor = 0;
     private int fabColor = 0;
     private int fabPressedColor = 0;
@@ -83,6 +86,7 @@ public class ActorStyle {
     private int groupAdminColor = 0;
     private int groupActionAddIconColor = 0;
     private int groupActionAddTextColor = 0;
+    private int groupOnlineColor = Color.parseColor("#ff7ea8ef");
 
     //Conversation
     private int convSendEnabledColor = 0;
@@ -109,6 +113,7 @@ public class ActorStyle {
     private int convMediaStateReadColor = Color.parseColor("#ff7ea8ef");
     private int convMediaStateErrorColor = Color.parseColor("#ffed534b");
     private int convMediaStateWarrningColor = Color.parseColor("#ffed534b");
+    private int convLikeColor = Color.parseColor("#e2264d");
 
     public int getMainColor() {
         return mainColor;
@@ -846,5 +851,29 @@ public class ActorStyle {
 
     public static int getDarkenArgb(int color, double percent) {
         return Color.argb(Color.alpha(color), (int) Math.round(Color.red(color) * percent), (int) Math.round(Color.green(color) * percent), (int) Math.round(Color.blue(color) * percent));
+    }
+
+    public int getGroupOnlineColor() {
+        return groupOnlineColor;
+    }
+
+    public void setGroupOnlineColor(int groupOnlineColor) {
+        this.groupOnlineColor = groupOnlineColor;
+    }
+
+    public int getConvLikeColor() {
+        return convLikeColor;
+    }
+
+    public void setConvLikeColor(int convLikeColor) {
+        this.convLikeColor = convLikeColor;
+    }
+
+    public int[] getDefaultBackgrouds() {
+        return defaultBackgrouds;
+    }
+
+    public void setDefaultBackgrouds(int[] defaultBackgrouds) {
+        this.defaultBackgrouds = defaultBackgrouds;
     }
 }

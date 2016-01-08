@@ -10,11 +10,19 @@ class AABubbles {
     static let mediaLayouter = AABubbleMediaCellLayouter()
     static let documentLayouter = AABubbleDocumentCellLayout()
     static let serviceLayouter = AABubbleServiceCellLayouter()
+    static let locationLayouter = AABubbleLocationCellLayouter()
+    static let contactLayouter = AABubbleContactCellLayouter()
+    static let voiceLayouter = AABubbleVoiceCellLayouter()
+    static let stickerLayouter = AABubbleStickerCellLayouter()
     
     static let builtInLayouters: [AABubbleLayouter] = [
         serviceLayouter,
         mediaLayouter,
+        voiceLayouter,
+        //stickerLayouter,
         documentLayouter,
+        locationLayouter,
+        contactLayouter,
         textLayouter
     ]
     
@@ -31,6 +39,7 @@ class AABubbles {
     }
     
     class func buildLayout(peer: ACPeer, message: ACMessage) -> AACellLayout {
+        
         for layouter in layouters {
             if (layouter.isSuitable(message)) {
                 return layouter.buildLayout(peer, message: message)
@@ -39,4 +48,5 @@ class AABubbles {
         
         return textLayouter.buildLayout(peer, message: message)
     }
+    
 }

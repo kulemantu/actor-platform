@@ -4,9 +4,9 @@ import slick.dbio.Effect.{ Write, Read }
 import slick.driver.PostgresDriver.api._
 import slick.profile.{ FixedSqlAction, FixedSqlStreamingAction }
 
-import im.actor.server.models
+import im.actor.server.model
 
-final class UserEmailTable(tag: Tag) extends Table[models.UserEmail](tag, "user_emails") {
+final class UserEmailTable(tag: Tag) extends Table[model.UserEmail](tag, "user_emails") {
   def userId = column[Int]("user_id", O.PrimaryKey)
   def id = column[Int]("id", O.PrimaryKey)
   def accessSalt = column[String]("access_salt")
@@ -15,14 +15,19 @@ final class UserEmailTable(tag: Tag) extends Table[models.UserEmail](tag, "user_
 
   def emailUnique = index("idx_user_emails_email", email, unique = true)
 
-  def * = (id, userId, accessSalt, email, title) <> (models.UserEmail.tupled, models.UserEmail.unapply)
+  def * = (id, userId, accessSalt, email, title) <> (model.UserEmail.tupled, model.UserEmail.unapply)
 }
 
 object UserEmailRepo {
   val emails = TableQuery[UserEmailTable]
 
-  def byEmail(email: String) =
+  val byEmail = Compiled { email: Rep[String] ⇒
     emails.filter(_.email === email)
+  }
+
+  val emailExists = Compiled { email: Rep[String] ⇒
+    emails.filter(_.email === email).exists
+  }
 
   def findByEmails(emailSet: Set[String]) =
     emails.filter(_.email inSet emailSet).result
@@ -34,14 +39,14 @@ object UserEmailRepo {
     emails.filter(_.email.like(s"%@$domain")).result
 
   def exists(email: String) =
-    byEmail(email).exists.result
+    emailExists(email).result
 
-  def findByUserId(userId: Int): FixedSqlStreamingAction[Seq[models.UserEmail], models.UserEmail, Read] =
+  def findByUserId(userId: Int): FixedSqlStreamingAction[Seq[model.UserEmail], model.UserEmail, Read] =
     emails.filter(_.userId === userId).result
 
-  def findByUserIds(userIds: Set[Int]): FixedSqlStreamingAction[Seq[models.UserEmail], models.UserEmail, Read] =
+  def findByUserIds(userIds: Set[Int]): FixedSqlStreamingAction[Seq[model.UserEmail], model.UserEmail, Read] =
     emails.filter(_.userId inSet userIds).result
 
   def create(id: Int, userId: Int, accessSalt: String, email: String, title: String): FixedSqlAction[Int, NoStream, Write] =
-    emails += models.UserEmail(id, userId, accessSalt, email, title)
+    emails += model.UserEmail(id, userId, accessSalt, email.toLowerCase, title)
 }

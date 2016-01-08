@@ -3,7 +3,6 @@ package im.actor.server.user
 import akka.actor.ActorSystem
 import akka.pattern.pipe
 import im.actor.api.rpc.users.ApiUser
-import im.actor.server.ApiConversions
 import im.actor.server.ApiConversions._
 import im.actor.server.acl.ACLUtils
 
@@ -53,4 +52,6 @@ private[user] trait UserQueriesHandlers {
   protected def getUser(state: User): Unit = sender() ! state
 
   protected def isAdmin(state: User): Unit = sender() ! IsAdminResponse(state.isAdmin.getOrElse(false))
+
+  protected def getName(state: User): Unit = sender() ! GetNameResponse(state.name)
 }

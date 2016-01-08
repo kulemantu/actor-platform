@@ -17,32 +17,25 @@ import im.actor.core.api.*;
 
 public class ResponseCreateGroup extends Response {
 
-    public static final int HEADER = 0x42;
+    public static final int HEADER = 0xd8;
     public static ResponseCreateGroup fromBytes(byte[] data) throws IOException {
         return Bser.parse(new ResponseCreateGroup(), data);
     }
 
-    private ApiGroupOutPeer groupPeer;
     private int seq;
     private byte[] state;
-    private List<Integer> users;
-    private long date;
+    private ApiGroup group;
+    private List<ApiUser> users;
 
-    public ResponseCreateGroup(@NotNull ApiGroupOutPeer groupPeer, int seq, @NotNull byte[] state, @NotNull List<Integer> users, long date) {
-        this.groupPeer = groupPeer;
+    public ResponseCreateGroup(int seq, @NotNull byte[] state, @NotNull ApiGroup group, @NotNull List<ApiUser> users) {
         this.seq = seq;
         this.state = state;
+        this.group = group;
         this.users = users;
-        this.date = date;
     }
 
     public ResponseCreateGroup() {
 
-    }
-
-    @NotNull
-    public ApiGroupOutPeer getGroupPeer() {
-        return this.groupPeer;
     }
 
     public int getSeq() {
@@ -55,36 +48,39 @@ public class ResponseCreateGroup extends Response {
     }
 
     @NotNull
-    public List<Integer> getUsers() {
-        return this.users;
+    public ApiGroup getGroup() {
+        return this.group;
     }
 
-    public long getDate() {
-        return this.date;
+    @NotNull
+    public List<ApiUser> getUsers() {
+        return this.users;
     }
 
     @Override
     public void parse(BserValues values) throws IOException {
-        this.groupPeer = values.getObj(1, new ApiGroupOutPeer());
-        this.seq = values.getInt(3);
-        this.state = values.getBytes(4);
-        this.users = values.getRepeatedInt(5);
-        this.date = values.getLong(6);
+        this.seq = values.getInt(1);
+        this.state = values.getBytes(2);
+        this.group = values.getObj(3, new ApiGroup());
+        List<ApiUser> _users = new ArrayList<ApiUser>();
+        for (int i = 0; i < values.getRepeatedCount(4); i ++) {
+            _users.add(new ApiUser());
+        }
+        this.users = values.getRepeatedObj(4, _users);
     }
 
     @Override
     public void serialize(BserWriter writer) throws IOException {
-        if (this.groupPeer == null) {
-            throw new IOException();
-        }
-        writer.writeObject(1, this.groupPeer);
-        writer.writeInt(3, this.seq);
+        writer.writeInt(1, this.seq);
         if (this.state == null) {
             throw new IOException();
         }
-        writer.writeBytes(4, this.state);
-        writer.writeRepeatedInt(5, this.users);
-        writer.writeLong(6, this.date);
+        writer.writeBytes(2, this.state);
+        if (this.group == null) {
+            throw new IOException();
+        }
+        writer.writeObject(3, this.group);
+        writer.writeRepeatedObj(4, this.users);
     }
 
     @Override
